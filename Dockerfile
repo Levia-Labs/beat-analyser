@@ -1,6 +1,7 @@
-FROM python:3.10
+FROM python:3.8-slim
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update
+RUN apt-get install -y \
     ffmpeg \
     libsndfile1 \
     build-essential \
