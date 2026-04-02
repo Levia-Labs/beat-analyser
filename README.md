@@ -4,6 +4,10 @@ Python-based beat and note extraction service using madmom, Dockerized.
 
 Converts MP3/WAV into time-aligned percussion and pitched instrument events. CSVs output per track. Folder per upload. ZIP package returned.
 
+It utilises [CPJKU/madmom](https://github.com/CPJKU/madmom) for audio processing and [Flask](https://flask.palletsprojects.com/) for the web interface.
+
+Madmom package is almost impossible to install in modern environment and this setup barely works.
+
 ---
 
 ## Function
@@ -49,10 +53,9 @@ Labels:
 .
 ├── app
 │   ├── app.py
+│   ├── Dockerfile
 │   └── templates/index.html
 ├── uploads/
-├── Dockerfile
-├── requirements.txt
 ├── docker-compose.yml
 └── README.md
 ```
@@ -61,29 +64,9 @@ Labels:
 
 ---
 
-## Docker Compose
-
-```yaml
-version: "3.9"
-services:
-  beat-analyser:
-    build: ./app
-    container_name: beat-analyser
-    ports:
-      - "80:80"
-    volumes:
-      - ./uploads:/app/uploads
-      - ./app/app.py:/app/app.py
-      - ./app/templates:/app/templates
-    restart: on-failure:3
-```
-
----
-
 ## Build
 
 ```bash
-docker build -t beat-analyser ./app
 docker compose build
 ```
 
@@ -92,11 +75,12 @@ docker compose build
 ## Run
 
 ```bash
-docker run -p 80:80 -v ./uploads:/app/uploads beat-analyser
 docker compose up
 ```
 
-Access: `http://localhost`
+Access UI: `http://localhost`
+
+Files are saved in `uploads/` folder on a host. ZIP response is sent to browser.
 
 ---
 
