@@ -18,7 +18,7 @@ Output is suitable for conversion into timeline markers (e.g., FMOD).
 
 ## Output Format
 
-```
+```csv
 
 <time_seconds>,<label>
 
@@ -26,7 +26,7 @@ Output is suitable for conversion into timeline markers (e.g., FMOD).
 
 Example:
 
-```
+```csv
 
 0.5123,kick
 0.7431,hh
@@ -54,7 +54,7 @@ Labels:
 
 ## Project Structure
 
-```
+```bash
 
 .
 ├── Dockerfile
@@ -68,7 +68,7 @@ Labels:
 
 ## Build
 
-```
+```bash
 
 docker build -t madmom-web .
 
@@ -78,19 +78,13 @@ docker build -t madmom-web .
 
 ## Run
 
-```
+```bash
 
 docker run -p 5000:5000 madmom-web
 
 ```
 
-Access:
-
-```
-
-[http://localhost:5000](http://localhost:5000)
-
-```
+Access: [http://localhost:5000](http://localhost:5000)
 
 ---
 
@@ -166,5 +160,3 @@ Python:
 ## Use Case
 
 Transform raw audio into discrete rhythmic events for systems requiring explicit timing (game audio engines, procedural music systems).
-
-```
