@@ -43,8 +43,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install madmom from GitHub
-RUN pip install \
-    madmom @ git+https://github.com/CPJKU/madmom.git@27f032e8947204902c675e5e341a3faf5dc86dae
+RUN pip install "madmom@git+https://github.com/CPJKU/madmom.git@27f032e8947204902c675e5e341a3faf5dc86dae"
+
+# Create directory for uploaded audio
+RUN mkdir -p uploads
 
 # Copy Flask app
 COPY app.py .

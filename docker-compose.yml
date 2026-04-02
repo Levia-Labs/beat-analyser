@@ -1,9 +1,15 @@
 services:
   beat-analyser:
-    build: .
+    # Service name
+    build: ./app
     container_name: beat-analyser
+    # Map container port 80 to host port 80
     ports:
       - "80:80"
+    # Mount host folders to container
     volumes:
-      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./app/app.py:/app/app.py
+      - ./app/templates:/app/templates
+    # Restart policy with up to 3 retries on failure
     restart: on-failure:3
