@@ -70,6 +70,10 @@ Labels:
 docker compose build
 ```
 
+> WARNING! Initial docker build is very slow due to ffmpeg installation and takes ~30 minutes.
+>
+> Subsequent builds are faster due to layer caching.
+
 ---
 
 ## Run
