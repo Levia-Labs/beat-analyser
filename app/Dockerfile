@@ -45,6 +45,9 @@ RUN apt-get update && apt-get install -y \
 # Install madmom from GitHub
 RUN pip install "madmom@git+https://github.com/CPJKU/madmom.git@27f032e8947204902c675e5e341a3faf5dc86dae"
 
+# additional installs
+RUN pip install librosa==0.10.2
+
 # Create directory for uploaded audio
 RUN mkdir -p uploads
 
