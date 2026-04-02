@@ -1,14 +1,49 @@
-# Use the prebuilt MIR image
-FROM minzwon/dl4mir:latest-cpu-py3
+FROM python:3.14.2-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install Flask
-RUN pip install --no-cache-dir flask
+# Install system dependencies
+RUN apt-get update
+RUN apt-get install -y \
+    build-essential \
+    libsndfile1 
 
-# Copy local app code
-COPY app.py . 
+# Upgrade pip and wheel
+RUN pip install --upgrade pip setuptools wheel
+
+# Install ffmpeg for audio processing
+RUN apt-get install -y \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install \
+    blinker==1.9.0 \
+    click==8.3.1 \
+    colorama==0.4.6 \
+    Cython>=0.25 \
+    Flask==3.1.3 \
+    itsdangerous==2.2.0 \
+    Jinja2==3.1.6 \
+    MarkupSafe==3.0.3 \
+    mido>=1.2.6 \
+    numpy>=1.13.4,==2.4.4 \
+    packaging==26.0 \
+    pydub==0.25.1 \
+    scipy>=0.16,==1.17.1 \
+    Werkzeug==3.1.7
+
+# Install madmom
+RUN apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install \
+    madmom @ git+https://github.com/CPJKU/madmom.git@27f032e8947204902c675e5e341a3faf5dc86dae
+
+# Copy Flask app
+COPY app.py .
 COPY templates ./templates
 
 # Expose Flask port
