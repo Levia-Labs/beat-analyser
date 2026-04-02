@@ -12,4 +12,4 @@ services:
       - ./app/app.py:/app/app.py
       - ./app/templates:/app/templates
     # Restart policy - do not restart automatically
-    restart: never
+    restart: no

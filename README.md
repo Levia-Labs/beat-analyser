@@ -1,18 +1,18 @@
 # beat-analyser
 
-Python-based beat extraction service using madmom, Dockerized.
+Python-based beat and note extraction service using madmom, Dockerized.
 
-Web service converts uploaded audio files (MP3/WAV) into time-aligned drum events (kick, snare, hi-hat). Uses madmom for drum transcription and Flask as the HTTP interface.
+Converts MP3/WAV into time-aligned percussion and pitched instrument events. CSVs output per track. Folder per upload. ZIP package returned.
 
 ---
 
 ## Function
 
-- Upload audio through browser  
-- Extract percussive events via neural drum transcription  
-- Return a text file with timestamps and drum labels  
-
-Output is compatible with timeline-based systems (e.g., FMOD).
+* Browser upload
+* Extract percussion (kick, snare, hi-hat)
+* Extract pitched notes (bass, chords, melody)
+* Output CSVs per track
+* Package CSV folder into ZIP
 
 ---
 
@@ -20,32 +20,26 @@ Output is compatible with timeline-based systems (e.g., FMOD).
 
 ```csv
 <time_seconds>,<label>
-````
+```
 
-Example:
+Percussion example: `kick.csv`
 
 ```csv
 0.5123,kick
-0.7431,hh
-1.0020,snare
+1.1020,kick
+```
+
+Pitched notes example: `bass.csv`
+
+```csv
+0.7431,note_40
+1.0020,note_36
 ```
 
 Labels:
 
-- kick
-- snare
-- hh (hi-hat)
-
----
-
-## Architecture
-
-- HTTP server: Flask
-- Processing: madmom (RNN + DBN drum tracking)
-- Runtime: Docker container
-- Orchestration: optional Docker Compose
-- Input: uploaded audio saved inside container
-- Output: generated text file returned to client
+* Percussion: kick, snare, hh
+* Pitched: bass (MIDI <48), chords (48–71), melody (≥72)
 
 ---
 
@@ -53,28 +47,35 @@ Labels:
 
 ```bash
 .
+├── app
+│   ├── app.py
+│   └── templates/index.html
+├── uploads/
 ├── Dockerfile
+├── requirements.txt
 ├── docker-compose.yml
-├── app.py
-└── templates/
-    └── index.html
+└── README.md
 ```
+
+* `uploads/`: synchronized folder for uploaded audio and generated CSVs/ZIPs
 
 ---
 
-## Docker Compose (optional)
+## Docker Compose
 
 ```yaml
 version: "3.9"
 services:
-  madmom-web:
-    build: .
-    container_name: madmom-web
+  beat-analyser:
+    build: ./app
+    container_name: beat-analyser
     ports:
-      - "5000:5000"
+      - "80:80"
     volumes:
-      - ./data:/app
-    restart: unless-stopped
+      - ./uploads:/app/uploads
+      - ./app/app.py:/app/app.py
+      - ./app/templates:/app/templates
+    restart: on-failure:3
 ```
 
 ---
@@ -82,12 +83,7 @@ services:
 ## Build
 
 ```bash
-docker build -t madmom-web .
-```
-
-Or with Compose:
-
-```bash
+docker build -t beat-analyser ./app
 docker compose build
 ```
 
@@ -96,47 +92,37 @@ docker compose build
 ## Run
 
 ```bash
-docker run -p 5000:5000 madmom-web
-```
-
-Or with Compose:
-
-```bash
+docker run -p 80:80 -v ./uploads:/app/uploads beat-analyser
 docker compose up
 ```
 
-Access via: [http://localhost:5000](http://localhost:5000)
+Access: `http://localhost`
 
 ---
 
 ## API
 
-### GET /
+GET `/` – returns upload page.
 
-Returns the upload page.
-
-### POST /upload
-
-Form-data:
-
-- `file`: audio file (.mp3 or .wav)
-
-Response:
-
-- downloadable `.txt` file containing drum events
+POST `/upload` – form-data `file`: audio. Response: ZIP with folder named after uploaded file, containing CSVs for percussion and pitched tracks.
 
 ---
 
 ## Processing Pipeline
 
-1. Save uploaded file
-2. Load audio
-3. Run:
+1. Save uploaded file in `uploads/`
+2. Create folder named after file
+3. Load audio
+4. Percussion extraction:
 
-   - `RNNDrumProcessor` → activation map
-   - `DBNDrumTrackingProcessor` → discrete drum events
-4. Write events to file (`<timestamp>,<label>`)
-5. Return file to client
+   * `CNNOnsetProcessor` + `OnsetPeakPickingProcessor`
+   * Assign kick/snare/hh
+5. Pitched instruments:
+
+   * `RNNPianoNoteProcessor` + `NotePeakPickingProcessor`
+   * Assign bass/chords/melody
+6. Write CSVs
+7. Package folder into ZIP
 
 ---
 
@@ -144,40 +130,40 @@ Response:
 
 System:
 
-- ffmpeg
-- libsndfile1
-- build-essential
+* ffmpeg
+* libsndfile1
+* build-essential
 
 Python:
 
-- numpy
-- scipy
-- cython
-- madmom
-- flask
+* numpy
+* scipy
+* cython
+* madmom
+* flask
+* librosa
 
 ---
 
 ## Constraints
 
-- MP3 decoding relies on ffmpeg
-- Drum classification is probabilistic, not exact
-- Accuracy drops on dense mixes
-- Only kick, snare, hi-hat classification
-- No tempo normalization or quantization applied
+* MP3 decoding requires ffmpeg
+* Percussion classification is approximate
+* Only kick, snare, hh, and MIDI notes
+* No tempo quantization
 
 ---
 
 ## Extension Points
 
-- BPM detection and quantization
-- Export JSON or other structured formats
-- Multi-file batch processing
-- Persistent storage for input/output
-- Frontend timeline visualization
+* Additional pitched instruments
+* BPM detection and quantization
+* Export JSON or other structured formats
+* Multi-file batch processing
+* Frontend timeline visualization
 
 ---
 
 ## Use Case
 
-Convert raw audio into discrete rhythmic events for systems requiring explicit timing, e.g., game audio engines or procedural music systems.
+Raw audio → discrete rhythmic and melodic events for engines, procedural music, transcription analysis.
