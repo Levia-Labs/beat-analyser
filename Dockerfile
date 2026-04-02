@@ -1,20 +1,18 @@
-FROM python:3.8-slim
+# Use the prebuilt MIR image
+FROM minzwon/dl4mir:latest-cpu-py3
 
-RUN apt-get update
-RUN apt-get install -y \
-    ffmpeg \
-    libsndfile1 \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN pip install --no-cache-dir numpy scipy cython
-RUN pip install --no-cache-dir madmom flask
-
+# Set working directory
 WORKDIR /app
 
-COPY app.py .
+# Install Flask
+RUN pip install --no-cache-dir flask
+
+# Copy local app code
+COPY app.py . 
 COPY templates ./templates
 
+# Expose Flask port
 EXPOSE 80
 
+# Run Flask
 CMD ["python", "app.py"]

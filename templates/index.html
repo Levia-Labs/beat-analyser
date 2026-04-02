@@ -1,13 +1,14 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <title>Beat Extractor</title>
+    <meta charset="UTF-8" />
+    <title>Drum Transcription</title>
   </head>
   <body>
-    <h2>Upload MP3</h2>
+    <h1>Upload MP3/WAV for Drum Transcription</h1>
     <form action="/upload" method="post" enctype="multipart/form-data">
-      <input type="file" name="file" accept=".mp3,.wav" required />
-      <button type="submit">Process</button>
+      <input type="file" name="file" accept=".wav,.mp3" required />
+      <button type="submit">Upload & Transcribe</button>
     </form>
   </body>
 </html>
