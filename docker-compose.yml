@@ -6,4 +6,4 @@ services:
       - "80:80"
     volumes:
       - ./data:/app/data
-    restart: unless-stopped
+    restart: on-failure:3
