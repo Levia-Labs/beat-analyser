@@ -6,9 +6,11 @@ app = Flask(__name__)
 UPLOAD_PATH = "input.wav"
 OUTPUT_PATH = "beats.txt"
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -24,5 +26,6 @@ def upload():
 
     return send_file(OUTPUT_PATH, as_attachment=True)
 
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=80)

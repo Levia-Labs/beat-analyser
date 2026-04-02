@@ -15,6 +15,6 @@ WORKDIR /app
 COPY app.py .
 COPY templates ./templates
 
-EXPOSE 5000
+EXPOSE 80
 
 CMD ["python", "app.py"]
