@@ -11,5 +11,5 @@ services:
       - ./uploads:/app/uploads
       - ./app/app.py:/app/app.py
       - ./app/templates:/app/templates
-    # Restart policy with up to 3 retries on failure
-    restart: on-failure:3
+    # Restart policy - do not restart automatically
+    restart: never
