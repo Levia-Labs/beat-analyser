@@ -1,8 +1,8 @@
 # beat-analyser
 
-read music file beat data with python madmom package, dockerized
+Python-based beat extraction service using madmom, Dockerized.
 
-Web service that converts an uploaded audio file (MP3/WAV) into time-aligned drum events (kick, snare, hi-hat). Uses madmom for inference and Flask for the HTTP interface.
+Web service converts uploaded audio files (MP3/WAV) into time-aligned drum events (kick, snare, hi-hat). Uses madmom for drum transcription and Flask as the HTTP interface.
 
 ---
 
@@ -10,28 +10,24 @@ Web service that converts an uploaded audio file (MP3/WAV) into time-aligned dru
 
 - Upload audio through browser  
 - Extract percussive events via neural drum transcription  
-- Return a text file with timestamps and labels  
+- Return a text file with timestamps and drum labels  
 
-Output is suitable for conversion into timeline markers (e.g., FMOD).
+Output is compatible with timeline-based systems (e.g., FMOD).
 
 ---
 
 ## Output Format
 
 ```csv
-
 <time_seconds>,<label>
-
-```
+````
 
 Example:
 
 ```csv
-
 0.5123,kick
 0.7431,hh
 1.0020,snare
-
 ```
 
 Labels:
@@ -44,24 +40,41 @@ Labels:
 
 ## Architecture
 
-- HTTP server: Flask  
-- Processing: madmom (RNN + DBN drum tracking)  
-- Runtime: Docker container  
-- Input: uploaded file saved locally  
-- Output: generated text file returned to client  
+- HTTP server: Flask
+- Processing: madmom (RNN + DBN drum tracking)
+- Runtime: Docker container
+- Orchestration: optional Docker Compose
+- Input: uploaded audio saved inside container
+- Output: generated text file returned to client
 
 ---
 
 ## Project Structure
 
 ```bash
-
 .
 ├── Dockerfile
+├── docker-compose.yml
 ├── app.py
 └── templates/
-└── index.html
+    └── index.html
+```
 
+---
+
+## Docker Compose (optional)
+
+```yaml
+version: "3.9"
+services:
+  madmom-web:
+    build: .
+    container_name: madmom-web
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app
+    restart: unless-stopped
 ```
 
 ---
@@ -69,9 +82,13 @@ Labels:
 ## Build
 
 ```bash
-
 docker build -t madmom-web .
+```
 
+Or with Compose:
+
+```bash
+docker compose build
 ```
 
 ---
@@ -79,12 +96,16 @@ docker build -t madmom-web .
 ## Run
 
 ```bash
-
 docker run -p 5000:5000 madmom-web
-
 ```
 
-Access: [http://localhost:5000](http://localhost:5000)
+Or with Compose:
+
+```bash
+docker compose up
+```
+
+Access via: [http://localhost:5000](http://localhost:5000)
 
 ---
 
@@ -92,29 +113,30 @@ Access: [http://localhost:5000](http://localhost:5000)
 
 ### GET /
 
-Returns upload page.
+Returns the upload page.
 
 ### POST /upload
 
 Form-data:
 
-- file: audio file (.mp3 or .wav)
+- `file`: audio file (.mp3 or .wav)
 
 Response:
 
-- downloadable .txt file with drum events
+- downloadable `.txt` file containing drum events
 
 ---
 
 ## Processing Pipeline
 
-1. Save uploaded file  
-2. Load audio  
+1. Save uploaded file
+2. Load audio
 3. Run:
-   - RNNDrumProcessor → activation map  
-   - DBNDrumTrackingProcessor → discrete events  
-4. Write events to file  
-5. Return file  
+
+   - `RNNDrumProcessor` → activation map
+   - `DBNDrumTrackingProcessor` → discrete drum events
+4. Write events to file (`<timestamp>,<label>`)
+5. Return file to client
 
 ---
 
@@ -122,41 +144,40 @@ Response:
 
 System:
 
-- ffmpeg  
-- libsndfile1  
-- build-essential  
+- ffmpeg
+- libsndfile1
+- build-essential
 
 Python:
 
-- numpy  
-- scipy  
-- cython  
-- madmom  
-- flask  
+- numpy
+- scipy
+- cython
+- madmom
+- flask
 
 ---
 
 ## Constraints
 
-- MP3 decoding depends on ffmpeg  
-- Drum classification is probabilistic, not exact  
-- Dense mixes reduce accuracy  
-- No instrument separation beyond kick/snare/hat classes  
-- No tempo normalization or quantization applied  
+- MP3 decoding relies on ffmpeg
+- Drum classification is probabilistic, not exact
+- Accuracy drops on dense mixes
+- Only kick, snare, hi-hat classification
+- No tempo normalization or quantization applied
 
 ---
 
 ## Extension Points
 
-- Add BPM detection (madmom beat processors)  
-- Quantize timestamps to grid  
-- Export JSON instead of plain text  
-- Multi-file batch processing  
-- Persistent storage instead of overwrite  
-- Frontend visualization (timeline rendering)  
+- BPM detection and quantization
+- Export JSON or other structured formats
+- Multi-file batch processing
+- Persistent storage for input/output
+- Frontend timeline visualization
 
 ---
 
 ## Use Case
 
-Transform raw audio into discrete rhythmic events for systems requiring explicit timing (game audio engines, procedural music systems).
+Convert raw audio into discrete rhythmic events for systems requiring explicit timing, e.g., game audio engines or procedural music systems.
