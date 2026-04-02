@@ -34,13 +34,15 @@ RUN pip install \
     scipy==1.17.1 \
     Werkzeug==3.1.7
 
-
-# Install madmom from GitHub
-RUN apt-get install -y \
+# Install git and supporting tools
+RUN apt-get update && apt-get install -y \
+    git \
+    gnupg \
     ca-certificates \
     apt-transport-https \
-    git \
     && rm -rf /var/lib/apt/lists/*
+
+# Install madmom from GitHub
 RUN pip install \
     madmom @ git+https://github.com/CPJKU/madmom.git@27f032e8947204902c675e5e341a3faf5dc86dae
 
