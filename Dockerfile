@@ -28,17 +28,19 @@ RUN pip install \
     Jinja2==3.1.6 \
     MarkupSafe==3.0.3 \
     mido>=1.2.6 \
-    numpy>=1.13.4,==2.4.4 \
+    numpy==2.4.4 \
     packaging==26.0 \
     pydub==0.25.1 \
-    scipy>=0.16,==1.17.1 \
+    scipy==1.17.1 \
     Werkzeug==3.1.7
 
-# Install madmom
+
+# Install madmom from GitHub
 RUN apt-get install -y \
+    ca-certificates \
+    apt-transport-https \
     git \
     && rm -rf /var/lib/apt/lists/*
-
 RUN pip install \
     madmom @ git+https://github.com/CPJKU/madmom.git@27f032e8947204902c675e5e341a3faf5dc86dae
 
