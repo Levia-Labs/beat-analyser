@@ -7,8 +7,8 @@ RUN apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir numpy scipy cython
-RUN pip install --no-cache-dir madmom flask
+RUN pip install numpy scipy cython
+RUN pip install madmom flask
 
 WORKDIR /app
 
