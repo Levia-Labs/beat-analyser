@@ -4,10 +4,14 @@ import json
 import numpy as np
 import librosa
 import csv
+import re
 
 from flask import Flask, render_template, request, send_file
 from madmom.features.onsets import CNNOnsetProcessor, OnsetPeakPickingProcessor
 from madmom.features.notes import RNNPianoNoteProcessor, NotePeakPickingProcessor
+
+from yt_dlp import YoutubeDL
+from pydub import AudioSegment
 
 app = Flask(__name__)
 
@@ -68,6 +72,44 @@ def save_meta(file_folder, base_name, key="C", bpm=120):
         json.dump(meta, f)
 
 
+def download_youtube_audio(url, output_folder=UPLOAD_FOLDER):
+    """Download YouTube audio as WAV and return the file path. Reuses existing files if present."""
+    # Validate YouTube URL
+    match = re.search(r'https?://(www\.)?youtube\.com/watch\?v=([\w-]+)', url)
+    if not match:
+        raise ValueError("Invalid YouTube URL")
+    base_name = match.group(2)
+
+    folder_path = os.path.join(output_folder, base_name)
+    wav_path = os.path.join(folder_path, "audio.wav")
+
+    # If WAV already exists, reuse it
+    if os.path.isfile(wav_path):
+        return wav_path, base_name
+
+    # Create folder if it doesn't exist
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Download audio using yt_dlp
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': os.path.join(folder_path, 'temp_audio.%(ext)s'),
+        'quiet': True,
+        'no_warnings': True
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        temp_audio = os.path.join(folder_path, "temp_audio." + info['ext'])
+
+    # Convert to WAV
+    audio = AudioSegment.from_file(temp_audio)
+    audio.export(wav_path, format="wav")
+    os.remove(temp_audio)
+
+    return wav_path, base_name
+
+
 # --- Workflow functions ---
 def extract_percussion(audio_path, file_folder):
     """Detect percussion events and save CSVs."""
@@ -110,18 +152,37 @@ def extract_pitched_instruments(audio_path, file_folder):
         write_csv(os.path.join(file_folder, f"{track}.csv"), events)
 
 
-def process_upload(file):
-    """Full workflow for handling an uploaded audio file, reuse ZIP if exists."""
-    base_name = os.path.splitext(file.filename)[0]
-    file_folder = os.path.join(UPLOAD_FOLDER, base_name)
-    os.makedirs(file_folder, exist_ok=True)
+def process_upload(file, is_path=False):
+    """
+    Full workflow for handling an uploaded audio file or local file path.
 
+    Args:
+        file: FileStorage (from Flask) or string path to WAV.
+        is_path: True if `file` is a local path, False if Flask FileStorage.
+    """
+    # Determine base_name
+    if is_path:
+        base_name = os.path.splitext(os.path.basename(file))[0]
+    else:
+        base_name = os.path.splitext(file.filename)[0]
+
+    # Check if ZIP already exists, return immediately
     zip_path = os.path.join(UPLOAD_FOLDER, f"{base_name}_tracks.zip")
     if os.path.isfile(zip_path):
-        return zip_path  # Reuse existing ZIP
+        return zip_path
 
-    audio_path = os.path.join(file_folder, "audio.wav")
-    file.save(audio_path)
+    # If ZIP doesn't exist, continue processing
+    if is_path:
+        file_folder = os.path.join(UPLOAD_FOLDER, base_name)
+        os.makedirs(file_folder, exist_ok=True)
+        audio_path = os.path.join(file_folder, "audio.wav")
+        import shutil
+        shutil.copyfile(file, audio_path)
+    else:
+        file_folder = os.path.join(UPLOAD_FOLDER, base_name)
+        os.makedirs(file_folder, exist_ok=True)
+        audio_path = os.path.join(file_folder, "audio.wav")
+        file.save(audio_path)
 
     save_meta(file_folder, base_name)
     extract_percussion(audio_path, file_folder)
@@ -181,6 +242,36 @@ def download_zip(folder_name):
         return send_file(zip_path, as_attachment=True)
     return "ZIP file not found", 404
 
+
+@app.route("/download_yt", methods=["POST"])
+def download_yt():
+    data = request.json
+    if not data or "url" not in data:
+        return {"error": "No URL provided"}, 400
+
+    url = data["url"]
+    
+    # Extract base_name from YouTube URL
+    match = re.search(r'v=([\w-]+)', url)
+    if not match:
+        return {"error": "Invalid YouTube URL"}, 400
+    base_name = match.group(1)
+
+    # Check if ZIP already exists
+    zip_path = os.path.join(UPLOAD_FOLDER, f"{base_name}_tracks.zip")
+    if os.path.isfile(zip_path):
+        return send_file(zip_path, as_attachment=True)
+
+    try:
+        # Download YouTube audio as WAV
+        wav_path, _ = download_youtube_audio(url)
+        # Process WAV to generate tracks and ZIP
+        zip_path = process_upload(wav_path, is_path=True)
+        return send_file(zip_path, as_attachment=True)
+    except ValueError as e:
+        return {"error": str(e)}, 400
+    except Exception as e:
+        return {"error": f"Failed to download/process YouTube audio: {str(e)}"}, 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80, debug=True)

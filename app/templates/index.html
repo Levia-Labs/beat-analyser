@@ -91,44 +91,68 @@
           justify-content: center;
           flex-direction: column;
         "
-    >
-      <h1 class="text-center mb-4 mt-4">Beat Analyzer</h1>
+      >
+        <h1 class="text-center mb-4 mt-4">Beat Analyzer</h1>
 
-      <!-- Upload Form -->
-      <div class="row justify-content-center mb-5">
+        <!-- Upload Form -->
+        <div class="row justify-content-center mb-5">
           <div class="col-md-6 container">
-          <form
-            id="uploadForm"
-            action="/upload"
-            method="post"
-            enctype="multipart/form-data"
-            class="card p-4 shadow-sm rounded"
-          >
-            <div class="mb-3">
-              <label for="file" class="form-label">Select file</label>
-              <input
-                class="form-control"
-                type="file"
-                id="file"
-                name="file"
-                accept=".wav,.mp3"
-                required
-              />
-            </div>
-            <div class="text-center">
-              <button type="submit" class="btn btn-process" id="uploadBtn">
-                Process file
-              </button>
-            </div>
-          </form>
+            <form
+              id="uploadForm"
+              action="/upload"
+              method="post"
+              enctype="multipart/form-data"
+              class="card p-4 shadow-sm rounded"
+            >
+              <div class="mb-3">
+                <label for="file" class="form-label">Select file</label>
+                <input
+                  class="form-control"
+                  type="file"
+                  id="file"
+                  name="file"
+                  accept=".wav,.mp3"
+                  required
+                />
+              </div>
+              <div class="text-center">
+                <button type="submit" class="btn btn-process" id="uploadBtn">
+                  Process file
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
 
-      <!-- Folders Accordion -->
-      <div class="row justify-content-center mb-5">
-        <div class="col-12">
-          <h2 class="mb-3 text-center">Results</h2>
-          <div class="accordion" id="foldersAccordion"></div>
+        <!-- YouTube URL Form -->
+        <div class="row justify-content-center mb-5">
+          <div class="col-md-6 container">
+            <form id="ytForm" class="card p-4 shadow-sm rounded">
+              <div class="mb-3">
+                <label for="ytUrl" class="form-label">YouTube URL</label>
+                <input
+                  type="url"
+                  class="form-control"
+                  id="ytUrl"
+                  placeholder="https://www.youtube.com/watch?v=example"
+                  required
+                />
+              </div>
+              <div class="text-center">
+                <button type="submit" class="btn btn-process" id="ytBtn">
+                  Process YouTube
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Folders Accordion -->
+        <div class="row justify-content-center mb-5">
+          <div class="col-12">
+            <h2 class="mb-3 text-center">Results</h2>
+            <div class="accordion" id="foldersAccordion"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -146,6 +170,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+      // --- Load existing folders ---
       async function loadFolders() {
         const response = await fetch("/folders");
         const data = await response.json();
@@ -192,12 +217,62 @@
         });
       }
 
+      // --- File upload handler ---
       const uploadForm = document.getElementById("uploadForm");
       uploadForm.addEventListener("submit", function () {
         const modal = new bootstrap.Modal(
           document.getElementById("loadingModal"),
         );
         modal.show();
+      });
+
+      // --- YouTube form handler with validation ---
+      const ytForm = document.getElementById("ytForm");
+      ytForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const ytUrl = document.getElementById("ytUrl").value.trim();
+
+        // --- Validate YouTube URL ---
+        const ytRegex =
+          /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+(&.*)?$/;
+        if (!ytRegex.test(ytUrl)) {
+          return alert("Please enter a valid YouTube URL.");
+        }
+
+        const modal = new bootstrap.Modal(
+          document.getElementById("loadingModal"),
+        );
+        modal.show();
+
+        try {
+          const response = await fetch("/download_yt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: ytUrl }),
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            alert(err.error || "Failed to process YouTube audio.");
+            modal.hide();
+            return;
+          }
+
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          const filename = ytUrl.split("v=")[1] || "yt_audio";
+          a.download = `${filename}_tracks.zip`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          alert("Error processing YouTube audio: " + err.message);
+        } finally {
+          modal.hide();
+        }
       });
 
       window.addEventListener("DOMContentLoaded", loadFolders);

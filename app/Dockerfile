@@ -47,12 +47,13 @@ RUN pip install "madmom@git+https://github.com/CPJKU/madmom.git@27f032e894720490
 
 # additional installs
 RUN pip install librosa==0.10.2
+RUN pip install yt-dlp
 
 # Create directory for uploaded audio
 RUN mkdir -p uploads
 
 # Copy Flask app
-COPY app.py .
+COPY app.py . 
 COPY templates ./templates
 
 # Expose Flask port
