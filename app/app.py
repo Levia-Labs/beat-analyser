@@ -173,34 +173,6 @@ def list_folders():
     return result
 
 
-# --- process all files in a folder ---
-@app.route("/process_folder", methods=["POST"])
-def process_folder():
-    """
-    Accepts JSON body with {"folder": "folder_path"}.
-    Processes all audio files in that folder sequentially.
-    Returns list of ZIP paths created or reused.
-    """
-    data = request.get_json()
-    folder = data.get("folder")
-    if not folder or not os.path.isdir(folder):
-        return {"error": "Invalid folder"}, 400
-
-    zip_paths = []
-    for f_name in os.listdir(folder):
-        f_path = os.path.join(folder, f_name)
-        if os.path.isfile(f_path) and f_name.lower().endswith((".wav", ".mp3")):
-            class DummyFile:
-                filename = f_name
-                def save(self, path):
-                    import shutil
-                    shutil.copy(f_path, path)
-            dummy_file = DummyFile()
-            zip_path = process_upload(dummy_file)
-            zip_paths.append(zip_path)
-    return {"zips": zip_paths}
-
-
 @app.route("/download/<folder_name>", methods=["GET"])
 def download_zip(folder_name):
     """Send the pre-created ZIP for a project folder."""
