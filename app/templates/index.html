@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <title>Drum Transcription</title>
-    <!-- Bootstrap CSS from Google CDN -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -11,8 +10,10 @@
   </head>
   <body class="bg-light">
     <div class="container py-5">
-      <h1 class="text-center mb-4">Upload MP3/WAV for Drum Transcription</h1>
-      <div class="row justify-content-center">
+      <h1 class="text-center mb-4">Beat Analyzer</h1>
+
+      <!-- Upload Form -->
+      <div class="row justify-content-center mb-5">
         <div class="col-md-6">
           <form
             action="/upload"
@@ -39,9 +40,64 @@
           </form>
         </div>
       </div>
+
+      <!-- Folders Accordion -->
+      <div class="row justify-content-center mb-5">
+        <div class="col-md-6">
+          <h2 class="mb-3 text-center">Projects</h2>
+          <div class="accordion" id="foldersAccordion">
+            <!-- Folders will be populated here via JS -->
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Bootstrap JS Bundle from Google CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      async function loadFolders() {
+        const response = await fetch("/folders");
+        const data = await response.json();
+        const accordion = document.getElementById("foldersAccordion");
+        accordion.innerHTML = "";
+
+        Object.keys(data).forEach((folder, index) => {
+          const folderId = `folder-${index}`;
+          const collapseId = `collapse-${index}`;
+
+          let filesHtml = '<ul class="list-group list-group-flush">';
+          Object.entries(data[folder]).forEach(([fname, info]) => {
+            if (info.content) {
+              filesHtml += `<li class="list-group-item">
+                <strong>${fname}</strong> (size: ${info.size} bytes)
+                <pre>${JSON.stringify(info.content, null, 2)}</pre>
+              </li>`;
+            } else {
+              filesHtml += `<li class="list-group-item">
+                <strong>${fname}</strong> (size: ${(info.size / 1024).toFixed(2)} KB)
+              </li>`;
+            }
+          });
+          filesHtml += "</ul>";
+
+          const itemHtml = `
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="${folderId}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                  ${folder}
+                </button>
+              </h2>
+              <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${folderId}" data-bs-parent="#foldersAccordion">
+                <div class="accordion-body p-0">
+                  ${filesHtml}
+                </div>
+              </div>
+            </div>
+          `;
+          accordion.insertAdjacentHTML("beforeend", itemHtml);
+        });
+      }
+
+      window.addEventListener("DOMContentLoaded", loadFolders);
+    </script>
   </body>
 </html>
