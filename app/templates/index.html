@@ -68,7 +68,7 @@
           Object.entries(data[folder]).forEach(([fname, info]) => {
             if (info.content) {
               filesHtml += `<li class="list-group-item">
-                <strong>${fname}</strong> (size: ${info.size} bytes)
+                <strong>${fname}</strong> (size: ${(info.size / 1024).toFixed(2)} KB)
                 <pre>${JSON.stringify(info.content, null, 2)}</pre>
               </li>`;
             } else {
@@ -89,6 +89,9 @@
               <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${folderId}" data-bs-parent="#foldersAccordion">
                 <div class="accordion-body p-0">
                   ${filesHtml}
+                  <div class="text-center p-2">
+                    <a href="/download/${folder}" class="btn btn-success btn-sm">Download ZIP</a>
+                  </div>
                 </div>
               </div>
             </div>

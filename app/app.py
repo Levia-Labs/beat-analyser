@@ -172,5 +172,14 @@ def list_folders():
     return result
 
 
+@app.route("/download/<folder_name>", methods=["GET"])
+def download_zip(folder_name):
+    """Send the pre-created ZIP for a project folder."""
+    zip_path = os.path.join(UPLOAD_FOLDER, f"{folder_name}_tracks.zip")
+    if os.path.isfile(zip_path):
+        return send_file(zip_path, as_attachment=True)
+    return "ZIP file not found", 404
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80, debug=True)
