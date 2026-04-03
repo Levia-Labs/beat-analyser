@@ -16,7 +16,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # --- Utility functions ---
-
 def write_csv(filename, events):
     """Write time-labeled events to CSV."""
     with open(filename, "w", newline="") as f:
@@ -70,7 +69,6 @@ def save_meta(file_folder, base_name, key="C", bpm=120):
 
 
 # --- Workflow functions ---
-
 def extract_percussion(audio_path, file_folder):
     """Detect percussion events and save CSVs."""
     onset_processor = CNNOnsetProcessor()
@@ -113,16 +111,19 @@ def extract_pitched_instruments(audio_path, file_folder):
 
 
 def process_upload(file):
-    """Full workflow for handling an uploaded audio file."""
+    """Full workflow for handling an uploaded audio file, reuse ZIP if exists."""
     base_name = os.path.splitext(file.filename)[0]
     file_folder = os.path.join(UPLOAD_FOLDER, base_name)
     os.makedirs(file_folder, exist_ok=True)
+
+    zip_path = os.path.join(UPLOAD_FOLDER, f"{base_name}_tracks.zip")
+    if os.path.isfile(zip_path):
+        return zip_path  # Reuse existing ZIP
 
     audio_path = os.path.join(file_folder, "audio.wav")
     file.save(audio_path)
 
     save_meta(file_folder, base_name)
-
     extract_percussion(audio_path, file_folder)
     extract_pitched_instruments(audio_path, file_folder)
 
@@ -170,6 +171,34 @@ def list_folders():
                     files_info[f_name] = {"size": size}
         result[folder] = files_info
     return result
+
+
+# --- process all files in a folder ---
+@app.route("/process_folder", methods=["POST"])
+def process_folder():
+    """
+    Accepts JSON body with {"folder": "folder_path"}.
+    Processes all audio files in that folder sequentially.
+    Returns list of ZIP paths created or reused.
+    """
+    data = request.get_json()
+    folder = data.get("folder")
+    if not folder or not os.path.isdir(folder):
+        return {"error": "Invalid folder"}, 400
+
+    zip_paths = []
+    for f_name in os.listdir(folder):
+        f_path = os.path.join(folder, f_name)
+        if os.path.isfile(f_path) and f_name.lower().endswith((".wav", ".mp3")):
+            class DummyFile:
+                filename = f_name
+                def save(self, path):
+                    import shutil
+                    shutil.copy(f_path, path)
+            dummy_file = DummyFile()
+            zip_path = process_upload(dummy_file)
+            zip_paths.append(zip_path)
+    return {"zips": zip_paths}
 
 
 @app.route("/download/<folder_name>", methods=["GET"])
