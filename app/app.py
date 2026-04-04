@@ -273,5 +273,46 @@ def download_yt():
     except Exception as e:
         return {"error": f"Failed to download/process YouTube audio: {str(e)}"}, 500
 
+
+@app.route("/repair", methods=["POST"])
+def repair_all_projects():
+    """Reprocess all project folders: regenerate CSVs and ZIPs."""
+    repaired = []
+
+    for folder_name in os.listdir(UPLOAD_FOLDER):
+        folder_path = os.path.join(UPLOAD_FOLDER, folder_name)
+        if not os.path.isdir(folder_path):
+            continue
+
+        audio_path = os.path.join(folder_path, "audio.wav")
+        if not os.path.isfile(audio_path):
+            # Skip folders without audio.wav
+            continue
+
+        try:
+            # Regenerate meta.json if missing
+            meta_path = os.path.join(folder_path, "meta.json")
+            if not os.path.isfile(meta_path):
+                save_meta(folder_path, folder_name)
+
+            # Delete old CSVs first
+            for f in os.listdir(folder_path):
+                if f.endswith(".csv"):
+                    os.remove(os.path.join(folder_path, f))
+
+            # Extract percussion and pitched instruments CSVs
+            extract_percussion(audio_path, folder_path)
+            extract_pitched_instruments(audio_path, folder_path)
+
+            # Recreate ZIP on top
+            zip_path = zip_output(folder_name, folder_path)
+
+            repaired.append({"folder": folder_name, "zip": os.path.basename(zip_path)})
+        except Exception as e:
+            repaired.append({"folder": folder_name, "error": str(e)})
+
+    return {"repaired_projects": repaired}
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80, debug=True)
