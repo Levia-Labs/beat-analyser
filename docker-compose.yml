@@ -1,8 +1,9 @@
 services:
-  beat-analyser:
+  backend:
     # Service name
     build: ./app
-    container_name: beat-analyser
+    container_name: beat-analyser-backend
+    image: beat-analyser:latest
     # Map container port 80 to host port 80
     ports:
       - "80:80"

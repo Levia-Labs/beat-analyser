@@ -8,6 +8,8 @@ It utilises [CPJKU/madmom](https://github.com/CPJKU/madmom) for audio processing
 
 Madmom package is almost impossible to install in modern environment and this setup barely works.
 
+Docker image available at [LeviaLabs/beat-analyser](https://hub.docker.com/r/levialabs/beat-analyser)
+
 ---
 
 ## Function
