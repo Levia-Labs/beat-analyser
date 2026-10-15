@@ -1,63 +1,51 @@
+# Two stages. The build stage carries the compiler and git that madmom's Cython extensions
+# and its pinned commit need; the runtime stage copies only the finished virtualenv, so
+# neither ships in the image.
+
+FROM python:3.14.2-slim AS build
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+
+COPY requirements.txt /tmp/requirements.txt
+# numpy and Cython first: madmom's setup.py imports both, and --no-build-isolation is what
+# lets it see them. Quoted pins: an unquoted `Cython>=0.25` in a RUN line is a shell
+# redirect, which is how the previous Dockerfile installed an unpinned Cython.
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir "Cython==3.2.4" "numpy==2.4.4" \
+    && pip install --no-cache-dir --no-build-isolation -r /tmp/requirements.txt
+
+
 FROM python:3.14.2-slim
 
-# Set working directory
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /opt/venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UPLOAD_ROOT=/app/uploads
+
+# Unprivileged, and uid 1000 so the bind-mounted uploads/ is writable on a typical Linux host.
+RUN useradd --create-home --uid 1000 app \
+    && mkdir -p /app/uploads \
+    && chown app:app /app/uploads
+
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update
-RUN apt-get install -y \
-    build-essential \
-    libsndfile1 
-
-# Upgrade pip and wheel
-RUN pip install --upgrade pip setuptools wheel
-
-# Install ffmpeg for audio processing
-RUN apt-get install -y \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-RUN pip install \
-    blinker==1.9.0 \
-    click==8.3.1 \
-    colorama==0.4.6 \
-    Cython>=0.25 \
-    Flask==3.1.3 \
-    itsdangerous==2.2.0 \
-    Jinja2==3.1.6 \
-    MarkupSafe==3.0.3 \
-    mido>=1.2.6 \
-    numpy==2.4.4 \
-    packaging==26.0 \
-    pydub==0.25.1 \
-    scipy==1.17.1 \
-    Werkzeug==3.1.7
-
-# Install git and supporting tools
-RUN apt-get update && apt-get install -y \
-    git \
-    gnupg \
-    ca-certificates \
-    apt-transport-https \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install madmom from GitHub
-RUN pip install "madmom@git+https://github.com/CPJKU/madmom.git@27f032e8947204902c675e5e341a3faf5dc86dae"
-
-# additional installs
-RUN pip install librosa==0.10.2
-RUN pip install yt-dlp
-
-# Create directory for uploaded audio
-RUN mkdir -p uploads
-
-# Copy Flask app
-COPY app.py . 
+COPY *.py ./
 COPY templates ./templates
+COPY static ./static
 
-# Expose Flask port
-EXPOSE 80
+USER app
+EXPOSE 8000
 
-# Run Flask
-CMD ["python", "app.py"]
+# One worker so the madmom models load once; threads for concurrent requests. An analysis
+# runs for minutes, so the worker timeout is 30 minutes rather than gunicorn's 30 seconds.
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "4", \
+     "--timeout", "1800", "--worker-tmp-dir", "/tmp", "app:app"]

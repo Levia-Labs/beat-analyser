@@ -1,0 +1,28 @@
+version: "3"
+
+# ruff over the Python, yamllint over the YAML. `check` changes nothing and is what CI and
+# pre-commit run; `run` formats in place.
+
+vars:
+  PY_PATHS: app tasks tests
+  YAML_PATHS: Taskfile.yml tasks .github docker-compose.yml .pre-commit-config.yaml
+  # pipx installs into ~/.local/bin, which an already-open shell may not have on PATH.
+  RUFF:
+    sh: command -v ruff 2>/dev/null || printf '%s' "${PIPX_BIN_DIR:-$HOME/.local/bin}/ruff"
+  YAMLLINT:
+    sh: command -v yamllint 2>/dev/null || printf '%s' "${PIPX_BIN_DIR:-$HOME/.local/bin}/yamllint"
+
+tasks:
+  check:
+    desc: Lint and format check. Changes nothing.
+    cmds:
+      - '"{{.RUFF}}" check {{.PY_PATHS}}'
+      - '"{{.RUFF}}" format --check {{.PY_PATHS}}'
+      - '"{{.YAMLLINT}}" --strict {{.YAML_PATHS}}'
+
+  run:
+    desc: Format and autofix in place
+    cmds:
+      - '"{{.RUFF}}" format {{.PY_PATHS}}'
+      - '"{{.RUFF}}" check --fix {{.PY_PATHS}}'
+      - '"{{.YAMLLINT}}" --strict {{.YAML_PATHS}}'

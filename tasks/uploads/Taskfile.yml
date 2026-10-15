@@ -1,0 +1,32 @@
+version: "3"
+
+# uploads/ - runtime data: one folder and one ZIP per analysed song. Gitignored, bind-mounted
+# into the container.
+
+tasks:
+  size:
+    desc: Disk used by uploads/
+    cmds:
+      - du -sh "{{.ROOT}}"
+
+  zips:clean:
+    desc: Delete every cached ZIP. Next request rebuilds from the CSVs - nothing is lost.
+    cmds:
+      - rm -f "{{.ROOT}}"/*_tracks.zip
+      - echo "cached ZIPs removed"
+
+  clean:
+    desc: 'DELETE every analysed project, audio included. Usage: task uploads:clean CONFIRM=yes'
+    preconditions:
+      - sh: '[ "{{.CONFIRM}}" = "yes" ]'
+        msg: |
+          This deletes every project folder and ZIP under {{.ROOT}}/, including the source
+          audio. It cannot be undone. List first:  task projects
+          Then:  task uploads:clean CONFIRM=yes
+    cmds:
+      - |
+        for entry in "{{.ROOT}}"/*; do
+          [ "$(basename "$entry")" = ".gitpreserve" ] && continue
+          rm -rf "$entry"
+        done
+        echo "{{.ROOT}}/ emptied"

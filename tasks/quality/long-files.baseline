@@ -1,0 +1,4 @@
+# Files at or over the 300-line ceiling, accepted at these lengths.
+# Regenerate with: task quality:long-files:baseline
+# A file here may shrink. Growth, or a new entrant, fails task quality:long-files:check.
+tasks/claude/budget.py 328

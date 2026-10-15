@@ -1,0 +1,3 @@
+# Scripts under tasks/ run on whatever python3 the host has, not the 3.14 container.
+extend = "../ruff.toml"
+target-version = "py312"

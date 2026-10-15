@@ -1,0 +1,139 @@
+version: "3"
+
+silent: true
+
+# beat-analyser: audio in, timed percussion and note events out.
+#
+# FIRST TIME
+#   task setup                   virtualenv, dependencies, git hooks
+#   task doctor                  what is installed and what is missing. Changes nothing.
+#
+# EVERY DAY
+#   task analyse FILE=song.mp3   analyse one local file, print a per-track summary
+#   task test                    the test suite (no madmom needed)
+#   task validate                every gate - what CI, the hooks and the Stop hook run
+#   task run                     the web UI on http://127.0.0.1:5000 (development server)
+#   task docker:up               the same UI in the container on http://localhost
+#
+# `task --list` is the index; every task carries a `desc`. docs/tasks.md explains each one.
+
+vars:
+  # The project virtualenv's interpreter. Windows and Linux lay a venv out differently.
+  PY: '{{if eq OS "windows"}}.venv/Scripts/python.exe{{else}}.venv/bin/python{{end}}'
+  # The interpreter that creates the venv. Windows has no real `python3` (a Store stub).
+  SYS_PY: '{{if eq OS "windows"}}python{{else}}python3{{end}}'
+  ROOT: '{{.ROOT | default "uploads"}}'
+
+includes:
+  deps:
+    taskfile: ./tasks/deps/Taskfile.yml
+    vars: { PY: "{{.PY}}", SYS_PY: "{{.SYS_PY}}" }
+  docker: ./tasks/docker/Taskfile.yml
+  git: ./tasks/git/Taskfile.yml
+  lint: ./tasks/lint/Taskfile.yml
+  quality:
+    taskfile: ./tasks/quality/Taskfile.yml
+    vars: { SYS_PY: "{{.SYS_PY}}" }
+  precommit: ./tasks/precommit/Taskfile.yml
+  uploads:
+    taskfile: ./tasks/uploads/Taskfile.yml
+    vars: { PY: "{{.PY}}", ROOT: "{{.ROOT}}" }
+
+  # Optional tooling. Nothing above needs these.
+  claude:
+    taskfile: ./tasks/claude/Taskfile.yml
+    vars: { SYS_PY: "{{.SYS_PY}}" }
+  graphify: ./tasks/graphify/Taskfile.yml
+
+tasks:
+  default:
+    desc: Show the task index
+    cmds:
+      - task --list
+
+  setup:
+    desc: Make this clone ready to work on - virtualenv, dependencies, git hooks
+    cmds:
+      - task: deps:setup
+      - task: precommit:setup
+      - task: doctor
+
+  doctor:
+    desc: Report every tool and dependency this project needs. Changes nothing.
+    cmds:
+      - |
+        probe() { if command -v "$1" > /dev/null 2>&1; then printf '  %-10s ok\n' "$1"; else printf '  %-10s MISSING  %s\n' "$1" "$2"; fi; }
+        echo "== tools"
+        probe "{{.SYS_PY}}" "install Python 3.14"
+        probe ffmpeg "decodes mp3/flac/ogg/m4a and YouTube audio"
+        probe docker "only for task docker:*"
+        probe ruff "task deps:setup installs it into .venv; pipx install ruff for the hooks"
+        probe yamllint "pipx install yamllint"
+        probe pre-commit "pipx install pre-commit"
+        echo "== virtualenv"
+        if [ -x "{{.PY}}" ] || [ -f "{{.PY}}" ]; then
+          "{{.PY}}" -W ignore -c "import flask, numpy, madmom, yt_dlp, pytest; print('  imports   ok (flask, numpy, madmom, yt_dlp, pytest)')" \
+            || echo "  imports   FAILED - run task deps:setup"
+        else
+          echo "  .venv     MISSING - run task setup"
+        fi
+
+  test:
+    desc: 'Run the test suite. Usage: task test [K=expression] - no madmom or network needed'
+    cmds:
+      - '"{{.PY}}" -m pytest {{if .K}}-k "{{.K}}"{{end}} {{.CLI_ARGS}}'
+
+  analyse:
+    desc: 'Analyse local audio and print a per-track summary. Usage: task analyse FILE=path/to/song.mp3 [ROOT=uploads]'
+    requires:
+      vars: [FILE]
+    cmds:
+      - '"{{.PY}}" -W ignore app/cli.py "{{.FILE}}" --root "{{.ROOT}}"'
+
+  analyse:yt:
+    desc: 'Download a YouTube video and analyse it. Usage: task analyse:yt URL=https://youtu.be/<id>'
+    requires:
+      vars: [URL]
+    cmds:
+      - '"{{.PY}}" -W ignore app/cli.py --youtube "{{.URL}}" --root "{{.ROOT}}"'
+
+  summary:
+    desc: 'Events and time range per track of one analysed project. Usage: task summary NAME=song'
+    requires:
+      vars: [NAME]
+    cmds:
+      - '"{{.PY}}" app/cli.py --summary "{{.NAME}}" --root "{{.ROOT}}"'
+
+  projects:
+    desc: List analysed projects and whether each has its ZIP
+    cmds:
+      - '"{{.PY}}" app/cli.py --list --root "{{.ROOT}}"'
+
+  repair:
+    desc: Regenerate CSVs and ZIP for every project from its audio.wav (slow - minutes per song)
+    cmds:
+      - '"{{.PY}}" -W ignore app/cli.py --repair --root "{{.ROOT}}"'
+
+  run:
+    desc: 'Web UI on the development server. Usage: task run [PORT=5000]'
+    env:
+      PORT: '{{.PORT | default "5000"}}'
+      UPLOAD_ROOT: "{{.ROOT}}"
+    cmds:
+      - '"{{.PY}}" -W ignore app/app.py'
+
+  smoke:
+    desc: 'Probe a running server - index, security headers, /folders. Usage: task smoke [URL=http://127.0.0.1:5000]'
+    vars:
+      URL: '{{.URL | default "http://127.0.0.1:5000"}}'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/dev/smoke.py "{{.URL}}"'
+
+  validate:
+    desc: Every gate - task tree, lint, tests, structure, compose file. What CI and the hooks run.
+    cmds:
+      - task --list-all > /dev/null
+      - task: lint:check
+      - task: test
+      - task: quality:check
+      - task: docker:config

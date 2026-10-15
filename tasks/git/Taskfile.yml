@@ -1,0 +1,67 @@
+version: "3"
+
+# Operations on this repository's code, with the same names and behaviour as the toolkit
+# repository's `git:` namespace, so one set of commands works in both.
+#
+# Installing and hardening git itself, and GitHub organisation administration, stay in the
+# toolkit: they act on the workstation and the organisation, not on this repository.
+
+tasks:
+  commit:
+    desc: 'Validate, stage, commit and push. Usage: task git:commit [M="what changed"] [SKIP_CHECKS=1]'
+    vars:
+      # Defaults to "update" so the common case is one word at a terminal. Pass M for
+      # anything worth finding again: a log that is all "update" cannot be read to bisect.
+      M: '{{.M | default "update"}}'
+    cmds:
+      # The gates run BEFORE anything is staged, so a failure leaves the working tree
+      # exactly as it was rather than half-staged.
+      - |
+        if [ -n "{{.SKIP_CHECKS}}" ]; then
+          echo "SKIP_CHECKS set - gates not run. The pre-commit hook still runs on commit."
+        else
+          task validate
+        fi
+
+      - git add -A
+
+      - |
+        if git diff --cached --quiet; then
+          echo "nothing staged - working tree matches HEAD. Nothing to commit."
+          exit 0
+        fi
+
+        # pre-commit over the staged files, so the fixers (end-of-file, whitespace, LF) work
+        # while the commit can still absorb the result. A fixer that changes a file exits
+        # non-zero and leaves the change unstaged, so the pass is repeated once with the
+        # fixes staged. Twice, not until-clean: a hook still rewriting files on the third
+        # pass is not converging.
+        if ! task precommit:staged; then
+          echo ""
+          echo "pre-commit modified files or found a problem. Staging and retrying once."
+          git add -A
+          if ! task precommit:staged; then
+            echo ""
+            echo "pre-commit still failing. Fix what it names, then re-run."
+            exit 1
+          fi
+        fi
+
+        if [ "{{.M}}" = "update" ]; then
+          echo ""
+          echo 'committing as "update" - pass M="what changed" when it is worth finding again'
+        fi
+
+        git commit -m "{{.M}}"
+        git push
+
+  status:
+    desc: What is uncommitted, and against what upstream
+    cmds:
+      - git status --short --branch
+
+  update:
+    desc: Fetch main and merge it into the current branch
+    cmds:
+      - git fetch origin main
+      - git merge origin/main --no-edit

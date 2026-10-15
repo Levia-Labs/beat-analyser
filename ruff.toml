@@ -1,0 +1,40 @@
+# ruff over app/, tasks/ and tests/. The container runs Python 3.14 (app/Dockerfile).
+target-version = "py314"
+line-length = 100
+
+exclude = [".venv", "graphify-out", "uploads", ".claude/skills"]
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "I",    # import sorting
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "SIM",  # flake8-simplify
+    "S",    # bandit - this is a network service
+    "PTH",  # pathlib over os.path
+    "RUF",
+]
+
+ignore = [
+    # ffmpeg is called with a fixed argument list and no shell; every call site decides
+    # whether a non-zero exit matters.
+    "S603", "S607",
+]
+
+[lint.isort]
+# The app modules import each other by bare name, the way gunicorn loads them from /app.
+known-first-party = ["analysis", "app", "pipeline", "storage", "youtube", "conftest"]
+
+[lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert is the test framework
+# Vendored from the toolkit repository; kept close to upstream.
+"tasks/claude/budget.py" = ["S", "PTH", "SIM", "UP", "B", "RUF"]
+"tasks/quality/*.py" = ["S"]
+"tasks/claude/hooks.py" = ["S"]
+"tasks/dev/smoke.py" = ["S310"]  # urlopen on a URL the operator typed
+
+[format]
+quote-style = "double"

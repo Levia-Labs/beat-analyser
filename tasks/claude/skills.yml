@@ -1,0 +1,57 @@
+version: "3"
+
+# Third-party Claude Code plugin marketplaces - neither is Anthropic's. Flattened into the
+# `claude:` namespace by ../Taskfile.yml, so these run as `task claude:skills:setup` and
+# `task claude:skills:verify`.
+#
+# caveman        https://github.com/JuliusBrussee/caveman            - Julius Brussee
+# superpowers    https://github.com/obra/superpowers-marketplace     - Jesse Vincent (obra)
+
+tasks:
+  setup:
+    desc: Add the caveman and superpowers plugin marketplaces, and install their skills
+    silent: true
+    preconditions:
+      - sh: command -v claude
+        msg: |
+          The `claude` CLI is not on PATH.
+          Install it: https://docs.claude.com/en/docs/claude-code/setup
+    cmds:
+      # `-y` accepts the marketplace-declared install command without a prompt - required
+      # here because task runs with no TTY attached.
+      - |
+        add_marketplace() {
+          name="$1"; source="$2"
+          if claude plugin marketplace list 2>/dev/null | grep -qw "$name"; then
+            echo "  marketplace already added: $name"
+          else
+            claude plugin marketplace add "$source"
+          fi
+        }
+        install_plugin() {
+          plugin="$1"; marketplace="$2"
+          if claude plugin list 2>/dev/null | grep -qw "$plugin"; then
+            echo "  plugin already installed: $plugin"
+          else
+            claude plugin install "$plugin@$marketplace" -y
+          fi
+        }
+
+        add_marketplace caveman JuliusBrussee/caveman
+        install_plugin caveman caveman
+
+        add_marketplace superpowers-marketplace obra/superpowers-marketplace
+        install_plugin superpowers superpowers-marketplace
+
+  verify:
+    desc: Report which plugin marketplaces and skills are actually registered. Changes nothing.
+    silent: true
+    preconditions:
+      - sh: command -v claude
+        msg: |
+          The `claude` CLI is not on PATH.
+          Install it: https://docs.claude.com/en/docs/claude-code/setup
+    cmds:
+      - claude plugin marketplace list
+      - echo ""
+      - claude plugin list

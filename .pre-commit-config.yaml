@@ -1,0 +1,40 @@
+# Commit-time gates: seconds, read-only. Install with `task precommit:setup`.
+# The local hooks call this repository's own tasks, so "linted" has one definition shared by
+# the hook, CI and a person running `task validate`.
+
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: ruff and yamllint
+        entry: task lint:check
+        language: system
+        pass_filenames: false
+        files: \.(py|ya?ml)$
+
+      - id: tests
+        name: pytest
+        entry: task test
+        language: system
+        pass_filenames: false
+        files: ^(app|tests)/
+
+      - id: structure
+        name: documentation paths and file length
+        entry: task quality:check
+        language: system
+        pass_filenames: false
+        files: \.(py|ya?ml|md|html|js|css)$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [--maxkb=1024]

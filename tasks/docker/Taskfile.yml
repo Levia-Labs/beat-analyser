@@ -1,0 +1,57 @@
+version: "3"
+
+# The container: docker-compose.yml at the repository root, image built from app/.
+# The first build compiles madmom and takes a long time; later builds reuse the dependency
+# layer unless app/requirements.txt changes.
+
+tasks:
+  build:
+    desc: Build the image (the first build is slow - madmom compiles from source)
+    cmds:
+      - docker compose build
+
+  rebuild:
+    desc: Build without cache - picks up a new yt-dlp release
+    cmds:
+      - docker compose build --no-cache
+
+  up:
+    desc: 'Start the service in the background. Usage: task docker:up [PORT=80] [BIND=127.0.0.1]'
+    cmds:
+      - docker compose up -d --build
+      - echo "http://localhost:${PORT:-80}  (task docker:logs to follow)"
+
+  down:
+    desc: Stop and remove the container. uploads/ on the host is kept.
+    cmds:
+      - docker compose down
+
+  logs:
+    desc: Follow the container logs
+    cmds:
+      - docker compose logs -f --tail 100
+
+  ps:
+    desc: Container state and health
+    cmds:
+      - docker compose ps
+
+  shell:
+    desc: Open a shell inside the running container
+    cmds:
+      - docker compose exec backend sh
+
+  config:
+    desc: Validate docker-compose.yml. Skipped when docker is not installed.
+    cmds:
+      - |
+        if command -v docker > /dev/null 2>&1; then
+          docker compose config --quiet && echo "docker-compose.yml valid"
+        else
+          echo "docker not installed - compose check skipped"
+        fi
+
+  size:
+    desc: Size of the built image
+    cmds:
+      - docker images beat-analyser

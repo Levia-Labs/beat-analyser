@@ -1,0 +1,25 @@
+# Edited on Windows, run in a Linux container. A CRLF in a Dockerfile RUN line or a shell
+# block breaks it with an error that names the wrong line, so text is LF everywhere.
+
+* text=auto eol=lf
+
+*.py    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+*.ini   text eol=lf
+*.html  text eol=lf
+*.js    text eol=lf
+*.css   text eol=lf
+*.baseline text eol=lf
+Dockerfile text eol=lf
+
+*.wav  binary
+*.mp3  binary
+*.flac binary
+*.ogg  binary
+*.zip  binary
+*.png  binary

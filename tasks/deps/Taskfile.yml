@@ -1,0 +1,32 @@
+version: "3"
+
+# The project virtualenv, .venv/. The container builds its own (app/Dockerfile); this one is
+# for running the app, the CLI and the tests on the host.
+
+tasks:
+  setup:
+    desc: Create .venv if missing and install app and dev dependencies (idempotent)
+    cmds:
+      - |
+        if [ ! -f "{{.PY}}" ]; then
+          "{{.SYS_PY}}" -m venv .venv
+        fi
+      # numpy and Cython before the rest, then --no-build-isolation: madmom's setup.py
+      # imports both at build time and build isolation would hide them. Pins are read from
+      # requirements.txt so there is one place they live.
+      - '"{{.PY}}" -m pip install --quiet --upgrade pip setuptools wheel'
+      - '"{{.PY}}" -m pip install --quiet $(grep -E "^(Cython|numpy)==" app/requirements.txt)'
+      - '"{{.PY}}" -m pip install --quiet --no-build-isolation -r app/requirements.txt -r requirements-dev.txt'
+      - echo "dependencies installed into .venv"
+
+  check:
+    desc: Broken requirements and outdated packages in .venv. Changes nothing.
+    cmds:
+      - '"{{.PY}}" -m pip check'
+      - '"{{.PY}}" -m pip list --outdated'
+
+  yt-dlp:
+    desc: Upgrade yt-dlp in .venv - the fix when YouTube downloads start failing
+    cmds:
+      - '"{{.PY}}" -m pip install --quiet --upgrade yt-dlp'
+      - '"{{.PY}}" -m yt_dlp --version'

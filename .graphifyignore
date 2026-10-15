@@ -1,0 +1,8 @@
+# What `graphify update` should not walk: runtime data, tool output, vendored skills.
+.claude/
+.venv/
+graphify-out/
+uploads/
+.github/instructions/
+docs/adr/template.md
+__pycache__/

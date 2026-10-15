@@ -1,0 +1,25 @@
+# yamllint over the Taskfiles, compose file and workflows. Relaxed exactly as far as
+# go-task needs: long embedded shell lines, `{{.VAR}}` braces, GitHub's `on:` key.
+
+extends: default
+
+ignore: |
+  .venv/
+  graphify-out/
+  uploads/
+  .claude/skills/
+
+rules:
+  line-length: disable
+  document-start: disable
+  comments-indentation: disable
+  quoted-strings: disable
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 2

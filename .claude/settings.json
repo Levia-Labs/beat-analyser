@@ -1,0 +1,157 @@
+{
+  "model": "claude-opus-5-5",
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5-5",
+    "GRAPHIFY_CLAUDE_CLI_MODEL": "haiku",
+    "SECURITY_REVIEW_MODEL": "claude-sonnet-5-5",
+    "CLAUDE_CODE_DISABLE_ARTIFACT": "1",
+    "CLAUDE_CODE_DISABLE_CRON": "1"
+  },
+  "disableClaudeAiConnectors": true,
+  "skillListingMaxDescChars": 250,
+  "permissions": {
+    "allow": [
+      "Bash(task *)",
+      "Bash(rtk *)",
+      "Bash(git *)",
+      "Bash(git.exe *)",
+      "Bash(python3 *)",
+      "Bash(python *)",
+      "Bash(.venv/Scripts/python.exe *)",
+      "Bash(.venv/bin/python *)",
+      "Bash(graphify *)",
+      "Bash(ruff *)",
+      "Bash(yamllint *)",
+      "Bash(pre-commit *)",
+      "Bash(pytest *)",
+      "Bash(docker ps *)",
+      "Bash(docker images *)",
+      "Bash(docker logs *)",
+      "Bash(docker inspect *)",
+      "Bash(docker compose config *)",
+      "Bash(docker compose ps *)",
+      "Bash(docker compose logs *)",
+      "Bash(docker compose build *)",
+      "Bash(curl -s http://localhost*)",
+      "Bash(claude --version)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(ls *)",
+      "Bash(cp *)",
+      "Bash(mkdir *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(diff *)",
+      "Bash(dirname *)",
+      "Bash(basename *)",
+      "Bash(echo *)",
+      "Bash(test *)",
+      "Bash(timeout *)",
+      "Bash(awk *)",
+      "Bash(sed -n *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(tr *)",
+      "Bash(xargs *)",
+      "Bash(jq *)",
+      "Bash(command -v *)",
+      "Bash(which *)",
+      "Bash(for *)",
+      "PowerShell(task *)",
+      "PowerShell(rtk *)",
+      "PowerShell(git *)",
+      "PowerShell(python3 *)",
+      "PowerShell(python *)",
+      "PowerShell(graphify *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Test-Path *)"
+    ],
+    "deny": [
+      "ShareOnboardingGuide",
+      "ListAgents",
+      "Bash(sudo *)",
+      "Bash(task uploads:clean *)",
+      "Bash(task docker:push *)",
+      "Bash(task git:commit)",
+      "Bash(task git:commit *)",
+      "PowerShell(task git:commit)",
+      "PowerShell(task git:commit *)",
+      "Bash(docker push *)",
+      "Bash(docker system prune *)",
+      "Bash(docker volume rm *)",
+      "Bash(docker rmi *)",
+      "Bash(docker compose down -v *)",
+      "Bash(rm -rf uploads*)",
+      "PowerShell(task uploads:clean *)",
+      "PowerShell(task docker:push *)",
+      "PowerShell(docker push *)",
+      "PowerShell(docker system prune *)",
+      "Bash(git push)",
+      "Bash(git push *)",
+      "Bash(rtk git push *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "PowerShell(git push)",
+      "PowerShell(git push *)",
+      "PowerShell(rtk git push *)",
+      "PowerShell(git reset --hard *)",
+      "PowerShell(git clean *)"
+    ],
+    "additionalDirectories": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tasks/claude/hooks.py\" pre-tool-use",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tasks/claude/hooks.py\" post-tool-use"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tasks/claude/hooks.py\" stop",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  }
+}

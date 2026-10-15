@@ -1,0 +1,23 @@
+version: "3"
+
+# A knowledge graph over this repository, for "what calls X" questions without a grep sweep.
+# Optional: needs the graphify CLI. The Stop hook refreshes it (AST only, no API cost).
+
+tasks:
+  update:
+    desc: Rebuild the graph from source (AST only, no API cost)
+    preconditions:
+      - sh: command -v graphify
+        msg: graphify is not installed - see https://github.com/safishamsi/graphify
+    cmds:
+      - graphify update . --force
+
+  query:
+    desc: 'Ask the graph a question. Usage: task graphify:query Q="what calls pipeline.build"'
+    requires:
+      vars: [Q]
+    preconditions:
+      - sh: command -v graphify
+        msg: graphify is not installed
+    cmds:
+      - graphify query "{{.Q}}"

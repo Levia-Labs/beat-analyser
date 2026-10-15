@@ -1,0 +1,23 @@
+version: "3"
+
+# Claude Code: usage budget and plugins. Nothing else in this repository needs the CLI.
+# The hooks wired in .claude/settings.json are hooks.py; budget.py is vendored from the
+# toolkit repository.
+
+includes: { skills: ./skills.yml }
+
+tasks:
+  budget:
+    desc: 'Usage windows against a ceiling. Exit 0 under, 3 over, 1 unknown. Usage: task claude:budget [CEILING=95]'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/budget.py --ceiling {{.CEILING | default 95}}'
+
+  resume:
+    desc: 'Block until the five-hour window is fresh. Usage: task claude:resume [CEILING=20]'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/budget.py --wait --window five_hour --ceiling {{.CEILING | default 20}}'
+
+  hooks:check:
+    desc: Run the Stop hook by hand - validates if an edit marked the tree dirty
+    cmds:
+      - echo '{}' | "{{.SYS_PY}}" tasks/claude/hooks.py stop

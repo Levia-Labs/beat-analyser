@@ -1,0 +1,25 @@
+# Project-local RTK filters. Only success noise is stripped: a failing line never matches,
+# so an agent still reads every error. Applied only after `rtk trust` on each machine.
+schema_version = 1
+
+[filters.task-validate]
+description = "Collapse a clean task validate"
+match_command = "^task\\s+(validate|lint:check|quality:check|test)\\b"
+strip_lines_matching = [
+  "^All checks passed!$",
+  "^\\d+ files? already formatted$",
+  "known finding\\(s\\), none new\\.$",
+  "none new, none grown\\.$",
+  "^\\.+\\s+\\[\\d+%\\]$",
+  "docker-compose.yml valid$",
+]
+on_empty = "validate: ok"
+
+# madmom prints a NumPy deprecation warning for every model it unpickles.
+[filters.analyse]
+description = "Drop madmom's model-loading deprecation warnings"
+match_command = "^task\\s+(analyse|repair|run)\\b"
+strip_lines_matching = [
+  "VisibleDeprecationWarning",
+  "obj = pickle.load\\(f, encoding='latin1'\\)",
+]

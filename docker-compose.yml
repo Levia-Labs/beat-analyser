@@ -1,16 +1,27 @@
 services:
   backend:
-    # Service name
     build: ./app
     container_name: beat-analyser-backend
     image: beat-analyser:latest
-    # Map container port 80 to host port 80
+    # Loopback only by default: the API has no authentication. BIND=0.0.0.0 exposes it to
+    # the network - see docs/security.md first.
     ports:
-      - "80:80"
-    # Mount host folders to container
+      - "${BIND:-127.0.0.1}:${PORT:-80}:8000"
+    environment:
+      MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-200}"
+      YT_MAX_MINUTES: "${YT_MAX_MINUTES:-20}"
     volumes:
       - ./uploads:/app/uploads
-      - ./app/app.py:/app/app.py
-      - ./app/templates:/app/templates
-    # Restart policy - do not restart automatically
-    restart: no
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/folders', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: "no"

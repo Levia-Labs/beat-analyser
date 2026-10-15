@@ -1,0 +1,57 @@
+name: validate
+
+# The same gates as `task validate`. Tests run without madmom: analysis is stubbed in
+# tests/conftest.py, so only Flask and numpy are installed here. The image build compiles
+# madmom and is slow, so it runs on demand only.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install task
+        run: curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/local/bin
+
+      - name: Install test and lint tooling
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --quiet -r requirements-dev.txt \
+            $(grep -E '^(Flask|Werkzeug|numpy)==' app/requirements.txt)
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Task tree resolves
+        run: task --list-all > /dev/null
+
+      - name: Lint
+        run: task lint:check
+
+      - name: Tests
+        run: task test
+
+      - name: Structure gates
+        run: task quality:check
+
+      - name: Compose file
+        run: task docker:config
+
+  image:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker compose build
