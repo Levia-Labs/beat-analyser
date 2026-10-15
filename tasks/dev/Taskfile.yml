@@ -1,0 +1,38 @@
+version: "3"
+
+# Development helpers. Each wraps a script in this folder so that an operation done once by
+# hand becomes one allowlisted `task` call in every later session, with no approval prompt.
+# Fixtures go to .cache/fixtures/ (gitignored).
+
+vars:
+  FIXTURES: .cache/fixtures
+
+tasks:
+  fixture:
+    desc: 'Synthetic clip with known kicks, hats and an A4 note (WAV and MP3). Usage: task dev:fixture [NAME=fixture-demo] [SECONDS=4] [BPM=120]'
+    vars:
+      NAME: '{{.NAME | default "fixture-demo"}}'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/dev/fixture.py "{{.FIXTURES}}/{{.NAME}}.wav" --seconds {{.SECONDS | default 4}} --bpm {{.BPM | default 120}} --mp3'
+
+  e2e:
+    desc: 'Upload a fixture to a running server and check ZIP, CSRF and URL refusals. Usage: task dev:e2e [URL=http://127.0.0.1:5000]'
+    cmds:
+      - task: fixture
+        vars: { NAME: fixture-e2e }
+      - '"{{.SYS_PY}}" tasks/dev/e2e.py "{{.FIXTURES}}/fixture-e2e.mp3" --url "{{.URL | default "http://127.0.0.1:5000"}}"'
+
+  encoding:
+    desc: List tracked text files that are not UTF-8 without a BOM. Changes nothing.
+    cmds:
+      - '"{{.SYS_PY}}" tasks/dev/encoding.py'
+
+  encoding:fix:
+    desc: Rewrite non-UTF-8 tracked text files as UTF-8, no BOM, LF
+    cmds:
+      - '"{{.SYS_PY}}" tasks/dev/encoding.py --fix'
+
+  packages:
+    desc: 'GitHub stars and PyPI status of libraries. Usage: task dev:packages GITHUB="owner/repo ..." PYPI="pkg ..."'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/dev/packages.py {{if .GITHUB}}--github {{.GITHUB}}{{end}} {{if .PYPI}}--pypi {{.PYPI}}{{end}}'

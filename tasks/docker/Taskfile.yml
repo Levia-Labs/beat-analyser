@@ -55,3 +55,19 @@ tasks:
     desc: Size of the built image
     cmds:
       - docker images beat-analyser
+
+  e2e:
+    desc: 'Build, start on a spare port, run task dev:e2e against it, stop. Usage: task docker:e2e [PORT=8099]'
+    vars:
+      PORT: '{{.PORT | default "8099"}}'
+    env:
+      PORT: "{{.PORT}}"
+    cmds:
+      - defer: docker compose down
+      # --wait blocks until the healthcheck passes, so no sleep and no retry loop.
+      - docker compose up -d --build --wait
+      - task: :dev:e2e
+        vars: { URL: "http://127.0.0.1:{{.PORT}}" }
+      - task: :summary
+        vars: { NAME: fixture-e2e }
+      - docker images beat-analyser --format "image {{"{{"}}.Size{{"}}"}}"

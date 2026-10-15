@@ -34,7 +34,8 @@ known-first-party = ["analysis", "app", "pipeline", "storage", "youtube", "conft
 "tasks/claude/budget.py" = ["S", "PTH", "SIM", "UP", "B", "RUF"]
 "tasks/quality/*.py" = ["S"]
 "tasks/claude/hooks.py" = ["S"]
-"tasks/dev/smoke.py" = ["S310"]  # urlopen on a URL the operator typed
+# urlopen on URLs the operator typed or fixed API hosts; fixture noise is not cryptography.
+"tasks/dev/*.py" = ["S310", "S311"]
 
 [format]
 quote-style = "double"

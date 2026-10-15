@@ -58,14 +58,36 @@ descriptions (brainstorming, TDD, systematic debugging, verification). `caveman`
 replies only: code, commit messages, docs and security warnings stay in normal English. Use
 `humanizer` on prose written for others (docs, ADRs, PR bodies).
 
-## Token discipline
+## No approval prompts
 
-1. One allowed command per call. A pipe or `&&` chain needs its own permission; prefer a
-   task, Read, Grep or Glob.
-2. `task summary NAME=` instead of reading CSVs. `task projects` instead of listing
-   `uploads/`.
-3. `task graphify:query Q=` for "what calls X" when the graph exists.
-4. Do not re-read a file after editing it.
+An approval prompt stops the person's work. Every command must match the allowlist in
+[.claude/settings.json](.claude/settings.json) on the first try.
+
+1. **One command per call.** No `&&`, `;`, `|`, `$(...)`, `for` loops or multi-line scripts:
+   a compound command is checked part by part and almost always prompts.
+2. **No `cd`.** Every call starts in the repository root; tasks run there too.
+3. **No inline `python -c`, no heredoc scripts, no `curl` to the internet, no `sed -i`.** If
+   an operation is not a task yet, write a script under `tasks/`, put a task in front of
+   it, name it in the folder's README, then run the task. It is then free in every later
+   session.
+4. Files: Read, Write, Edit, Grep, Glob. Never `cat`, `head` or `grep` through the shell.
+5. Never edit `.claude/settings*.json` through the shell or a task: Claude Code always asks
+   before a command changes its own permissions. `task claude:allow:sync` is for a person.
+6. `task claude:history:prompts` lists every past command the allowlist did not cover. Read
+   it at the start of a long session; turn each repeat into a task.
+
+| Instead of | Use |
+| --- | --- |
+| a `python -c` that writes a test WAV | `task dev:fixture NAME=fixture-x` |
+| `curl -F file=@... /upload`, checking a ZIP by hand | `task dev:e2e URL=...` |
+| `docker compose up`, sleep, curl, `down` | `task docker:e2e` |
+| `curl api.github.com`, `pypi.org/pypi/.../json` | `task dev:packages GITHUB="o/r" PYPI="pkg"` |
+| `file`, `iconv` on a suspect file | `task dev:encoding`, `task dev:encoding:fix` |
+| deleting a test project | name it `fixture-*`, then `task uploads:fixtures:clean` |
+| reading CSVs or listing `uploads/` | `task summary NAME=`, `task projects` |
+| a grep sweep for "what calls X" | `task graphify:query Q=` |
+
+Do not re-read a file after editing it.
 
 ## Conventions
 

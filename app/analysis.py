@@ -7,6 +7,7 @@ keeps this module importable where madmom is not installed (the CI test job).
 
 import csv
 import subprocess
+import warnings
 from functools import cache
 from pathlib import Path
 
@@ -28,6 +29,10 @@ WINDOW_S = 0.025
 BAND_WEIGHTS = {"kick": 1.2, "snare": 1.1, "hh": 1.0}
 
 Event = tuple[float, str]
+
+# madmom unpickles its models with an `align=0` NumPy 2.4 deprecates; harmless, and it
+# otherwise fills the container log on every model load.
+warnings.filterwarnings("ignore", message=r"dtype\(\): align should be passed")
 
 
 @cache

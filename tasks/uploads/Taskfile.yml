@@ -15,6 +15,12 @@ tasks:
       - rm -f "{{.ROOT}}"/*_tracks.zip
       - echo "cached ZIPs removed"
 
+  fixtures:clean:
+    desc: Delete test projects named fixture-* (and their ZIPs). Real projects are untouched.
+    cmds:
+      - rm -rf "{{.ROOT}}"/fixture-*
+      - echo "fixture projects removed from {{.ROOT}}/"
+
   clean:
     desc: 'DELETE every analysed project, audio included. Usage: task uploads:clean CONFIRM=yes'
     preconditions:

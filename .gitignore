@@ -18,7 +18,8 @@ htmlcov/
 build/
 dist/
 
-# Tool output
+# Tool output. .cache/fixtures/ holds clips written by task dev:fixture.
+.cache/
 graphify-out/
 *.log
 

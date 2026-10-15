@@ -17,6 +17,36 @@ tasks:
     cmds:
       - '"{{.SYS_PY}}" tasks/claude/budget.py --wait --window five_hour --ceiling {{.CEILING | default 20}}'
 
+  history:
+    desc: 'What this project''s sessions ran, and what repeats without a task. Usage: task claude:history [TOP=25]'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/history.py {{if .TOP}}--top {{.TOP}}{{end}}'
+
+  history:prompts:
+    desc: Session commands the allowlist does not cover - each one was an approval prompt
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/history.py --prompts'
+
+  history:inline:
+    desc: Ad-hoc python one-liners the sessions ran - each one is a script not yet written
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/history.py --inline'
+
+  allow:sync:
+    desc: Write an allow rule for every task into .claude/settings.json. Run by a person - agents are denied it.
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/allow_tasks.py'
+
+  allow:check:
+    desc: Fail when a task has no allow rule in .claude/settings.json. Changes nothing.
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/allow_tasks.py --check'
+
+  allow:report:
+    desc: List tasks with no allow rule, never fail. What task validate runs.
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/allow_tasks.py --check --warn'
+
   hooks:check:
     desc: Run the Stop hook by hand - validates if an edit marked the tree dirty
     cmds:

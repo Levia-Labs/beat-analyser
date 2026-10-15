@@ -4,10 +4,8 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
 
 ## Unverified
 
-- [ ] The rebuilt image (two-stage, non-root, gunicorn, read-only root) has not been built
-      and run. `task docker:up`, then `task smoke URL=http://localhost`.
-- [ ] `--no-build-isolation` for the whole requirements file in the Dockerfile: confirm no
-      other package needs an isolated build.
+- [x] Rebuilt image verified 2026-10-15 on Docker Desktop (Windows): 875 MB (was 1.93 GB),
+      runs as uid 1000 on a read-only root, smoke test passes, MP3 upload returns the ZIP.
 - [ ] Bind-mounted `uploads/` owned by a uid other than 1000 on a Linux host
       (troubleshooting documents the `chown`).
 - [ ] yt-dlp's need for a JavaScript runtime on current YouTube; the image ships none.

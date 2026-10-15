@@ -28,7 +28,12 @@ includes:
   deps:
     taskfile: ./tasks/deps/Taskfile.yml
     vars: { PY: "{{.PY}}", SYS_PY: "{{.SYS_PY}}" }
-  docker: ./tasks/docker/Taskfile.yml
+  dev:
+    taskfile: ./tasks/dev/Taskfile.yml
+    vars: { SYS_PY: "{{.SYS_PY}}" }
+  docker:
+    taskfile: ./tasks/docker/Taskfile.yml
+    vars: { SYS_PY: "{{.SYS_PY}}" }
   git: ./tasks/git/Taskfile.yml
   lint: ./tasks/lint/Taskfile.yml
   quality:
@@ -137,3 +142,4 @@ tasks:
       - task: test
       - task: quality:check
       - task: docker:config
+      - task: claude:allow:report

@@ -37,6 +37,11 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `docker:logs`, `docker:ps`, `docker:size` | Inspect | read |
 | `docker:shell` | Shell in the running container | local |
 | `docker:config` | Validate `docker-compose.yml` | read |
+| `docker:e2e [PORT=8099]` | Build, start, upload a fixture, check refusals, stop | local, slow first time |
+| `dev:fixture [NAME=] [SECONDS=] [BPM=]` | Synthetic clip with known events in `.cache/fixtures/` | local |
+| `dev:e2e [URL=]` | Fixture upload and refusal checks against a running server | local |
+| `dev:encoding`, `dev:encoding:fix` | Find / fix non-UTF-8 tracked text files | read / local |
+| `dev:packages GITHUB= PYPI=` | Library stars, licence, versions, wheels | read, network |
 | `git:status` | Uncommitted changes and upstream | read |
 | `git:update` | Fetch `main`, merge into current branch | local, network |
 | `git:commit [M=...] [SKIP_CHECKS=1]` | Validate, stage, pre-commit, commit, push | pushes, denied to agents |
@@ -46,10 +51,14 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `quality:*:baseline` | Accept current findings ([ADR 0006](adr/0006-ratcheting-baselines.md)) | local |
 | `precommit:setup`, `precommit:run` | Install / run the git hooks | local / read |
 | `uploads:size` | Disk used | read |
+| `uploads:fixtures:clean` | Delete `fixture-*` test projects only | local |
 | `uploads:zips:clean` | Delete cached ZIPs; rebuilt on next request | local |
 | `uploads:clean CONFIRM=yes` | Delete every project and its audio | destructive, denied to agents |
 | `claude:budget`, `claude:resume` | Usage windows | read |
 | `claude:skills:setup`, `claude:skills:verify` | caveman and superpowers plugins | local / read |
+| `claude:history`, `claude:history:prompts`, `claude:history:inline` | Session command log: repeats, approval prompts, one-liners | read |
+| `claude:allow:sync` | Write per-task allow rules into `.claude/settings.json` | person only, denied to agents |
+| `claude:allow:check`, `claude:allow:report` | Missing per-task rules: fail / list only | read |
 | `claude:hooks:check` | Run the Stop hook by hand | read |
 | `graphify:update`, `graphify:query Q=` | Knowledge graph | local / read |
 
@@ -62,3 +71,5 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 4. Logic longer than a few lines of shell becomes a script under `tasks/`, named in that
    folder's README.
 5. Add it to this page.
+6. `Bash(task *)` already allows it. A person runs `task claude:allow:sync` to add the
+   explicit rule; `task validate` lists tasks still missing one.

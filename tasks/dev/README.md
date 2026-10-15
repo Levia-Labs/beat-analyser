@@ -1,7 +1,16 @@
 # tasks / dev
 
-Scripts behind root-level tasks.
+Namespace `dev:`, plus the script behind root `task smoke`. Each script turns something done
+by hand once into one allowlisted `task` call, so later sessions run it without an approval
+prompt. All are standard-library Python and run on the host's `python3`.
 
 | Script | Task | Role |
 | --- | --- | --- |
-| `smoke.py` | `task smoke` | Probe a running server: index loads with CSP and framing headers, `/folders` answers JSON. Uploads nothing |
+| `smoke.py` | `task smoke [URL=]` | Probe a running server: index headers, `/folders`. Uploads nothing |
+| `fixture.py` | `task dev:fixture [NAME=] [SECONDS=] [BPM=]` | Synthetic clip with known kicks, hats and an A4 note, WAV and MP3, in `.cache/fixtures/` |
+| `e2e.py` | `task dev:e2e [URL=]`, `task docker:e2e [PORT=]` | Upload a fixture, check the ZIP, the cross-origin refusal and the foreign-URL refusal |
+| `encoding.py` | `task dev:encoding`, `task dev:encoding:fix` | Find or fix tracked text files that are not UTF-8 without a BOM |
+| `packages.py` | `task dev:packages GITHUB="o/r" PYPI="pkg"` | Stars, licence and activity from GitHub; version, wheels and dependencies from PyPI |
+
+Fixture projects are named `fixture-*`; `task uploads:fixtures:clean` removes them and
+nothing else.
