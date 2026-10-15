@@ -18,6 +18,9 @@ tasks:
   e2e:
     desc: 'Upload a fixture to a running server and check ZIP, CSRF and URL refusals. Usage: task dev:e2e [URL=http://127.0.0.1:5000]'
     cmds:
+      # A cached ZIP from the last run would be served without analysis, and the check
+      # would pass on stale output. Fixture projects only; nothing else is touched.
+      - task: :uploads:fixtures:clean
       - task: fixture
         vars: { NAME: fixture-e2e }
       - '"{{.SYS_PY}}" tasks/dev/e2e.py "{{.FIXTURES}}/fixture-e2e.mp3" --url "{{.URL | default "http://127.0.0.1:5000"}}"'
@@ -32,7 +35,12 @@ tasks:
     cmds:
       - '"{{.SYS_PY}}" tasks/dev/encoding.py --fix'
 
-  packages:
-    desc: 'GitHub stars and PyPI status of libraries. Usage: task dev:packages GITHUB="owner/repo ..." PYPI="pkg ..."'
+  basic-pitch:
+    desc: 'Fetch basic-pitch''s ONNX model and licence from its PyPI wheel, sha256-verified. Usage: task dev:basic-pitch [VERSION=0.4.0]'
     cmds:
-      - '"{{.SYS_PY}}" tasks/dev/packages.py {{if .GITHUB}}--github {{.GITHUB}}{{end}} {{if .PYPI}}--pypi {{.PYPI}}{{end}}'
+      - '"{{.SYS_PY}}" tasks/dev/basic_pitch.py --version {{.VERSION | default "0.4.0"}}'
+
+  packages:
+    desc: 'GitHub stars, PyPI and crates.io status of libraries. Usage: task dev:packages GITHUB="owner/repo" PYPI="pkg" CRATES="crate"'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/dev/packages.py {{if .GITHUB}}--github {{.GITHUB}}{{end}} {{if .PYPI}}--pypi {{.PYPI}}{{end}} {{if .CRATES}}--crates {{.CRATES}}{{end}}'

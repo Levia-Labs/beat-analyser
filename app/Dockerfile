@@ -1,29 +1,40 @@
-# Two stages. The build stage carries the compiler and git that madmom's Cython extensions
-# and its pinned commit need; the runtime stage copies only the finished virtualenv, so
-# neither ships in the image.
+# Built from the repository root (docker-compose.yml sets the context), because the image
+# needs both app/ and the beatcore crate.
+#
+# Three stages. The Rust toolchain comes from the official image and is used only to build
+# the beatcore wheel; the runtime stage copies the finished virtualenv, so neither Rust nor
+# a compiler ships in the image.
+
+FROM rust:1.90-slim AS rust
+
 
 FROM python:3.14.2-slim AS build
 
+# gcc is the linker rustc calls.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential git \
+    && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python -m venv /opt/venv
-ENV PATH=/opt/venv/bin:$PATH
+COPY --from=rust /usr/local/cargo /usr/local/cargo
+COPY --from=rust /usr/local/rustup /usr/local/rustup
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/opt/venv/bin:/usr/local/cargo/bin:$PATH
 
-COPY requirements.txt /tmp/requirements.txt
-# numpy and Cython first: madmom's setup.py imports both, and --no-build-isolation is what
-# lets it see them. Quoted pins: an unquoted `Cython>=0.25` in a RUN line is a shell
-# redirect, which is how the previous Dockerfile installed an unpinned Cython.
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir "Cython==3.2.4" "numpy==2.4.4" \
-    && pip install --no-cache-dir --no-build-isolation -r /tmp/requirements.txt
+RUN python -m venv /opt/venv
+COPY app/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Last, so an edit to the crate rebuilds only this layer.
+COPY beatcore /tmp/beatcore
+RUN pip install --no-cache-dir /tmp/beatcore
 
 
 FROM python:3.14.2-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg libsndfile1 \
+    && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /opt/venv /opt/venv
@@ -38,14 +49,15 @@ RUN useradd --create-home --uid 1000 app \
     && chown app:app /app/uploads
 
 WORKDIR /app
-COPY *.py ./
-COPY templates ./templates
-COPY static ./static
+COPY app/*.py ./
+COPY app/models ./models
+COPY app/templates ./templates
+COPY app/static ./static
 
 USER app
 EXPOSE 8000
 
-# One worker so the madmom models load once; threads for concurrent requests. An analysis
-# runs for minutes, so the worker timeout is 30 minutes rather than gunicorn's 30 seconds.
+# One worker so the note model loads once; threads for concurrent requests. An analysis can
+# run for minutes on a long song, so the worker timeout is 30 minutes, not 30 seconds.
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "4", \
      "--timeout", "1800", "--worker-tmp-dir", "/tmp", "app:app"]

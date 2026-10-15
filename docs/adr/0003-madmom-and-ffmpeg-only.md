@@ -1,6 +1,6 @@
 # 0003. madmom and ffmpeg do all audio I/O; librosa and pydub removed
 
-- **Status:** Accepted
+- **Status:** Superseded by [0009](0009-beatcore-and-basic-pitch.md) - ffmpeg still decodes everything; madmom is gone, and librosa and pydub stay out
 - **Date:** 2026-10-15
 
 ## Context

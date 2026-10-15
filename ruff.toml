@@ -26,7 +26,9 @@ ignore = [
 
 [lint.isort]
 # The app modules import each other by bare name, the way gunicorn loads them from /app.
-known-first-party = ["analysis", "app", "pipeline", "storage", "youtube", "conftest"]
+known-first-party = [
+    "analysis", "app", "cli", "conftest", "notes", "pipeline", "storage", "youtube",
+]
 
 [lint.per-file-ignores]
 "tests/**" = ["S101"]  # assert is the test framework

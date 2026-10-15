@@ -26,7 +26,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SETTINGS = ROOT / ".claude" / "settings.json"
-TOOLS = ("Bash", "PowerShell")
+# Bash only: agents in this repository do not use PowerShell (it is denied outright).
+TOOLS = ("Bash",)
 WILDCARDS = {f"{tool}(task *)" for tool in TOOLS}
 PER_TASK = re.compile(r"^(Bash|PowerShell)\(task [a-z0-9:_-]+( \*)?\)$")
 

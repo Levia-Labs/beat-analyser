@@ -1,5 +1,6 @@
-"""Shared fixtures. The app is tested without madmom: analysis.analyse is replaced by a stub
-that writes one CSV, so the HTTP and storage behaviour runs anywhere Flask and numpy do."""
+"""Shared fixtures. The app is tested without beatcore or the note model: analysis.analyse is
+replaced by a stub that writes one CSV, so the HTTP and storage behaviour runs anywhere Flask
+and numpy do."""
 
 import io
 import wave
@@ -29,6 +30,7 @@ def upload_root(tmp_path):
 def client(upload_root, monkeypatch):
     def fake_analyse(audio_path, folder):
         analysis.write_tracks(folder, {"kick": [(0.5, "kick")]})
+        return {"bpm": 128.0, "confidence": 0.5}
 
     monkeypatch.setattr(analysis, "analyse", fake_analyse)
     app_module.app.config.update(TESTING=True, UPLOAD_ROOT=upload_root)

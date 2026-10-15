@@ -1,0 +1,61 @@
+version: "3"
+
+# The beatcore crate (beatcore/), built and tested inside a pinned Rust image, so neither a
+# person nor CI needs a host toolchain. Registry and target directories live in named Docker
+# volumes: a rebuild reuses them, and Windows bind-mount speed does not matter.
+#
+# A host toolchain (rustup) is optional; with one, `task deps:setup` builds beatcore into
+# .venv and `task rust:host:test` runs cargo directly.
+
+vars:
+  RUST_IMAGE: rust:1.90-slim
+  RUN: >-
+    docker run --rm
+    -v "{{.ROOT_DIR}}/beatcore:/src"
+    -v beatcore-cargo:/usr/local/cargo/registry
+    -v beatcore-target:/src/target
+    -w /src {{.RUST_IMAGE}}
+
+tasks:
+  test:
+    desc: cargo test in the pinned Rust image (synthetic tempo, beat and onset checks)
+    cmds:
+      - '{{.RUN}} cargo test --release'
+
+  check:
+    desc: rustfmt and clippy in the pinned Rust image. Changes nothing.
+    cmds:
+      - '{{.RUN}} sh -c "rustup component add rustfmt clippy >/dev/null 2>&1; cargo fmt --check && cargo clippy --release --all-targets -- -D warnings"'
+
+  fmt:
+    desc: rustfmt the crate in place
+    cmds:
+      - '{{.RUN}} sh -c "rustup component add rustfmt >/dev/null 2>&1; cargo fmt"'
+
+  lock:
+    desc: Regenerate beatcore/Cargo.lock after a dependency change
+    cmds:
+      - '{{.RUN}} cargo generate-lockfile'
+
+  analyse:
+    desc: 'Run beatcore-cli on a WAV file. Usage: task rust:analyse FILE=.cache/fixtures/fixture-demo.wav'
+    requires:
+      vars: [FILE]
+    cmds:
+      - >-
+        docker run --rm
+        -v "{{.ROOT_DIR}}/beatcore:/src"
+        -v beatcore-cargo:/usr/local/cargo/registry
+        -v beatcore-target:/src/target
+        -v "{{.ROOT_DIR}}/{{dir .FILE}}:/audio:ro"
+        -w /src {{.RUST_IMAGE}}
+        cargo run --quiet --release --bin beatcore-cli -- "/audio/{{base .FILE}}"
+
+  host:test:
+    desc: cargo test with a host toolchain, when one is installed
+    dir: beatcore
+    preconditions:
+      - sh: command -v cargo
+        msg: No host Rust toolchain. Use task rust:test (Docker), or install rustup yourself.
+    cmds:
+      - cargo test --release

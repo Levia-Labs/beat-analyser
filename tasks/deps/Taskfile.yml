@@ -5,19 +5,26 @@ version: "3"
 
 tasks:
   setup:
-    desc: Create .venv if missing and install app and dev dependencies (idempotent)
+    desc: Create .venv if missing, install app and dev dependencies, and beatcore when Rust is present
     cmds:
       - |
         if [ ! -f "{{.PY}}" ]; then
           "{{.SYS_PY}}" -m venv .venv
         fi
-      # numpy and Cython before the rest, then --no-build-isolation: madmom's setup.py
-      # imports both at build time and build isolation would hide them. Pins are read from
-      # requirements.txt so there is one place they live.
-      - '"{{.PY}}" -m pip install --quiet --upgrade pip setuptools wheel'
-      - '"{{.PY}}" -m pip install --quiet $(grep -E "^(Cython|numpy)==" app/requirements.txt)'
-      - '"{{.PY}}" -m pip install --quiet --no-build-isolation -r app/requirements.txt -r requirements-dev.txt'
-      - echo "dependencies installed into .venv"
+      - '"{{.PY}}" -m pip install --quiet --upgrade pip'
+      - '"{{.PY}}" -m pip install --quiet -r app/requirements.txt -r requirements-dev.txt'
+      - task: beatcore
+
+  beatcore:
+    desc: Build and install the beatcore Rust extension into .venv (needs a host Rust toolchain)
+    cmds:
+      - |
+        if command -v cargo > /dev/null 2>&1; then
+          "{{.PY}}" -m pip install --quiet ./beatcore && echo "beatcore installed into .venv"
+        else
+          echo "No host Rust toolchain: beatcore not built into .venv."
+          echo "Analysis tasks fall back to the Docker image (task docker:build)."
+        fi
 
   check:
     desc: Broken requirements and outdated packages in .venv. Changes nothing.

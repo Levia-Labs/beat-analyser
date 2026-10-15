@@ -22,4 +22,7 @@ Dockerfile text eol=lf
 *.flac binary
 *.ogg  binary
 *.zip  binary
+*.onnx binary
+*.rs   text eol=lf
+Cargo.lock text eol=lf
 *.png  binary

@@ -2,8 +2,9 @@
 
 Instructions for AI agents. Humans want [docs/development.md](docs/development.md).
 
-A Flask service that turns audio (an upload or a YouTube URL) into timed percussion and note
-events with madmom: one CSV per track, packaged as a ZIP. It runs in Docker; a host
+A Flask service that turns audio (an upload or a YouTube URL) into timed percussion, beat and
+note events: one CSV per track, packaged as a ZIP. Rhythm is beatcore, a Rust extension in
+`beatcore/`; notes are basic-pitch on onnxruntime (`app/notes.py`). It runs in Docker; a host
 virtualenv runs the CLI and the tests.
 
 ## The rules that matter most
@@ -12,7 +13,7 @@ virtualenv runs the CLI and the tests.
    explains each one. Prefer a task over an ad-hoc command, and write a task for a command
    you find yourself running twice.
 2. **Do not run anything slow or destructive to "check it works".** `task repair` reanalyses
-   every song (minutes each). `task docker:rebuild` recompiles madmom. `task uploads:clean`
+   every song. `task docker:rebuild` rebuilds every layer from scratch. `task uploads:clean`
    deletes data and is denied in [.claude/settings.json](.claude/settings.json), as are
    `task git:commit` (it pushes), `git push`, `git reset --hard`, `git clean` and `docker push`.
 3. **`task validate` before saying done.** The Stop hook runs it after any edit to source,
@@ -21,24 +22,27 @@ virtualenv runs the CLI and the tests.
 ## Verifying a change
 
 ```bash
-task test                       # seconds, no madmom needed: analysis is stubbed
+task test                       # seconds; analysis stubbed, note model run if installed
 task validate                   # lint, tests, doc paths, file length, compose file
-task analyse FILE=song.wav      # real madmom run on one file, prints a per-track summary
-task summary NAME=song          # what an analysed project contains, without reading CSVs
-task run   then   task smoke    # web UI on :5000, then probe its headers and /folders
+task rust:test                  # beatcore: synthetic tempo, beat and onset truth
+task rust:check                 # rustfmt and clippy -D warnings
+task dev:fixture                # clip with known events in .cache/fixtures/
+task analyse FILE=.cache/fixtures/fixture-demo.wav   # both engines, per-track summary
+task docker:e2e                 # build image, upload a fixture, check refusals, stop
 ```
 
-A change to `app/analysis.py` is not verified by `task test` alone: the tests cover band
-classification and pitch routing, not madmom. Run `task analyse` on a short real file.
+A change under `beatcore/` is verified by `task rust:test` and `task rust:check`, then
+`task docker:e2e` for the Python binding. A change to `app/notes.py` by `task test K=notes`.
 
-A change to `app/Dockerfile` or `app/requirements.txt` is verified only by `task docker:build`
-(slow on first build). If it was not run, say so.
+A change to `app/Dockerfile` or `app/requirements.txt` is verified only by `task docker:e2e`.
+If it was not run, say so.
 
 ## Layout
 
 | Path | What it is |
 | --- | --- |
 | `app/` | The service. Modules listed in [app/README.md](app/README.md) |
+| `beatcore/` | Rust: onsets, drum classes, tempo, beats ([beatcore/README.md](beatcore/README.md)) |
 | `tests/` | pytest. `conftest.py` stubs madmom out |
 | `tasks/` | Taskfile namespaces and the scripts behind them ([tasks/README.md](tasks/README.md)) |
 | `docs/` | Architecture, API, configuration, security, troubleshooting, ADRs |
@@ -63,6 +67,7 @@ replies only: code, commit messages, docs and security warnings stay in normal E
 An approval prompt stops the person's work. Every command must match the allowlist in
 [.claude/settings.json](.claude/settings.json) on the first try.
 
+0. **Bash tool only. Never PowerShell** - it is denied in settings.json.
 1. **One command per call.** No `&&`, `;`, `|`, `$(...)`, `for` loops or multi-line scripts:
    a compound command is checked part by part and almost always prompts.
 2. **No `cd`.** Every call starts in the repository root; tasks run there too.

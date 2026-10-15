@@ -50,8 +50,8 @@ def zip_path(root: Path, name: str) -> Path:
     return root / f"{name}{ZIP_SUFFIX}"
 
 
-def save_meta(folder: Path, name: str, key: str = "C", bpm: int = 120) -> None:
-    """Write meta.json. key and bpm are placeholders: nothing detects them yet (TODO.md)."""
+def save_meta(folder: Path, name: str, key: str = "C", bpm: float = 120.0) -> None:
+    """Write meta.json. bpm is detected by beatcore; key is a placeholder (TODO.md)."""
     meta = {"name": name, "key": key, "bpm": bpm}
     (folder / META_NAME).write_text(json.dumps(meta), encoding="utf-8")
 

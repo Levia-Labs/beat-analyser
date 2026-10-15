@@ -1,8 +1,9 @@
 name: validate
 
-# The same gates as `task validate`. Tests run without madmom: analysis is stubbed in
-# tests/conftest.py, so only Flask and numpy are installed here. The image build compiles
-# madmom and is slow, so it runs on demand only.
+# The same gates as `task validate`, plus beatcore's Rust checks. The Python job builds
+# beatcore with the runner's own Rust toolchain and installs onnxruntime, so the end-to-end
+# and note-model tests run here rather than skipping. The image build is slower and runs on
+# demand.
 
 on:
   push:
@@ -30,8 +31,12 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install --quiet -r requirements-dev.txt \
-            $(grep -E '^(Flask|Werkzeug|numpy)==' app/requirements.txt)
+            $(grep -E '^(Flask|Werkzeug|numpy|scipy|onnxruntime)==' app/requirements.txt) \
+            ./beatcore
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: ffmpeg for the end-to-end tests
+        run: sudo apt-get install -y --no-install-recommends ffmpeg
 
       - name: Task tree resolves
         run: task --list-all > /dev/null
@@ -47,6 +52,20 @@ jobs:
 
       - name: Compose file
         run: task docker:config
+
+  rust:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: beatcore
+    steps:
+      - uses: actions/checkout@v4
+      - name: Format
+        run: cargo fmt --check
+      - name: Clippy
+        run: cargo clippy --release --all-targets -- -D warnings
+      - name: Tests
+        run: cargo test --release
 
   image:
     if: github.event_name == 'workflow_dispatch'

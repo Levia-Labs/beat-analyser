@@ -1,6 +1,9 @@
 services:
   backend:
-    build: ./app
+    # Repository root: the image needs app/ and the beatcore crate.
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     container_name: beat-analyser-backend
     image: beat-analyser:latest
     # Loopback only by default: the API has no authentication. BIND=0.0.0.0 exposes it to

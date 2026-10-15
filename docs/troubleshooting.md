@@ -10,22 +10,31 @@ Projects are keyed by file name, and an existing ZIP is served as is
 ([ADR 0005](adr/0005-name-keyed-projects.md)). Rename the file, or delete
 `uploads/<name>_tracks.zip` and `uploads/<name>/audio.wav` and upload again.
 
-### Every onset is late, early or missing
+### `RuntimeError: beatcore is not installed`
 
-Check that the peak pickers in `app/analysis.py` use `ACTIVATION_FPS = 100`. Both madmom
-networks emit 100 frames per second; a different `fps` scales every time, and a large
-`combine` merges onsets. The previous code used `fps=250, combine=1`, which on a
-four-beat test returned one onset at 0.004 s.
+The Rust extension is not built into this Python. In the container it always is. On the
+host: install a Rust toolchain, then `task deps:beatcore`; without one, `task analyse`,
+`task analyse:yt` and `task repair` run in the image (`task docker:build` first).
+`import beatcore` succeeding is not proof: from the repository root, the crate's source
+directory imports as an empty namespace package. `task doctor` checks properly.
+
+### The tempo is half or double the real one
+
+The tempo prior is centred on 120 BPM, one octave wide; a song at 70 BPM with busy
+eighth notes can come out at 140. beats.csv then has twice the beats. Tune
+`PRIOR_BPM` in `beatcore/src/tempo.rs` against real music before changing it - a
+synthetic test passes either way.
+
+### Beats fall between the kicks
+
+The beat envelope weights kick, snare and hi-hat bands 1.0 / 0.7 / 0.35
+(`BEAT_WEIGHTS` in `beatcore/src/features.rs`). Unweighted, off-beat hi-hats put every
+beat half a beat late; `task rust:test` catches that on a synthetic loop.
 
 ### Results look wrong after changing analysis code
 
 ZIPs are a cache. `task repair` regenerates every project; for one project delete its ZIP
 and run `task analyse` on its `audio.wav`.
-
-### `VisibleDeprecationWarning: dtype(): align should be passed as ...`
-
-madmom unpickling its models under NumPy 2.4. Harmless. The tasks pass `-W ignore`; RTK's
-filter in [.rtk/filters.toml](../.rtk/filters.toml) drops it.
 
 ### `FileNotFoundError: ... 'ffmpeg'`
 
@@ -46,10 +55,11 @@ Raise `YT_MAX_MINUTES` ([configuration.md](configuration.md)).
 
 ## Container
 
-### First build takes a very long time
+### First build takes a long time
 
-madmom compiles from a pinned git commit. Later builds reuse that layer unless
-`app/requirements.txt` changes.
+The first build pulls the Rust image, installs ffmpeg and compiles beatcore with
+link-time optimisation. Later builds reuse every layer except the ones whose inputs
+changed: an edit under `beatcore/` recompiles only the crate.
 
 ### `PermissionError` writing to `/app/uploads`
 

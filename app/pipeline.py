@@ -40,15 +40,16 @@ def build(root: Path, name: str, place_audio: Callable[[Path], None]) -> Path:
         if not wav.is_file():
             place_audio(wav)
 
-        storage.save_meta(folder, name)
         storage.clear_tracks(folder)
-        analysis.analyse(wav, folder)
-        log.info("built %s", name)
+        result = analysis.analyse(wav, folder)
+        storage.save_meta(folder, name, bpm=result["bpm"])
+        log.info("built %s at %.2f BPM", name, result["bpm"])
         return storage.package(root, name)
 
 
 def repair_all(root: Path) -> list[dict]:
-    """Regenerate CSVs and ZIP for every folder holding audio.wav. meta.json is kept."""
+    """Regenerate CSVs, meta.json (with the detected tempo) and ZIP for every folder holding
+    audio.wav."""
     repaired = []
     for folder in sorted(root.iterdir()):
         name = folder.name
@@ -57,10 +58,9 @@ def repair_all(root: Path) -> list[dict]:
             continue
         try:
             with _lock(name):
-                if not (folder / storage.META_NAME).is_file():
-                    storage.save_meta(folder, name)
                 storage.clear_tracks(folder)
-                analysis.analyse(wav, folder)
+                result = analysis.analyse(wav, folder)
+                storage.save_meta(folder, name, bpm=result["bpm"])
                 archive = storage.package(root, name)
             repaired.append({"folder": name, "zip": archive.name})
         except Exception as exc:  # one broken project must not stop the rest

@@ -18,6 +18,9 @@ htmlcov/
 build/
 dist/
 
+# Rust build output (task rust:* keeps it in a Docker volume; a host cargo writes it here).
+beatcore/target/
+
 # Tool output. .cache/fixtures/ holds clips written by task dev:fixture.
 .cache/
 graphify-out/

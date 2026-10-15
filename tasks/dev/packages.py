@@ -5,6 +5,7 @@ Standard library only; no token needed (GitHub allows 60 unauthenticated calls a
 Usage:
   python3 tasks/dev/packages.py --github spotify/basic-pitch librosa/librosa
   python3 tasks/dev/packages.py --pypi basic-pitch librosa onnxruntime
+  python3 tasks/dev/packages.py --crates pyo3 realfft hound
 """
 
 import argparse
@@ -43,13 +44,22 @@ def pypi(package: str) -> str:
     )
 
 
+def crate(name: str) -> str:
+    d = fetch(f"https://crates.io/api/v1/crates/{name}")["crate"]
+    return (
+        f"{d['name']:<20} {d['max_stable_version']:<10} updated {d['updated_at'][:10]}  "
+        f"{d['downloads']:>12,} downloads"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--github", nargs="*", default=[], metavar="OWNER/REPO")
     parser.add_argument("--pypi", nargs="*", default=[], metavar="PACKAGE")
+    parser.add_argument("--crates", nargs="*", default=[], metavar="CRATE")
     args = parser.parse_args()
     failed = 0
-    for lookup, names in ((github, args.github), (pypi, args.pypi)):
+    for lookup, names in ((github, args.github), (pypi, args.pypi), (crate, args.crates)):
         for name in names:
             try:
                 print(lookup(name))

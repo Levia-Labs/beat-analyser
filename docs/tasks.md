@@ -15,8 +15,8 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `task doctor` | Which tools and imports are present | read |
 | `task test [K=expr]` | pytest, madmom stubbed | read |
 | `task validate` | Every gate | read |
-| `task analyse FILE=path` | Analyse one local file, print per-track summary | local, slow |
-| `task analyse:yt URL=...` | Download and analyse a YouTube video | local, slow, network |
+| `task analyse FILE=path` | Analyse one local file, print per-track summary. Runs in the image when `.venv` lacks beatcore | local |
+| `task analyse:yt URL=...` | Download and analyse a YouTube video | local, network |
 | `task summary NAME=song` | Events and time range per track | read |
 | `task projects` | Projects and whether each has a ZIP | read |
 | `task repair` | Reanalyse every project | local, slow |
@@ -29,7 +29,14 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 
 | Task | Does | Safety |
 | --- | --- | --- |
-| `deps:setup` | Install into `.venv` | local |
+| `deps:setup` | Install into `.venv`, beatcore too when a host `cargo` exists | local |
+| `deps:beatcore` | Build beatcore into `.venv` (needs host Rust) | local, slow first time |
+| `rust:test` | beatcore's tests in the pinned Rust image | read, slow first time |
+| `rust:check`, `rust:fmt` | rustfmt and clippy / format in place | read / local |
+| `rust:analyse FILE=` | beatcore-cli on a WAV: tempo, beats, labelled onsets | read |
+| `rust:lock` | Regenerate `beatcore/Cargo.lock` | local, network |
+| `rust:host:test` | `cargo test` with a host toolchain | read |
+| `dev:basic-pitch [VERSION=]` | Fetch and verify the basic-pitch model into `app/models/` | local, network |
 | `deps:check` | `pip check` and outdated packages | read |
 | `deps:yt-dlp` | Upgrade yt-dlp in `.venv` | local, network |
 | `docker:build`, `docker:rebuild` | Build the image (cached / from scratch) | slow |

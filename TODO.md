@@ -4,21 +4,29 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
 
 ## Unverified
 
-- [x] Rebuilt image verified 2026-10-15 on Docker Desktop (Windows): 875 MB (was 1.93 GB),
-      runs as uid 1000 on a read-only root, smoke test passes, MP3 upload returns the ZIP.
+- [ ] No host Rust toolchain on the Windows development machine: `task deps:beatcore` and
+      `task rust:host:test` are untested on a host; everything Rust ran in Docker.
 - [ ] Bind-mounted `uploads/` owned by a uid other than 1000 on a Linux host
       (troubleshooting documents the `chown`).
 - [ ] yt-dlp's need for a JavaScript runtime on current YouTube; the image ships none.
 
 ## Analysis quality
 
-- [ ] `meta.json` carries placeholder `key: C` and `bpm: 120`. madmom has tempo
-      (`TempoEstimationProcessor`) and key (`CNNKeyRecognitionProcessor`) models.
-- [ ] Percussion classification is a three-band energy heuristic. A drum-transcription model
-      would separate overlapping hits.
-- [ ] Note detection is a piano model applied to everything.
-- [ ] No regression test runs madmom. A short committed WAV and an expected-events test,
-      skipped when madmom is absent, would catch parameter mistakes like the `fps=250` bug.
+- [ ] **beatcore is unproven on real music** ([ADR 0009](docs/adr/0009-beatcore-and-basic-pitch.md)).
+      It passes synthetic tests with known truth only. Next: a `task eval` scoring tempo
+      (within 4 percent, octave errors allowed) and beat F-measure with `mir_eval` on an
+      annotated set (Ballroom: check size and licence first), with the old madmom results
+      as the baseline to beat. Tune `PRIOR_BPM`, the peak-picking `delta` and
+      `BEAT_WEIGHTS` there, not by ear.
+- [ ] One label per onset: a kick and hi-hat struck together count as one event. Per-band
+      peak picking with cross-band suppression would separate them.
+- [ ] One global tempo; songs with tempo changes get one grid.
+- [ ] `meta.json` carries a placeholder `key: C`. A key profile (Krumhansl) over the
+      basic-pitch notes would fill it without another model.
+- [ ] basic-pitch splits held notes at drum hits. Merging repeated same-pitch notes across a
+      gap of a frame or two would clean chords.csv.
+- [ ] beatcore holds the GIL while it runs (seconds per song). Releasing it needs PyO3's
+      `detach`, whose name changed across 0.2x releases - pin first, then add.
 
 ## Behaviour
 

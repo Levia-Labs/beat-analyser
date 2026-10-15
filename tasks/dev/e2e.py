@@ -20,7 +20,7 @@ import uuid
 import zipfile
 from pathlib import Path
 
-TRACKS = ("kick", "snare", "hh", "bass", "chords", "melody")
+TRACKS = ("kick", "snare", "hh", "beats", "bass", "chords", "melody")
 
 
 def request(url: str, data: bytes | None, headers: dict) -> tuple[int, bytes]:

@@ -35,6 +35,7 @@ includes:
     taskfile: ./tasks/docker/Taskfile.yml
     vars: { SYS_PY: "{{.SYS_PY}}" }
   git: ./tasks/git/Taskfile.yml
+  rust: ./tasks/rust/Taskfile.yml
   lint: ./tasks/lint/Taskfile.yml
   quality:
     taskfile: ./tasks/quality/Taskfile.yml
@@ -77,30 +78,53 @@ tasks:
         probe pre-commit "pipx install pre-commit"
         echo "== virtualenv"
         if [ -x "{{.PY}}" ] || [ -f "{{.PY}}" ]; then
-          "{{.PY}}" -W ignore -c "import flask, numpy, madmom, yt_dlp, pytest; print('  imports   ok (flask, numpy, madmom, yt_dlp, pytest)')" \
+          "{{.PY}}" -c "import flask, numpy, onnxruntime, yt_dlp, pytest; print('  imports   ok (flask, numpy, onnxruntime, yt_dlp, pytest)')" \
             || echo "  imports   FAILED - run task deps:setup"
+          "{{.PY}}" -c "import beatcore; print('  beatcore  ok', beatcore.__version__)" 2>/dev/null \
+            || echo "  beatcore  not built on the host - analysis tasks use the Docker image (task docker:build)"
         else
           echo "  .venv     MISSING - run task setup"
         fi
 
   test:
-    desc: 'Run the test suite. Usage: task test [K=expression] - no madmom or network needed'
+    desc: 'Run the test suite. Usage: task test [K=expression] - beatcore and network not needed'
     cmds:
       - '"{{.PY}}" -m pytest {{if .K}}-k "{{.K}}"{{end}} {{.CLI_ARGS}}'
+
+  # app/cli.py on the host when .venv has beatcore, otherwise in the built image - so a
+  # machine without a Rust toolchain can still analyse. INPUT is a host file to mount.
+  _cli:
+    internal: true
+    vars:
+      INPUT_ABS: '{{if .INPUT}}{{if osIsAbs .INPUT}}{{.INPUT}}{{else}}{{.ROOT_DIR}}/{{.INPUT}}{{end}}{{end}}'
+    cmds:
+      - |
+        if "{{.PY}}" -c "import beatcore; beatcore.analyse" 2> /dev/null; then
+          "{{.PY}}" app/cli.py {{if .INPUT}}"{{.INPUT}}"{{end}} {{.ARGS}} --root "{{.ROOT}}"
+        else
+          echo "beatcore is not built on the host - running in the beat-analyser image"
+          docker run --rm \
+            -v "{{.ROOT_DIR}}/{{.ROOT}}:/app/uploads" \
+            {{if .INPUT}}-v "{{osDir .INPUT_ABS}}:/input:ro"{{end}} \
+            beat-analyser:latest \
+            python cli.py {{if .INPUT}}"/input/{{osBase .INPUT_ABS}}"{{end}} {{.ARGS}} --root /app/uploads
+        fi
 
   analyse:
     desc: 'Analyse local audio and print a per-track summary. Usage: task analyse FILE=path/to/song.mp3 [ROOT=uploads]'
     requires:
       vars: [FILE]
     cmds:
-      - '"{{.PY}}" -W ignore app/cli.py "{{.FILE}}" --root "{{.ROOT}}"'
+      - task: _cli
+        vars: { INPUT: "{{.FILE}}" }
 
   analyse:yt:
     desc: 'Download a YouTube video and analyse it. Usage: task analyse:yt URL=https://youtu.be/<id>'
     requires:
       vars: [URL]
     cmds:
-      - '"{{.PY}}" -W ignore app/cli.py --youtube "{{.URL}}" --root "{{.ROOT}}"'
+      - task: _cli
+        vars: { ARGS: '--youtube "{{.URL}}"' }
 
   summary:
     desc: 'Events and time range per track of one analysed project. Usage: task summary NAME=song'
@@ -115,9 +139,10 @@ tasks:
       - '"{{.PY}}" app/cli.py --list --root "{{.ROOT}}"'
 
   repair:
-    desc: Regenerate CSVs and ZIP for every project from its audio.wav (slow - minutes per song)
+    desc: Regenerate CSVs, meta.json and ZIP for every project from its audio.wav
     cmds:
-      - '"{{.PY}}" -W ignore app/cli.py --repair --root "{{.ROOT}}"'
+      - task: _cli
+        vars: { ARGS: "--repair" }
 
   run:
     desc: 'Web UI on the development server. Usage: task run [PORT=5000]'

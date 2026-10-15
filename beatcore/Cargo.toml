@@ -1,0 +1,33 @@
+[package]
+name = "beatcore"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+license = "MIT"
+description = "Onsets, percussion classes, tempo and beats for beat-analyser"
+publish = false
+
+[lib]
+name = "beatcore"
+# cdylib for the Python extension, rlib for the CLI and the tests.
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+# Not `beatcore`: on Windows the binary and the cdylib would both claim beatcore.pdb.
+name = "beatcore-cli"
+path = "src/main.rs"
+
+[features]
+# The Python bindings. maturin enables it (pyproject.toml); `cargo test` and the CLI do not,
+# so neither links against Python.
+python = ["dep:pyo3"]
+
+[dependencies]
+hound = "3.5"
+realfft = "3.5"
+# abi3: one wheel for CPython 3.12 and every later version, 3.14 included.
+pyo3 = { version = "0.26", features = ["extension-module", "abi3-py312"], optional = true }
+
+[profile.release]
+lto = true
+codegen-units = 1

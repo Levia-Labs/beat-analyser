@@ -1,6 +1,6 @@
 # 0002. madmom is installed from a pinned git commit
 
-- **Status:** Accepted
+- **Status:** Superseded by [0009](0009-beatcore-and-basic-pitch.md) - madmom removed
 - **Date:** 2026-10-15
 
 ## Context
