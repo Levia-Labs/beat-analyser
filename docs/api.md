@@ -1,7 +1,8 @@
 # API
 
 Every error is JSON: `{"error": "<message>"}` with the status code below. Every POST from
-another origin is refused with 403 (see [security.md](security.md)).
+another origin is refused with 403 (see [security.md](security.md)). ZIP contents are described
+in [output.md](output.md).
 
 ## `POST /upload`
 

@@ -41,22 +41,26 @@ uploads/
 ├── song/
 │   ├── audio.wav      the decoded source
 │   ├── meta.json      {"name": "song", "key": "A minor", "bpm": 120.02} - both detected
+│   ├── labels.json    {"0": "note_0", ..., "128": "kick", ...} - decodes CSV label IDs
 │   ├── kick.csv  snare.csv  hh.csv  beats.csv
 │   └── bass.csv  chords.csv  melody.csv
 └── song_tracks.zip    the folder above, zipped under song/
 ```
 
-Every CSV row is `<time in seconds>,<label>`:
+Every CSV row is `<time in seconds>,<label ID>`; `labels.json` maps each ID to its label:
 
 ```csv
-0.4900,kick
-0.9800,note_69
+0.49,128
+0.98,69
 ```
 
-1. Percussion labels: `kick`, `snare`, `hh`, chosen by which frequency band rises most per
-   bin at the onset. Approximate by design.
-2. `beats.csv`: one `beat` row per beat of the detected grid.
-3. Note labels: `note_<MIDI pitch>`. Bass is below 48, chords 48 to 71, melody 72 and up.
+1. Percussion: `kick` 128, `snare` 129, `hh` 130, chosen by which frequency band rises most
+   per bin at the onset. Approximate by design.
+2. `beats.csv`: one `beat` (131) row per beat of the detected grid.
+3. Notes: the ID is the MIDI pitch, label `note_<pitch>`. Bass is below 48, chords 48 to 71,
+   melody 72 and up.
+
+Full schema: [docs/output.md](docs/output.md).
 
 ## API
 
@@ -74,12 +78,13 @@ Details and error codes: [docs/api.md](docs/api.md).
 ## Documentation
 
 1. [docs/architecture.md](docs/architecture.md) - modules and the processing pipeline
-2. [docs/configuration.md](docs/configuration.md) - environment variables
-3. [docs/security.md](docs/security.md) - what is protected, what is not, before exposing it
-4. [docs/troubleshooting.md](docs/troubleshooting.md)
-5. [docs/development.md](docs/development.md) - working on the code
-6. [docs/adr/](docs/adr/README.md) - why things are the way they are
-7. [TODO.md](TODO.md) - known gaps
+2. [docs/output.md](docs/output.md) - ZIP, `meta.json` and CSV schema
+3. [docs/configuration.md](docs/configuration.md) - environment variables
+4. [docs/security.md](docs/security.md) - what is protected, what is not, before exposing it
+5. [docs/troubleshooting.md](docs/troubleshooting.md)
+6. [docs/development.md](docs/development.md) - working on the code
+7. [docs/adr/](docs/adr/README.md) - why things are the way they are
+8. [TODO.md](TODO.md) - known gaps
 
 ## Limits
 

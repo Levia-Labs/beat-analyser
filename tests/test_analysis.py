@@ -1,3 +1,4 @@
+import json
 import shutil
 import sys
 import wave
@@ -20,8 +21,41 @@ def test_pitch_track_boundaries(pitch, track):
 
 def test_write_tracks_format(tmp_path):
     analysis.write_tracks(tmp_path, {"kick": [(0.51234, "kick")], "snare": []})
-    assert (tmp_path / "kick.csv").read_text() == "0.5123,kick\n"
+    assert (tmp_path / "kick.csv").read_text() == "0.5123,128\n"
     assert (tmp_path / "snare.csv").read_text() == ""
+
+
+def test_write_tracks_uses_label_ids(tmp_path):
+    analysis.write_tracks(tmp_path, {"chords": [(1.0, "note_69")], "beats": [(2.0, "beat")]})
+    assert (tmp_path / "chords.csv").read_text() == "1,69\n"
+    assert (tmp_path / "beats.csv").read_text() == "2,131\n"
+
+
+@pytest.mark.parametrize(
+    ("time", "text"),
+    [
+        (0.0, "0"),
+        (0.5, "0.5"),
+        (0.51234, "0.5123"),
+        (0.49999, "0.5"),
+        (10.0, "10"),
+        (123.4567, "123.4567"),
+    ],
+)
+def test_timestamps_rounded_without_trailing_zeros(time, text):
+    assert analysis.format_time(time) == text
+
+
+def test_labels_file_decodes_every_id(tmp_path):
+    analysis.write_labels(tmp_path)
+    labels = json.loads((tmp_path / analysis.LABELS_NAME).read_text())
+    assert labels["0"] == "note_0"
+    assert labels["127"] == "note_127"
+    assert labels["128"] == "kick"
+    assert labels["129"] == "snare"
+    assert labels["130"] == "hh"
+    assert labels["131"] == "beat"
+    assert len(labels) == 132
 
 
 def test_percussion_tracks_split_by_label():
@@ -69,4 +103,5 @@ def test_analyse_end_to_end(tmp_path):
     assert result["bpm"] == pytest.approx(bpm, abs=1.5)
     for track in (*analysis.PERCUSSION_TRACKS, *analysis.PITCHED_TRACKS, "beats"):
         assert (tmp_path / f"{track}.csv").is_file()
-    assert "note_69" in (tmp_path / "chords.csv").read_text()
+    assert (tmp_path / analysis.LABELS_NAME).is_file()
+    assert ",69\n" in (tmp_path / "chords.csv").read_text()

@@ -3,7 +3,7 @@
 
 Kick (55 Hz, decaying) on every beat, hi-hat (noise burst) on every off-beat, and an A4 tone
 (MIDI 69) from second 1 to 2 - so a correct analysis is known in advance: kicks at
-0, 60/bpm, ..., hh at half a beat later, note_69 near 1.0 s in chords.csv.
+0, 60/bpm, ..., hh at half a beat later, note_69 (ID 69) near 1.0 s in chords.csv.
 
 Usage:
   python3 tasks/dev/fixture.py OUT.wav [--seconds 4] [--bpm 120] [--mp3]

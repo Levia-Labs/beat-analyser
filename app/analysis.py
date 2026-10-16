@@ -9,6 +9,7 @@ extension is not built.
 """
 
 import csv
+import json
 import subprocess
 from pathlib import Path
 
@@ -18,6 +19,17 @@ import notes
 PERCUSSION_TRACKS = ("kick", "snare", "hh")
 PITCHED_TRACKS = ("bass", "chords", "melody")
 BEAT_TRACK = "beats"
+
+# CSVs carry a numeric label ID; labels.json decodes it. The table is fixed, not built per
+# song, so one ID means the same thing in every project. A note's ID is its MIDI pitch.
+LABELS_NAME = "labels.json"
+LABELS: dict[int, str] = {pitch: f"note_{pitch}" for pitch in range(128)} | {
+    128: "kick",
+    129: "snare",
+    130: "hh",
+    131: "beat",
+}
+LABEL_IDS = {label: label_id for label_id, label in LABELS.items()}
 
 Event = tuple[float, str]
 
@@ -82,16 +94,31 @@ def pitched_tracks(found: list[notes.Note]) -> dict[str, list[Event]]:
     return tracks
 
 
+def format_time(seconds: float) -> str:
+    """Seconds rounded to 4 decimals, trailing zeros dropped: 0.5, 1, 0.5123.
+
+    Not `:g`: it counts significant digits, so 123.4567 would lose its last decimal.
+    """
+    return f"{seconds:.4f}".rstrip("0").rstrip(".")
+
+
 def write_tracks(folder: Path, tracks: dict[str, list[Event]]) -> None:
     for name, events in tracks.items():
         with (folder / f"{name}.csv").open("w", newline="", encoding="utf-8") as handle:
             writer = csv.writer(handle)
             for time, label in events:
-                writer.writerow([f"{time:.4f}", label])
+                writer.writerow([format_time(time), LABEL_IDS[label]])
+
+
+def write_labels(folder: Path) -> None:
+    labels = {str(label_id): label for label_id, label in LABELS.items()}
+    (folder / LABELS_NAME).write_text(json.dumps(labels), encoding="utf-8")
 
 
 def analyse(audio_path: Path, folder: Path) -> dict:
-    """Write every track CSV for one audio file. Returns {"bpm", "confidence", "key"}."""
+    """Write every track CSV and labels.json for one audio file. Returns {"bpm", "confidence",
+    "key"}."""
+    write_labels(folder)
     result = rhythm(audio_path)
     write_tracks(folder, percussion_tracks(result))
     write_tracks(folder, {BEAT_TRACK: [(float(t), "beat") for t in result["beats"]]})

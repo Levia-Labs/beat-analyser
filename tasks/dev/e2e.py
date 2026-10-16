@@ -62,7 +62,9 @@ def main() -> int:
         return 1
     name = args.file.stem
     names = set(zipfile.ZipFile(io.BytesIO(data)).namelist())
-    expected = {f"{name}/{t}.csv" for t in TRACKS} | {f"{name}/audio.wav", f"{name}/meta.json"}
+    expected = {f"{name}/{t}.csv" for t in TRACKS} | {
+        f"{name}/{f}" for f in ("audio.wav", "meta.json", "labels.json")
+    }
     if missing := expected - names:
         failures.append(f"ZIP lacks {sorted(missing)}")
     print(f"  upload    200  {len(data)} bytes  {elapsed:.1f}s  {len(names)} files")
