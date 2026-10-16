@@ -47,6 +47,8 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `docker:shell` | Shell in the running container | local |
 | `docker:config` | Validate `docker-compose.yml` | read |
 | `docker:e2e [PORT=8099]` | Build, start, upload a fixture, check refusals, stop | local, slow first time |
+| `docker:hub:check` | Compare the Docker Hub page with `tasks/docker/hub.md` | read |
+| `docker:hub:publish` | Publish `tasks/docker/hub.md` as the Docker Hub page. Uses the `docker login` credentials, or `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`. Denied to agents | publishes |
 | `dev:fixture [NAME=] [SECONDS=] [BPM=]` | Synthetic clip with known events in `.cache/fixtures/` | local |
 | `dev:e2e [URL=]` | Fixture upload and refusal checks against a running server | local |
 | `dev:encoding`, `dev:encoding:fix` | Find / fix non-UTF-8 tracked text files | read / local |

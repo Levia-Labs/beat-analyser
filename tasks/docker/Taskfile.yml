@@ -56,6 +56,17 @@ tasks:
     cmds:
       - docker images beat-analyser
 
+  hub:check:
+    desc: Compare the Docker Hub page with tasks/docker/hub.md. Changes nothing.
+    cmds:
+      - '"{{.SYS_PY}}" tasks/docker/hub.py'
+
+  # Publishes to Docker Hub: run by a person, denied to agents like docker push.
+  hub:publish:
+    desc: 'Publish tasks/docker/hub.md as the Docker Hub page. Uses the docker login credentials, or DOCKERHUB_USERNAME and DOCKERHUB_TOKEN'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/docker/hub.py --apply'
+
   e2e:
     desc: 'Build, start on a spare port, run task dev:e2e against it, stop. Usage: task docker:e2e [PORT=8099]'
     vars:

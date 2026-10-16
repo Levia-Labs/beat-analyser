@@ -39,6 +39,7 @@ known-first-party = [
 "tasks/claude/hooks.py" = ["S"]
 # urlopen on URLs the operator typed or fixed API hosts; fixture noise is not cryptography.
 "tasks/dev/*.py" = ["S310", "S311"]
+"tasks/docker/hub.py" = ["S310"]  # fixed https://hub.docker.com URLs only
 
 [format]
 quote-style = "double"

@@ -7,7 +7,7 @@ everyday tasks (`setup`, `test`, `analyse`, `run`, `validate`); `task --list` is
 | Folder | Namespace | What it does |
 | --- | --- | --- |
 | [deps/](deps/) | `deps:` | The `.venv` virtualenv: install, check, upgrade yt-dlp |
-| [docker/](docker/) | `docker:` | Build, start, stop, logs and checks for the container |
+| [docker/](docker/) | `docker:` | Build, start, stop, logs and checks for the container; `hub.py` and `hub.md` behind `docker:hub:*`, the Docker Hub page |
 | [rust/](rust/) | `rust:` | The beatcore crate: test, fmt, clippy, CLI - in the pinned Rust image |
 | [eval/](eval/) | `eval:` | Score beatcore's tempo, beats and onsets against ground truth |
 | [git/](git/) | `git:` | `commit`, `status`, `update` - same commands as the toolkit repository |
