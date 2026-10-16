@@ -34,6 +34,8 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `rust:test` | beatcore's tests in the pinned Rust image | read, slow first time |
 | `rust:check`, `rust:fmt` | rustfmt and clippy / format in place | read / local |
 | `rust:analyse FILE=` | beatcore-cli on a WAV: tempo, beats, labelled onsets | read |
+| `eval:synthetic [SECONDS=]` | Tempo, beat and onset scores on generated clips, in the image | read |
+| `eval:dir DIR=` | Tempo and beat scores on an annotated folder, in the image | read |
 | `rust:lock` | Regenerate `beatcore/Cargo.lock` | local, network |
 | `rust:host:test` | `cargo test` with a host toolchain | read |
 | `dev:basic-pitch [VERSION=]` | Fetch and verify the basic-pitch model into `app/models/` | local, network |

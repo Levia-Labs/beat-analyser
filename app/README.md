@@ -9,6 +9,7 @@ name; gunicorn loads the Flask object `app` from `app.py` in this directory.
 | `pipeline.py` | One project from audio to ZIP, with a lock per project name; `repair_all` |
 | `analysis.py` | Calls beatcore (rhythm) and `notes` (pitch), writes the track CSVs, ffmpeg decode |
 | `notes.py` | basic-pitch note transcription on onnxruntime - a port, changes listed in its header |
+| `key.py` | Musical key from the notes: Krumhansl-Schmuckler profiles, `unknown` when nothing fits |
 | `models/` | The basic-pitch ONNX model and its licence ([models/README.md](models/README.md)) |
 | `storage.py` | Project names (the path-traversal boundary), `meta.json`, ZIP packaging, listing |
 | `youtube.py` | URL to video ID, and the yt-dlp download |

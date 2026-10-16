@@ -27,7 +27,8 @@ ignore = [
 [lint.isort]
 # The app modules import each other by bare name, the way gunicorn loads them from /app.
 known-first-party = [
-    "analysis", "app", "cli", "conftest", "notes", "pipeline", "storage", "youtube",
+    "analysis", "app", "beatcore", "cli", "conftest", "key", "notes", "pipeline", "storage",
+    "youtube",
 ]
 
 [lint.per-file-ignores]

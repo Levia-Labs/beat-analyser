@@ -7,9 +7,10 @@ version: "3"
 # A host toolchain (rustup) is optional; with one, `task deps:setup` builds beatcore into
 # .venv and `task rust:host:test` runs cargo directly.
 
+# Prefixed: included Taskfiles share one var scope (see .claude/rules/taskfile-shell.md).
 vars:
   RUST_IMAGE: rust:1.90-slim
-  RUN: >-
+  RUST_RUN: >-
     docker run --rm
     -v "{{.ROOT_DIR}}/beatcore:/src"
     -v beatcore-cargo:/usr/local/cargo/registry
@@ -20,22 +21,22 @@ tasks:
   test:
     desc: cargo test in the pinned Rust image (synthetic tempo, beat and onset checks)
     cmds:
-      - '{{.RUN}} cargo test --release'
+      - '{{.RUST_RUN}} cargo test --release'
 
   check:
     desc: rustfmt and clippy in the pinned Rust image. Changes nothing.
     cmds:
-      - '{{.RUN}} sh -c "rustup component add rustfmt clippy >/dev/null 2>&1; cargo fmt --check && cargo clippy --release --all-targets -- -D warnings"'
+      - '{{.RUST_RUN}} sh -c "rustup component add rustfmt clippy >/dev/null 2>&1; cargo fmt --check && cargo clippy --release --all-targets -- -D warnings"'
 
   fmt:
     desc: rustfmt the crate in place
     cmds:
-      - '{{.RUN}} sh -c "rustup component add rustfmt >/dev/null 2>&1; cargo fmt"'
+      - '{{.RUST_RUN}} sh -c "rustup component add rustfmt >/dev/null 2>&1; cargo fmt"'
 
   lock:
     desc: Regenerate beatcore/Cargo.lock after a dependency change
     cmds:
-      - '{{.RUN}} cargo generate-lockfile'
+      - '{{.RUST_RUN}} cargo generate-lockfile'
 
   analyse:
     desc: 'Run beatcore-cli on a WAV file. Usage: task rust:analyse FILE=.cache/fixtures/fixture-demo.wav'

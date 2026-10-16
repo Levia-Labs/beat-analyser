@@ -12,6 +12,10 @@ pub const FPS: f64 = 100.0;
 /// Band edges in Hz: kick up to 150, snare 150 to 4000, hi-hat above.
 pub const KICK_MAX_HZ: f64 = 150.0;
 pub const SNARE_MAX_HZ: f64 = 4000.0;
+/// Top of the hi-hat band for classification. An MP3 encoder cuts everything above about
+/// 16 kHz, and averaging those empty bins into the hi-hat density turned the white-noise
+/// hats of `task docker:e2e`'s MP3 fixture into snares (5 of 8). Hat energy sits below.
+pub const HH_MAX_HZ: f64 = 12_000.0;
 
 /// Log compression `ln(1 + LAMBDA * |X|)`, as in madmom's spectral-flux family.
 const LAMBDA: f32 = 100.0;
@@ -22,8 +26,9 @@ pub struct Features {
     /// Full-band log spectral flux with a frequency max-filter on the reference frame
     /// (SuperFlux): vibrato and slow pitch changes do not register as onsets.
     pub flux: Vec<f32>,
-    /// Positive change in linear magnitude, summed per band: [kick, snare, hh]. What is new
-    /// in each band at a frame, used to classify the onset there.
+    /// Positive change in linear magnitude per bin, averaged within each band: [kick, snare,
+    /// hh]. A density, not a sum: the hi-hat band holds ~80 percent of the bins, so summed it
+    /// won every noisy hit. Used to classify onsets.
     pub band_flux: Vec<[f32; 3]>,
     /// The full-band flux split into the same three bands, for `beat_envelope`.
     pub band_log_flux: Vec<[f32; 3]>,
@@ -74,6 +79,7 @@ pub fn extract(samples: &[f32], sample_rate: u32) -> Features {
     let bins = n / 2 + 1;
     let kick_end = ((KICK_MAX_HZ / bin_hz).floor() as usize + 1).min(bins);
     let snare_end = ((SNARE_MAX_HZ / bin_hz).floor() as usize + 1).min(bins);
+    let hh_end = ((HH_MAX_HZ / bin_hz).floor() as usize + 1).clamp(snare_end + 1, bins);
 
     // Frames are centred: frame t covers samples around t * hop.
     let pad = n / 2;
@@ -125,12 +131,18 @@ pub fn extract(samples: &[f32], sample_rate: u32) -> Features {
             } else {
                 2
             };
-            bands[band] += (mag[k] - prev_mag[k]).max(0.0);
+            if k < hh_end {
+                bands[band] += (mag[k] - prev_mag[k]).max(0.0);
+            }
             log_bands[band] += log_rise;
         }
         // Before the first frame is silence (prev_* start at zero), so a hit at sample 0 is an
         // onset. Zeroing frame 0 instead lost the opening kick of every clip that starts on one.
         flux.push(full);
+        let widths = [kick_end, snare_end - kick_end, hh_end - snare_end];
+        for (value, width) in bands.iter_mut().zip(widths) {
+            *value /= width.max(1) as f32;
+        }
         band_flux.push(bands);
         band_log_flux.push(log_bands);
 

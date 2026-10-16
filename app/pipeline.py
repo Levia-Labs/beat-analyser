@@ -42,7 +42,7 @@ def build(root: Path, name: str, place_audio: Callable[[Path], None]) -> Path:
 
         storage.clear_tracks(folder)
         result = analysis.analyse(wav, folder)
-        storage.save_meta(folder, name, bpm=result["bpm"])
+        storage.save_meta(folder, name, key=result["key"], bpm=result["bpm"])
         log.info("built %s at %.2f BPM", name, result["bpm"])
         return storage.package(root, name)
 
@@ -60,7 +60,7 @@ def repair_all(root: Path) -> list[dict]:
             with _lock(name):
                 storage.clear_tracks(folder)
                 result = analysis.analyse(wav, folder)
-                storage.save_meta(folder, name, bpm=result["bpm"])
+                storage.save_meta(folder, name, key=result["key"], bpm=result["bpm"])
                 archive = storage.package(root, name)
             repaired.append({"folder": name, "zip": archive.name})
         except Exception as exc:  # one broken project must not stop the rest

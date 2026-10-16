@@ -31,6 +31,13 @@ The beat envelope weights kick, snare and hi-hat bands 1.0 / 0.7 / 0.35
 (`BEAT_WEIGHTS` in `beatcore/src/features.rs`). Unweighted, off-beat hi-hats put every
 beat half a beat late; `task rust:test` catches that on a synthetic loop.
 
+### Hi-hats come out as snares (or the reverse)
+
+Classification compares rise per frequency bin between bands (`DENSITY_WEIGHTS` in
+`beatcore/src/onset.rs`, band edges in `beatcore/src/features.rs`). Change them only
+against `task eval:synthetic` and `task docker:e2e` together: the eval clips are WAV and
+the e2e fixture is MP3, and an MP3's empty top octave once turned every hat into a snare.
+
 ### Results look wrong after changing analysis code
 
 ZIPs are a cache. `task repair` regenerates every project; for one project delete its ZIP

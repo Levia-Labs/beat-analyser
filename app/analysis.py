@@ -12,6 +12,7 @@ import csv
 import subprocess
 from pathlib import Path
 
+import key
 import notes
 
 PERCUSSION_TRACKS = ("kick", "snare", "hh")
@@ -90,9 +91,14 @@ def write_tracks(folder: Path, tracks: dict[str, list[Event]]) -> None:
 
 
 def analyse(audio_path: Path, folder: Path) -> dict:
-    """Write every track CSV for one audio file. Returns {"bpm", "confidence"}."""
+    """Write every track CSV for one audio file. Returns {"bpm", "confidence", "key"}."""
     result = rhythm(audio_path)
     write_tracks(folder, percussion_tracks(result))
     write_tracks(folder, {BEAT_TRACK: [(float(t), "beat") for t in result["beats"]]})
-    write_tracks(folder, pitched_tracks(notes.transcribe(audio_path)))
-    return {"bpm": round(float(result["bpm"]), 2), "confidence": float(result["confidence"])}
+    found = notes.transcribe(audio_path)
+    write_tracks(folder, pitched_tracks(found))
+    return {
+        "bpm": round(float(result["bpm"]), 2),
+        "confidence": float(result["confidence"]),
+        "key": key.estimate(found)[0],
+    }

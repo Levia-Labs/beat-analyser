@@ -36,6 +36,7 @@ includes:
     vars: { SYS_PY: "{{.SYS_PY}}" }
   git: ./tasks/git/Taskfile.yml
   rust: ./tasks/rust/Taskfile.yml
+  eval: ./tasks/eval/Taskfile.yml
   lint: ./tasks/lint/Taskfile.yml
   quality:
     taskfile: ./tasks/quality/Taskfile.yml

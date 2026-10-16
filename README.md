@@ -40,7 +40,7 @@ Each analysed song becomes a folder and a ZIP:
 uploads/
 ├── song/
 │   ├── audio.wav      the decoded source
-│   ├── meta.json      {"name": "song", "key": "C", "bpm": 120.02} - bpm detected, key a placeholder
+│   ├── meta.json      {"name": "song", "key": "A minor", "bpm": 120.02} - both detected
 │   ├── kick.csv  snare.csv  hh.csv  beats.csv
 │   └── bass.csv  chords.csv  melody.csv
 └── song_tracks.zip    the folder above, zipped under song/
@@ -53,8 +53,8 @@ Every CSV row is `<time in seconds>,<label>`:
 0.9800,note_69
 ```
 
-1. Percussion labels: `kick`, `snare`, `hh`, chosen by which frequency band rises most at
-   the onset. Approximate by design.
+1. Percussion labels: `kick`, `snare`, `hh`, chosen by which frequency band rises most per
+   bin at the onset. Approximate by design.
 2. `beats.csv`: one `beat` row per beat of the detected grid.
 3. Note labels: `note_<MIDI pitch>`. Bass is below 48, chords 48 to 71, melody 72 and up.
 
@@ -84,9 +84,9 @@ Details and error codes: [docs/api.md](docs/api.md).
 ## Limits
 
 1. Percussion classification is a three-band heuristic, not a drum transcriber; one onset
-   gets one label, so simultaneous kick and hi-hat count as one.
+   gets one label, so a kick and hi-hat struck together count as one.
 2. One global tempo per song; tempo changes are not followed.
-3. No key detection yet; `meta.json` carries a placeholder.
+3. Key comes from the transcribed notes; drum-only audio gives `unknown`.
 4. A project is keyed by file name. Uploading a different file with an existing name
    returns the cached result; see [docs/troubleshooting.md](docs/troubleshooting.md).
 

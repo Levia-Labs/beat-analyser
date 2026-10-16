@@ -14,6 +14,10 @@ substituted first.
   for the system one; never hard-code `.venv/bin/python` or `python3`.
 - Included Taskfiles do not inherit root vars reliably: pass them in the `includes:` entry
   (`vars: { PY: "{{.PY}}" }`), as the root Taskfile does.
+- **Top-level vars of every included Taskfile share one scope; the last one loaded wins.**
+  Prefix them with the namespace (`RUST_RUN`, `EVAL_RUN`): an unprefixed `RUN` in
+  `tasks/eval/` was silently replaced by `tasks/rust/`'s and ran the wrong image.
+  `task --verbose --dry <name>` shows the rendered command.
 - Commands run from the repository root, so paths are repo-relative.
 - **`PATH` cannot be set in `env:`** - go-task ignores it. Resolve a pipx tool instead:
 

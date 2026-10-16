@@ -15,16 +15,17 @@ pub struct Analysis {
     pub bpm: f64,
     pub confidence: f64,
     pub beats: Vec<f64>,
-    /// (seconds, "kick" | "snare" | "hh"), in time order.
+    /// (seconds, "kick" | "snare" | "hh"), in time order. Simultaneous hits in different
+    /// bands share a time and appear once per band.
     pub onsets: Vec<(f64, &'static str)>,
 }
 
 pub fn analyse_samples(samples: &[f32], sample_rate: u32) -> Analysis {
     let feats = features::extract(samples, sample_rate);
     let peaks = onset::pick_peaks(&feats.flux, feats.fps, &onset::PeakParams::default());
-    let onsets = peaks
-        .iter()
-        .filter_map(|&f| onset::classify(&feats.band_flux, f).map(|l| (f as f64 / feats.fps, l)))
+    let onsets = onset::classify_all(&feats.band_flux, &peaks)
+        .into_iter()
+        .map(|(f, l)| (f as f64 / feats.fps, l))
         .collect();
 
     let beat_env = feats.beat_envelope();

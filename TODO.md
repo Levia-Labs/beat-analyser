@@ -13,18 +13,25 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
 ## Analysis quality
 
 - [ ] **beatcore is unproven on real music** ([ADR 0009](docs/adr/0009-beatcore-and-basic-pitch.md)).
-      It passes synthetic tests with known truth only. Next: a `task eval` scoring tempo
-      (within 4 percent, octave errors allowed) and beat F-measure with `mir_eval` on an
-      annotated set (Ballroom: check size and licence first), with the old madmom results
-      as the baseline to beat. Tune `PRIOR_BPM`, the peak-picking `delta` and
-      `BEAT_WEIGHTS` there, not by ear.
-- [ ] One label per onset: a kick and hi-hat struck together count as one event. Per-band
-      peak picking with cross-band suppression would separate them.
+      `task eval:dir DIR=` scores an annotated folder; no dataset has been run yet
+      (Ballroom: check size and licence first).
+- [x] Drum classes, `task eval:synthetic` (36 clips, 2026-10-16), kick / snare / hh
+      F-measure: raw sums 0.81 / 0.17 / 0.84; per-bin density (current) 0.86 / 0.83 /
+      0.94, with no false snares on four-on-the-floor, white-noise hats, or the MP3 e2e
+      fixture. Approaches tried and dropped are listed in `beatcore/src/onset.rs`.
+- [ ] Tempo octave errors: every acc1 miss is at 70, 150 or 180 BPM (acc1 0.69, acc2
+      1.00): the 120 BPM prior pulls toward the middle. A narrower prior trades one end
+      for the other; tune on real data.
+- [ ] `noisehat@110` beat F-measure 0.00 with the right tempo: the grid locked half a beat
+      off, onto the hats. The beat envelope's hi-hat weight (0.35) is not low enough there.
+- [ ] Kicks under a sustained pad: F-measure 0.08-0.48. The pad's low partials mask the
+      kick's per-bin rise.
+- [ ] One label per onset: a kick and hi-hat struck together count as one. Co-labelling
+      was tried three ways and each added false labels (scores in `onset.rs`).
+- [ ] `eval.py` scores WAV only; real uploads are mostly MP3. Score both.
 - [ ] One global tempo; songs with tempo changes get one grid.
-- [ ] `meta.json` carries a placeholder `key: C`. A key profile (Krumhansl) over the
-      basic-pitch notes would fill it without another model.
-- [ ] basic-pitch splits held notes at drum hits. Merging repeated same-pitch notes across a
-      gap of a frame or two would clean chords.csv.
+- [x] Key from the notes (`app/key.py`, Krumhansl-Schmuckler).
+- [x] Re-triggered held notes are merged (`notes.merge_repeats`).
 - [ ] beatcore holds the GIL while it runs (seconds per song). Releasing it needs PyO3's
       `detach`, whose name changed across 0.2x releases - pin first, then add.
 

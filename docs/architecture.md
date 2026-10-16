@@ -45,9 +45,12 @@ at 100 frames per second (2048-point Hann window at 44.1 kHz) produces three thi
 1. **Onsets.** Log-magnitude spectral flux with a three-bin frequency max-filter on the
    reference frame (SuperFlux), peak-picked: a local maximum over 30 ms that rises 0.05 of
    the envelope's peak above its 100 ms / 70 ms moving average; onsets within 30 ms merge.
-2. **Percussion class.** Positive linear-magnitude change per band - kick up to 150 Hz,
-   snare 150 Hz to 4 kHz, hi-hat above - over the onset frame and the two after it. The band
-   with the largest weighted rise wins (weights 1.2, 1.1, 1.0).
+2. **Percussion class.** Positive linear-magnitude change per bin, averaged within each
+   band - kick up to 150 Hz, snare 150 Hz to 4 kHz, hi-hat 4 to 12 kHz (above 12 kHz MP3
+   leaves nothing) - over the onset frame and the two after it. The band with the largest
+   weighted density wins (weights 0.3, 1.0, 1.5: a few kick bins inflate from any low
+   leakage, and white noise is flat so ties go to hi-hat). One label per onset. The
+   approaches this replaced and their scores are in `beatcore/src/onset.rs`.
 3. **Tempo and beats.** The band log-flux, each band normalised by its mean and weighted
    1.0 / 0.7 / 0.35 toward the low end, so off-beat hi-hats do not pull the grid. Tempo is
    the autocorrelation peak between 40 and 240 BPM under a log-normal prior centred on

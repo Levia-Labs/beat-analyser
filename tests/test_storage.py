@@ -35,7 +35,7 @@ def test_package_and_list(tmp_path):
     folder = storage.project_dir(tmp_path, "song")
     folder.mkdir()
     (folder / "kick.csv").write_text("0.5000,kick\n")
-    storage.save_meta(folder, "song")
+    storage.save_meta(folder, "song", key="A minor", bpm=128.0)
 
     archive = storage.package(tmp_path, "song")
 
@@ -45,7 +45,8 @@ def test_package_and_list(tmp_path):
     assert not list(tmp_path.glob("*.part"))
 
     listing = storage.list_projects(tmp_path)
-    assert listing["song"]["meta.json"]["content"] == {"name": "song", "key": "C", "bpm": 120}
+    meta = listing["song"]["meta.json"]["content"]
+    assert meta == {"name": "song", "key": "A minor", "bpm": 128.0}
     assert listing["song"]["kick.csv"]["size"] > 0
 
 

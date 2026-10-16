@@ -2,8 +2,6 @@
 
 /// Percussion classes, in the order of `Features::band_flux`.
 pub const LABELS: [&str; 3] = ["kick", "snare", "hh"];
-/// Band weights carried over from the madmom version, tuned by ear there.
-const WEIGHTS: [f32; 3] = [1.2, 1.1, 1.0];
 
 pub struct PeakParams {
     /// Seconds a peak must dominate on each side.
@@ -68,8 +66,13 @@ pub fn pick_peaks(env: &[f32], fps: f64, params: &PeakParams) -> Vec<usize> {
     found
 }
 
-/// Which band rose most at the onset, over the onset frame and the two after it (the attack).
-pub fn classify(band_flux: &[[f32; 3]], frame: usize) -> Option<&'static str> {
+/// Per-bin density weights for [kick, snare, hh]. The hi-hat weight decides ties: white
+/// noise rises equally per bin in the snare and hi-hat bands, so a flat attack is a hi-hat
+/// unless the mid band clearly dominates - as a snare's body around 200 Hz makes it.
+const DENSITY_WEIGHTS: [f32; 3] = [0.3, 1.0, 1.5];
+
+/// Per-bin rise per band over the onset frame and the two after it (the attack).
+fn attack(band_flux: &[[f32; 3]], frame: usize) -> [f32; 3] {
     let end = (frame + 3).min(band_flux.len());
     let mut sums = [0.0f32; 3];
     for bands in &band_flux[frame..end] {
@@ -77,16 +80,31 @@ pub fn classify(band_flux: &[[f32; 3]], frame: usize) -> Option<&'static str> {
             *sum += value;
         }
     }
-    let total: f32 = sums.iter().sum();
-    if total <= 0.0 {
-        return None;
-    }
-    let best = (0..3)
-        .max_by(|&a, &b| {
-            (sums[a] * WEIGHTS[a])
-                .partial_cmp(&(sums[b] * WEIGHTS[b]))
-                .unwrap_or(std::cmp::Ordering::Equal)
+    sums
+}
+
+/// One label per onset: the band with the largest weighted rise per bin.
+///
+/// What this replaced, measured with `task eval:synthetic` (kick / snare / hh F-measure):
+///   1. Raw band sums: the hi-hat band holds ~80 percent of the bins and won every noisy
+///      hit. Snare 0.17.
+///   2. Sums over each band's mean across the song, with co-labels: 0.85 / 0.67 / 0.91,
+///      but a song with no snare has a tiny snare mean, so every white-noise hat also read
+///      as a snare (ten false snares in `task docker:e2e`'s fixture).
+///   3. Sums over each band's leakage level (25th percentile over onsets): fixed that,
+///      but leakage levels are not comparable between bands. 0.65 / 0.88 / 0.74, and with
+///      a co-label rule on top 0.68 / 0.34 / 0.77.
+pub fn classify_all(band_flux: &[[f32; 3]], peaks: &[usize]) -> Vec<(usize, &'static str)> {
+    peaks
+        .iter()
+        .filter_map(|&frame| {
+            let rise = attack(band_flux, frame);
+            let best = (0..3).max_by(|&a, &b| {
+                (rise[a] * DENSITY_WEIGHTS[a])
+                    .partial_cmp(&(rise[b] * DENSITY_WEIGHTS[b]))
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })?;
+            (rise[best] > 0.0).then_some((frame, LABELS[best]))
         })
-        .unwrap_or(0);
-    Some(LABELS[best])
+        .collect()
 }

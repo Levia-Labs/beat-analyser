@@ -30,7 +30,7 @@ def upload_root(tmp_path):
 def client(upload_root, monkeypatch):
     def fake_analyse(audio_path, folder):
         analysis.write_tracks(folder, {"kick": [(0.5, "kick")]})
-        return {"bpm": 128.0, "confidence": 0.5}
+        return {"bpm": 128.0, "confidence": 0.5, "key": "A minor"}
 
     monkeypatch.setattr(analysis, "analyse", fake_analyse)
     app_module.app.config.update(TESTING=True, UPLOAD_ROOT=upload_root)

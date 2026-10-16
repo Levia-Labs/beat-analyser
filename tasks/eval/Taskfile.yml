@@ -1,0 +1,30 @@
+version: "3"
+
+# Scoring beatcore against ground truth (tasks/eval/eval.py). Runs in the app image, where
+# beatcore is built: `task docker:build` first after changing the crate.
+
+# Prefixed: go-task merges every included Taskfile's top-level vars into one scope, and an
+# unprefixed RUN here was silently replaced by tasks/rust/'s.
+vars:
+  EVAL_RUN: >-
+    docker run --rm
+    -v "{{.ROOT_DIR}}/tasks/eval:/eval:ro"
+    beat-analyser:latest
+
+tasks:
+  synthetic:
+    desc: 'Tempo, beat and onset scores on generated clips with known truth. Usage: task eval:synthetic [SECONDS=20]'
+    cmds:
+      - '{{.EVAL_RUN}} python /eval/eval.py synthetic --seconds {{.SECONDS | default 20}}'
+
+  dir:
+    desc: 'Tempo and beat scores on a folder of audio with .beats annotations (Ballroom format). Usage: task eval:dir DIR=path'
+    requires:
+      vars: [DIR]
+    cmds:
+      - >-
+        docker run --rm
+        -v "{{.ROOT_DIR}}/tasks/eval:/eval:ro"
+        -v "{{if osIsAbs .DIR}}{{.DIR}}{{else}}{{.ROOT_DIR}}/{{.DIR}}{{end}}:/data:ro"
+        beat-analyser:latest
+        python /eval/eval.py /data

@@ -44,6 +44,16 @@ def test_decode_drops_short_notes():
     assert notes._decode(frames, onsets, min_len=11) == []
 
 
+def test_merge_repeats_joins_retriggers():
+    split = [(0.99, 1.25, 69, 0.6), (1.25, 1.49, 69, 0.6), (1.49, 1.99, 69, 0.5)]
+    assert notes.merge_repeats(split) == [(0.99, 1.99, 69, pytest.approx(0.55))]
+
+
+def test_merge_repeats_keeps_gaps_and_other_pitches():
+    found = [(0.0, 0.5, 60, 0.5), (0.8, 1.0, 60, 0.5), (0.5, 1.0, 64, 0.5)]
+    assert len(notes.merge_repeats(found)) == 3
+
+
 def test_frame_times_start_at_zero_and_increase():
     times = notes.frame_times(500)
     assert times[0] == 0

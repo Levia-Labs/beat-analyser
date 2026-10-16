@@ -39,6 +39,8 @@ ONSET_THRESHOLD = 0.5
 FRAME_THRESHOLD = 0.3
 MIN_NOTE_MS = 127.70
 ENERGY_TOL = 11
+# Gap below which two same-pitch notes are one held note (merge_repeats). About 4 frames.
+MERGE_GAP_S = 0.05
 
 Note = tuple[float, float, int, float]  # start s, end s, MIDI pitch, amplitude 0..1
 
@@ -173,12 +175,33 @@ def _decode(frames: np.ndarray, onsets: np.ndarray, min_len: int) -> list[tuple]
     return events
 
 
+def merge_repeats(found: list[Note], gap: float = MERGE_GAP_S) -> list[Note]:
+    """Join same-pitch notes separated by less than `gap` seconds.
+
+    Not upstream. basic-pitch re-triggers a held note at every drum hit (an A4 held for one
+    second came out as three notes), which turns one chord into several in chords.csv.
+    The merged note keeps the first start, the last end and a duration-weighted amplitude.
+    """
+    merged: list[Note] = []
+    open_by_pitch: dict[int, int] = {}
+    for start, end, pitch, amp in sorted(found):
+        i = open_by_pitch.get(pitch)
+        if i is not None and start - merged[i][1] < gap:
+            s0, e0, _, a0 = merged[i]
+            d0, d1 = max(e0 - s0, 1e-6), max(end - start, 1e-6)
+            merged[i] = (s0, max(e0, end), pitch, (a0 * d0 + amp * d1) / (d0 + d1))
+            continue
+        open_by_pitch[pitch] = len(merged)
+        merged.append((start, end, pitch, amp))
+    return sorted(merged)
+
+
 def transcribe(path: Path) -> list[Note]:
-    """Note events sorted by start time."""
+    """Note events sorted by start time, repeated re-triggers merged."""
     frames, onsets = infer(load_audio(path))
     if frames.shape[0] == 0:
         return []
     min_len = int(np.round(MIN_NOTE_MS / 1000 * (SAMPLE_RATE / FFT_HOP)))
     times = frame_times(frames.shape[0])
     decoded = _decode(frames, onsets, min_len)
-    return sorted((float(times[s]), float(times[e]), int(p), a) for s, e, p, a in decoded)
+    return merge_repeats([(float(times[s]), float(times[e]), int(p), a) for s, e, p, a in decoded])
