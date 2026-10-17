@@ -4,6 +4,8 @@ Example tests pin known cases; these search for the inputs nobody thought of. Pr
 in conftest.py: `task test` runs 50 examples, `task test:deep` 1000.
 """
 
+import ntpath
+import posixpath
 import string
 from urllib.parse import urlsplit
 
@@ -19,17 +21,14 @@ ID_CHARS = string.ascii_letters + string.digits + "_-"
 ID = st.text(alphabet=ID_CHARS, min_size=11, max_size=11)
 
 
-@given(st.text())
-def test_project_name_is_valid_or_refused(filename):
-    try:
-        name = storage.project_name(filename)
-    except ValueError:
-        return
-    assert storage.is_valid_name(name)
-    assert "/" not in name and "\\" not in name
+# Random unicode is almost always refused outright; printable ASCII reaches the sanitiser's
+# interesting cases (dots, separators, spaces, `..`).
+FILENAME = st.text() | st.text(alphabet=string.printable, max_size=40)
+# Names shaped like valid ones, plus noise, so the traversal property is not vacuous.
+NAME = st.from_regex(r"[A-Za-z0-9.][A-Za-z0-9._/\\-]{0,20}", fullmatch=True) | st.text()
 
 
-@given(st.text())
+@given(FILENAME)
 def test_project_name_is_stable(filename):
     try:
         name = storage.project_name(filename)
@@ -38,12 +37,27 @@ def test_project_name_is_stable(filename):
     assert storage.project_name(f"{name}.wav") == name
 
 
-@given(st.text())
-def test_valid_name_cannot_traverse(name):
-    if storage.is_valid_name(name):
-        assert not name.startswith(".")
-        assert "/" not in name and "\\" not in name
-        assert len(name) <= 100
+@given(FILENAME)
+@example("../../etc/passwd")
+@example("..\\..\\boot.ini")
+def test_project_name_stays_inside_the_root(filename):
+    try:
+        name = storage.project_name(filename)
+    except ValueError:
+        return
+    # Judged by the path libraries of both platforms, not by re-reading storage's regex.
+    for flavour in (posixpath, ntpath):
+        assert flavour.dirname(flavour.normpath(flavour.join("uploads", name))) == "uploads"
+
+
+@given(NAME)
+@example("..")
+@example("a/../..")
+def test_valid_name_stays_inside_the_root(name):
+    if not storage.is_valid_name(name):
+        return
+    for flavour in (posixpath, ntpath):
+        assert flavour.dirname(flavour.normpath(flavour.join("uploads", name))) == "uploads"
 
 
 ALLOWED_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be"}
@@ -99,18 +113,31 @@ def test_format_time_is_monotonic_and_close(a, b):
     assert abs(float(analysis.format_time(a)) - a) <= 5e-5 + 1e-9
 
 
-NOTE = st.tuples(st.floats(0, 100), st.floats(0, 5), st.integers(21, 108), st.floats(0, 1)).map(
+# Three pitches over two seconds, short notes: dense enough that same-pitch gaps fall on
+# both sides of MERGE_GAP_S, which is where merging happens.
+NOTE = st.tuples(st.floats(0, 2), st.floats(0, 0.3), st.integers(60, 62), st.floats(0, 1)).map(
     lambda t: (t[0], t[0] + t[1], t[2], t[3])
 )
 
 
-@given(st.lists(NOTE, max_size=40))
-def test_merge_repeats_shortens_sorts_and_separates(found):
-    merged = notes.merge_repeats(found)
-    assert len(merged) <= len(found)
-    assert merged == sorted(merged)
+@given(st.lists(NOTE, max_size=30))
+def test_merge_repeats_separates_same_pitch_notes(found):
     last_end: dict[int, float] = {}
-    for start, end, pitch, _ in merged:
+    for start, end, pitch, _ in notes.merge_repeats(found):
         if pitch in last_end:
             assert start - last_end[pitch] >= notes.MERGE_GAP_S
         last_end[pitch] = max(end, last_end.get(pitch, end))
+
+
+@given(st.lists(NOTE, max_size=30))
+def test_merge_repeats_loses_no_sounding_time(found):
+    merged = notes.merge_repeats(found)
+    for start, end, pitch, _ in found:
+        assert any(p == pitch and s <= start and end <= e for s, e, p, _ in merged)
+
+
+@given(st.lists(NOTE, max_size=30))
+def test_merge_repeats_keeps_amplitude_in_range(found):
+    amplitudes = [amp for *_, amp in found]
+    for *_, amp in notes.merge_repeats(found):
+        assert min(amplitudes) - 1e-9 <= amp <= max(amplitudes) + 1e-9

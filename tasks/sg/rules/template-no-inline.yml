@@ -1,13 +1,14 @@
 id: template-no-inline
 language: html
 severity: error
-message: The CSP forbids inline script and style; move it to app/static/.
+message: The CSP forbids inline script, style and event handlers; move them to app/static/.
 files:
   - app/templates/**/*.html
 rule:
   any:
     - kind: attribute_name
-      regex: '^style$'
+      regex: '^(style|on[a-z]+)$'
+    - kind: style_element
     - all:
         - kind: script_element
         - not:

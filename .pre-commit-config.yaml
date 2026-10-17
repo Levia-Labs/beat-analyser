@@ -26,6 +26,13 @@ repos:
         pass_filenames: false
         files: \.(py|html)$|^tasks/sg/|^sgconfig\.yml$
 
+      - id: ast-grep-tests
+        name: ast-grep rule tests
+        entry: task sg:test
+        language: system
+        pass_filenames: false
+        files: ^tasks/sg/|^sgconfig\.yml$
+
       - id: tests
         name: pytest
         entry: task test

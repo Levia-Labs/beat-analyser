@@ -24,12 +24,3 @@ strip_lines_matching = [
   "^$",
 ]
 on_empty = "validate: ok"
-
-# madmom prints a NumPy deprecation warning for every model it unpickles.
-[filters.analyse]
-description = "Drop madmom's model-loading deprecation warnings"
-match_command = "^task\\s+(analyse|repair|run)\\b"
-strip_lines_matching = [
-  "VisibleDeprecationWarning",
-  "obj = pickle.load\\(f, encoding='latin1'\\)",
-]

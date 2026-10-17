@@ -1,13 +1,19 @@
 id: app-bare-imports
 language: python
 severity: error
-message: App modules import each other by bare name (`import storage`); gunicorn loads them from /app.
+message: App modules import each other by bare name (`import storage`); gunicorn loads them from /app, where there is no `app` package.
 files:
   - app/**/*.py
 rule:
-  kind: import_from_statement
-  has:
-    field: module_name
-    any:
-      - kind: relative_import
-      - regex: '^app(\.|$)'
+  any:
+    - kind: import_from_statement
+      has:
+        field: module_name
+        any:
+          - kind: relative_import
+          - regex: '^app\.'
+    - kind: import_statement
+      has:
+        kind: dotted_name
+        regex: '^app\.'
+        stopBy: end

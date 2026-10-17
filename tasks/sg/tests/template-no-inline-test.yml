@@ -2,6 +2,11 @@ id: template-no-inline
 valid:
   - '<script src="/static/app.js"></script>'
   - '<div class="page"></div>'
+  - '<link href="/static/app.css" rel="stylesheet" />'
+  - '<button type="submit" class="btn">Go</button>'
 invalid:
   - "<script>alert(1)</script>"
   - '<div style="color: red"></div>'
+  - "<style>body { color: red; }</style>"
+  - '<button onclick="go()">Go</button>'
+  - '<body onload="init()"></body>'

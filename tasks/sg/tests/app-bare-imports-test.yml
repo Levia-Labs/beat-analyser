@@ -1,8 +1,14 @@
 id: app-bare-imports
 valid:
   - "import storage"
+  - "import storage as s"
   - "from storage import is_valid_name"
+  - "import application"
+  # Inside app/, `app` is the module app/app.py, imported by bare name like any other.
+  - "import app"
+  - "from app import upload_root"
 invalid:
   - "from . import storage"
   - "from .storage import is_valid_name"
-  - "from app import storage"
+  - "from app.storage import is_valid_name"
+  - "import app.storage"

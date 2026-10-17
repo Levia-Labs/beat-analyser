@@ -43,7 +43,7 @@ includes:
   lint: ./tasks/lint/Taskfile.yml
   quality:
     taskfile: ./tasks/quality/Taskfile.yml
-    vars: { SYS_PY: "{{.SYS_PY}}" }
+    vars: { SYS_PY: "{{.SYS_PY}}", PY: "{{.PY}}" }
   precommit: ./tasks/precommit/Taskfile.yml
   types:
     taskfile: ./tasks/types/Taskfile.yml

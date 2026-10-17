@@ -48,9 +48,11 @@ tasks:
   coverage:check:
     desc: Fail when a file's coverage falls below the baseline (run task test:cov first)
     cmds:
-      - '"{{.SYS_PY}}" tasks/quality/coverage.py --check'
+      # The venv interpreter: the gate checks which optional tools (onnxruntime, beatcore)
+      # the tests could import.
+      - '"{{.PY}}" tasks/quality/coverage.py --check'
 
   coverage:baseline:
     desc: Accept the current coverage as the floor (run task test:cov first)
     cmds:
-      - '"{{.SYS_PY}}" tasks/quality/coverage.py --update-baseline'
+      - '"{{.PY}}" tasks/quality/coverage.py --update-baseline'

@@ -10,6 +10,9 @@ version: "3"
 # Prefixed: included Taskfiles share one var scope (see .claude/rules/taskfile-shell.md).
 vars:
   RUST_IMAGE: rust:1.90-slim
+  # Pinned: an unpinned install breaks the day cargo-audit's minimum Rust passes RUST_IMAGE.
+  # Bump the two together.
+  RUST_AUDIT_VERSION: 0.22.2
   RUST_RUN: >-
     docker run --rm
     -v "{{.ROOT_DIR}}/beatcore:/src"
@@ -51,7 +54,9 @@ tasks:
         -v beatcore-cargo:/usr/local/cargo/registry
         -v beatcore-tools:/opt/tools
         -w /src {{.RUST_IMAGE}}
-        sh -c "[ -x /opt/tools/bin/cargo-audit ] || cargo install --quiet --locked --root /opt/tools cargo-audit; /opt/tools/bin/cargo-audit audit --db /opt/tools/advisory-db"
+        sh -c '[ "$(/opt/tools/bin/cargo-audit --version 2>/dev/null)" = "cargo-audit {{.RUST_AUDIT_VERSION}}" ]
+        || cargo install --quiet --locked --force --version {{.RUST_AUDIT_VERSION}} --root /opt/tools cargo-audit;
+        /opt/tools/bin/cargo-audit audit --db /opt/tools/advisory-db'
 
   analyse:
     desc: 'Run beatcore-cli on a WAV file. Usage: task rust:analyse FILE=.cache/fixtures/fixture-demo.wav'
