@@ -1,0 +1,31 @@
+version: "3"
+
+# ast-grep: structural search and the project rules in tasks/sg/rules (sgconfig.yml).
+# A rule turns a CLAUDE.md convention into a check; each has a test in tasks/sg/tests.
+
+vars:
+  SG_BIN: "{{.BIN}}/ast-grep"
+
+tasks:
+  check:
+    desc: Run the project rules over the tree. Changes nothing.
+    preconditions:
+      - sh: '"{{.SG_BIN}}" --version'
+        msg: ast-grep is not in .venv - run task deps:setup
+    cmds:
+      - '"{{.SG_BIN}}" scan --report-style short'
+
+  test:
+    desc: Test every rule against its valid and invalid snippets
+    preconditions:
+      - sh: '"{{.SG_BIN}}" --version'
+        msg: ast-grep is not in .venv - run task deps:setup
+    cmds:
+      - '"{{.SG_BIN}}" test --skip-snapshot-tests'
+
+  search:
+    desc: 'Structural search. Usage: task sg:search P=''subprocess.run($$$A)'' [L=python] [-- app] (single quotes: the shell expands $$)'
+    requires:
+      vars: [P]
+    cmds:
+      - '"{{.SG_BIN}}" run --pattern "{{.P}}" --lang {{.L | default "python"}} {{.CLI_ARGS}}'

@@ -29,7 +29,7 @@ from pathlib import Path
 
 import numpy as np
 
-import beatcore
+import beatcore  # pyright: ignore[reportMissingImports]  # in the image; on the host only with Rust
 
 RATE = 44100
 STYLES = ("four", "noisehat", "backbeat", "swing", "syncopated", "pad")
@@ -187,7 +187,7 @@ def report(rows: list[tuple[str, dict]]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("source", help="`synthetic`, or a folder of audio and .beats files")
     parser.add_argument("--seconds", type=float, default=20.0)
     args = parser.parse_args()

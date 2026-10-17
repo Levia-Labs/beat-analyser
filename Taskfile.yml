@@ -11,7 +11,8 @@ silent: true
 # EVERY DAY
 #   task analyse FILE=song.mp3   analyse one local file, print a per-track summary
 #   task test                    the test suite (no madmom needed)
-#   task validate                every gate - what CI, the hooks and the Stop hook run
+#   task validate                every offline gate - what the hooks and the Stop hook run
+#   task validate:deep           validate plus coverage, deep properties, security audits
 #   task run                     the web UI on http://127.0.0.1:5000 (development server)
 #   task docker:up               the same UI in the container on http://localhost
 #
@@ -23,6 +24,8 @@ vars:
   # The interpreter that creates the venv. Windows has no real `python3` (a Store stub).
   SYS_PY: '{{if eq OS "windows"}}python{{else}}python3{{end}}'
   ROOT: '{{.ROOT | default "uploads"}}'
+  # The virtualenv's scripts folder, for tools that ship a binary (ast-grep).
+  BIN: '{{if eq OS "windows"}}.venv/Scripts{{else}}.venv/bin{{end}}'
 
 includes:
   deps:
@@ -42,6 +45,15 @@ includes:
     taskfile: ./tasks/quality/Taskfile.yml
     vars: { SYS_PY: "{{.SYS_PY}}" }
   precommit: ./tasks/precommit/Taskfile.yml
+  types:
+    taskfile: ./tasks/types/Taskfile.yml
+    vars: { PY: "{{.PY}}" }
+  sg:
+    taskfile: ./tasks/sg/Taskfile.yml
+    vars: { BIN: "{{.BIN}}" }
+  security:
+    taskfile: ./tasks/security/Taskfile.yml
+    vars: { PY: "{{.PY}}" }
   uploads:
     taskfile: ./tasks/uploads/Taskfile.yml
     vars: { PY: "{{.PY}}", ROOT: "{{.ROOT}}" }
@@ -81,6 +93,8 @@ tasks:
         if [ -x "{{.PY}}" ] || [ -f "{{.PY}}" ]; then
           "{{.PY}}" -c "import flask, numpy, onnxruntime, yt_dlp, pytest; print('  imports   ok (flask, numpy, onnxruntime, yt_dlp, pytest)')" \
             || echo "  imports   FAILED - run task deps:setup"
+          "{{.PY}}" -c "import basedpyright, coverage, hypothesis, pip_audit; print('  devtools  ok (basedpyright, coverage, hypothesis, pip-audit)')" \
+            || echo "  devtools  MISSING - run task deps:setup"
           "{{.PY}}" -c "import beatcore; print('  beatcore  ok', beatcore.__version__)" 2>/dev/null \
             || echo "  beatcore  not built on the host - analysis tasks use the Docker image (task docker:build)"
         else
@@ -91,6 +105,20 @@ tasks:
     desc: 'Run the test suite. Usage: task test [K=expression] - beatcore and network not needed'
     cmds:
       - '"{{.PY}}" -m pytest {{if .K}}-k "{{.K}}"{{end}} {{.CLI_ARGS}}'
+
+  test:deep:
+    desc: Property tests at 1000 examples each (Hypothesis deep profile)
+    env:
+      HYPOTHESIS_PROFILE: deep
+    cmds:
+      - '"{{.PY}}" -m pytest tests/test_properties.py {{.CLI_ARGS}}'
+
+  test:cov:
+    desc: Tests under branch coverage; lists only files below 100% and their missing lines
+    cmds:
+      - '"{{.PY}}" -m coverage run -m pytest {{.CLI_ARGS}}'
+      - '"{{.PY}}" -m coverage report'
+      - '"{{.PY}}" -m coverage json -q'
 
   # app/cli.py on the host when .venv has beatcore, otherwise in the built image - so a
   # machine without a Rust toolchain can still analyse. INPUT is a host file to mount.
@@ -161,11 +189,27 @@ tasks:
       - '"{{.SYS_PY}}" tasks/dev/smoke.py "{{.URL}}"'
 
   validate:
-    desc: Every gate - task tree, lint, tests, structure, compose file. What CI and the hooks run.
+    desc: Every offline gate - task tree, lint, types, ast-grep, tests, structure, compose file. The Stop hook runs it; pre-commit and CI run its parts.
     cmds:
       - task --list-all > /dev/null
       - task: lint:check
       - task: test
       - task: quality:check
       - task: docker:config
+      # Last: on a .venv that predates them, their precondition makes the Stop hook skip
+      # the rest of the run, and the gates above have already run by then.
+      - task: types:check
+      - task: sg:check
+      - task: sg:test
       - task: claude:allow:report
+
+  validate:deep:
+    desc: validate, then coverage ratchet, deep property tests and security audits. Before a push; needs network.
+    cmds:
+      - task: validate
+      - task: test:cov
+      - task: quality:coverage:check
+      - task: test:deep
+      - task: security:deps
+      - task: security:secrets
+      - task: rust:audit

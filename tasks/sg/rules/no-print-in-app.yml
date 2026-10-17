@@ -1,0 +1,10 @@
+id: no-print-in-app
+language: python
+severity: error
+message: The service logs; only app/cli.py prints.
+files:
+  - app/**/*.py
+ignores:
+  - app/cli.py
+rule:
+  pattern: print($$$ARGS)

@@ -1,0 +1,12 @@
+id: yt-dlp-only-in-youtube
+valid:
+  - "download_audio(vid, folder, 60, 10)"
+  - 'subprocess.run(["ffmpeg", "-i", source])'
+  - "import youtube"
+invalid:
+  - "with YoutubeDL(options) as ydl: pass"
+  - "yt_dlp.YoutubeDL(options)"
+  - "import yt_dlp"
+  - "from yt_dlp import YoutubeDL as Y"
+  - 'subprocess.run(["yt-dlp", url])'
+  - "subprocess.run(['yt-dlp', url])"

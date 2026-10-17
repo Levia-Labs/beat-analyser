@@ -12,6 +12,20 @@ repos:
         pass_filenames: false
         files: \.(py|ya?ml)$
 
+      - id: types
+        name: basedpyright
+        entry: task types:check
+        language: system
+        pass_filenames: false
+        files: \.py$|^pyrightconfig\.json$
+
+      - id: ast-grep
+        name: ast-grep rules
+        entry: task sg:check
+        language: system
+        pass_filenames: false
+        files: \.(py|html)$|^tasks/sg/|^sgconfig\.yml$
+
       - id: tests
         name: pytest
         entry: task test
@@ -25,6 +39,12 @@ repos:
         language: system
         pass_filenames: false
         files: \.(py|ya?ml|md|html|js|css)$
+
+  # Secrets in staged changes. pre-commit installs the Go toolchain the hook needs.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

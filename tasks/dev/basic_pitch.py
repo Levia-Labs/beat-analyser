@@ -35,7 +35,7 @@ def fetch(url: str) -> bytes:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("--version", default="0.4.0")
     args = parser.parse_args()
 

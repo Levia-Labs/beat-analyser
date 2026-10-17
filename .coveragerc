@@ -1,0 +1,12 @@
+# task test:cov. Branch coverage of the service; tasks/ and tests/ are not measured.
+[run]
+branch = True
+source = app
+
+[report]
+skip_covered = True
+show_missing = True
+precision = 1
+
+[json]
+output = .cache/coverage.json

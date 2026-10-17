@@ -1,0 +1,13 @@
+{
+  "include": ["app", "tasks", "tests"],
+  "exclude": ["**/.ruff_cache", "**/__pycache__", ".venv", "graphify-out", "uploads"],
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.14",
+  "typeCheckingMode": "standard",
+  "executionEnvironments": [
+    { "root": "tasks", "pythonVersion": "3.12" },
+    { "root": "tests", "extraPaths": ["app", "tests"] },
+    { "root": "app", "extraPaths": ["app"] }
+  ]
+}

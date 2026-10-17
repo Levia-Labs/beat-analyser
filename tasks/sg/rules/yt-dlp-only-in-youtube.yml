@@ -1,0 +1,28 @@
+id: yt-dlp-only-in-youtube
+language: python
+severity: error
+message: yt-dlp is called only from app/youtube.py, after youtube.video_id reduced the URL.
+files:
+  - app/**/*.py
+ignores:
+  - app/youtube.py
+rule:
+  any:
+    # An import is enough to flag: every other shape (alias, attribute call) starts with one.
+    - kind: import_statement
+      has:
+        kind: dotted_name
+        regex: '^yt_dlp(\.|$)'
+        stopBy: end
+    - kind: import_from_statement
+      has:
+        field: module_name
+        regex: '^yt_dlp(\.|$)'
+    - pattern: YoutubeDL($$$ARGS)
+    - pattern: $MODULE.YoutubeDL($$$ARGS)
+    # The command-line tool, run as a subprocess.
+    - kind: string
+      regex: '^["'']yt-dlp["'']$'
+      inside:
+        kind: call
+        stopBy: end

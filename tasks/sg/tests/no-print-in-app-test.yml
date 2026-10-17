@@ -1,0 +1,5 @@
+id: no-print-in-app
+valid:
+  - 'log.info("done")'
+invalid:
+  - 'print("done")'

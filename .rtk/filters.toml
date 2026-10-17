@@ -4,14 +4,24 @@ schema_version = 1
 
 [filters.task-validate]
 description = "Collapse a clean task validate"
-match_command = "^task\\s+(validate|lint:check|quality:check|test)\\b"
+match_command = "^task\\s+(validate|lint:check|quality:check|types:check|sg:check|sg:test|test)\\b"
 strip_lines_matching = [
   "^All checks passed!$",
   "^\\d+ files? already formatted$",
   "known finding\\(s\\), none new\\.$",
   "none new, none grown\\.$",
-  "^\\.+\\s+\\[\\d+%\\]$",
+  # pytest progress: dots, s for a skip, a padded percentage ("[ 33%]"). F and E never match.
+  "^[.s]+\\s+\\[\\s*\\d+%\\]$",
+  "^every task has an allow rule",
   "docker-compose.yml valid$",
+  # basedpyright and ast-grep test on success.
+  "^0 errors, 0 warnings, 0 notes$",
+  "^Running \\d+ tests$",
+  "^-+ Case Details -+$",
+  "^PASS \\S+\\s+\\.+$",
+  "^test result: ok\\. \\d+ passed; 0 failed;$",
+  "no file below its baseline$",
+  "^$",
 ]
 on_empty = "validate: ok"
 

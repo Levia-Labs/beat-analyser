@@ -23,7 +23,8 @@ BASELINE = Path(__file__).resolve().parent / "long-files.baseline"
 LIMIT = 300
 ROOTS = ("app", "tasks", "docs", "tests")
 SUFFIXES = (".py", ".yml", ".yaml", ".md", ".sh", ".html", ".js", ".css")
-EXCLUDED = ("graphify-out/",)
+# Implementation plans carry every step's code in full; they are executed, not maintained.
+EXCLUDED = ("graphify-out/", "docs/superpowers/")
 
 
 def tracked_files() -> list[str]:

@@ -23,6 +23,7 @@ task docker:e2e               # image build, upload, refusal checks
 task run                      # dev server on :5000 (needs beatcore in .venv); task smoke
 task lint:run                 # format Python; task rust:fmt for Rust
 task validate                 # before committing - the same gates as CI and the hooks
+task validate:deep            # before pushing - coverage, deep properties, security audits
 ```
 
 ## Tests
@@ -35,6 +36,9 @@ task validate                 # before committing - the same gates as CI and the
    beatcore is built.
 4. `beatcore/tests/synthetic.rs` holds drum loops and bursts with known tempo, beat times and
    classes.
+5. `tests/test_properties.py` holds Hypothesis properties of the URL and name boundary, the
+   time formatter and note merging: 50 examples in `task test`, 1000 in `task test:deep`.
+   A failure prints the smallest falsifying input; Hypothesis replays it from `.hypothesis/`.
 
 Not covered: analysis quality on real music (TODO.md), ffmpeg itself and yt-dlp downloads.
 
@@ -44,13 +48,25 @@ Not covered: analysis quality on real music (TODO.md), ffmpeg itself and yt-dlp 
 | --- | --- |
 | Task tree resolves | `task --list-all` |
 | ruff lint and format, yamllint | `task lint:check` |
-| pytest | `task test` |
+| Types (basedpyright, baselined) | `task types:check` |
+| Project conventions as ast-grep rules, and their tests | `task sg:check`, `task sg:test` |
+| pytest, properties at 50 examples | `task test` |
 | Documents name real paths; scripts documented | `task quality:docs:check` |
 | No file past 300 lines | `task quality:long-files:check` |
 | Compose file valid | `task docker:config` |
 | Rust format, clippy, tests | `task rust:check`, `task rust:test` (CI job `rust`) |
 
-`task validate` runs the Python-side gates. CI
+Deep tier, `task validate:deep`, by hand before a push:
+
+| Gate | Task |
+| --- | --- |
+| Branch coverage of `app/` never falls | `task test:cov`, `task quality:coverage:check` |
+| Properties at 1000 examples | `task test:deep` |
+| Known vulnerabilities in `.venv` | `task security:deps` (network) |
+| Secrets in the git history | `task security:secrets`; staged changes by the pre-commit hook |
+| RustSec advisories | `task rust:audit` (network) |
+
+`task validate` runs the Python-side gates, offline. CI
 ([.github/workflows/validate.yml](../.github/workflows/validate.yml)) runs those and the Rust
 job on every push; the image build runs on manual dispatch.
 

@@ -27,11 +27,12 @@ jobs:
       - name: Install task
         run: curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/local/bin
 
+      # yt-dlp too: without it, basedpyright cannot resolve the import in app/youtube.py.
       - name: Install test and lint tooling
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install --quiet -r requirements-dev.txt \
-            $(grep -E '^(Flask|Werkzeug|numpy|scipy|onnxruntime)==' app/requirements.txt) \
+            $(grep -E '^(Flask|Werkzeug|numpy|scipy|onnxruntime)==|^yt-dlp$' app/requirements.txt) \
             ./beatcore
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
@@ -43,6 +44,15 @@ jobs:
 
       - name: Lint
         run: task lint:check
+
+      - name: Types
+        run: task types:check
+
+      - name: ast-grep rules
+        run: task sg:check
+
+      - name: ast-grep rule tests
+        run: task sg:test
 
       - name: Tests
         run: task test

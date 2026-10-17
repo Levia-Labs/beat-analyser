@@ -91,7 +91,7 @@ def login() -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("--apply", action="store_true", help="publish instead of comparing")
     args = parser.parse_args()
 

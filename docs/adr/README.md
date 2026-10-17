@@ -14,6 +14,7 @@ of these and see an obvious improvement; the record is what stops the fix from b
 | [0007](0007-taskfile-as-the-interface.md) | go-task is the interface for people and agents | Accepted |
 | [0008](0008-loopback-without-auth.md) | No authentication; loopback by default, same-origin POSTs | Accepted |
 | [0009](0009-beatcore-and-basic-pitch.md) | beatcore (Rust) and basic-pitch (ONNX) replace madmom | Accepted |
+| [0010](0010-two-tier-local-pipeline.md) | Verification runs locally in two tiers, as tasks | Accepted |
 
 ## Writing one
 

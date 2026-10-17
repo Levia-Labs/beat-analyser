@@ -50,7 +50,8 @@ def _beatcore():
     directory beatcore/ imports as an empty namespace package.
     """
     try:
-        import beatcore
+        # Built into the image and into .venv only where a Rust toolchain exists.
+        import beatcore  # pyright: ignore[reportMissingImports]
     except ImportError:
         return None
     return beatcore if hasattr(beatcore, "analyse") else None

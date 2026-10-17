@@ -42,7 +42,7 @@ def multipart(path: Path) -> tuple[bytes, str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("file", type=Path)
     parser.add_argument("--url", default="http://127.0.0.1:5000")
     args = parser.parse_args()

@@ -46,6 +46,8 @@ DID_NOT_RUN = (
     "precondition not met",
     "executable file not found",
     "No module named pytest",
+    # tests/conftest.py imports hypothesis; a .venv from before it was added lacks it.
+    "No module named 'hypothesis'",
 )
 
 

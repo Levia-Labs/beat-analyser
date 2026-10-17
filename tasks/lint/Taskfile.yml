@@ -16,7 +16,7 @@ tasks:
   check:
     desc: Lint and format check. Changes nothing.
     cmds:
-      - '"{{.RUFF}}" check {{.PY_PATHS}}'
+      - '"{{.RUFF}}" check --output-format concise {{.PY_PATHS}}'
       - '"{{.RUFF}}" format --check {{.PY_PATHS}}'
       - '"{{.YAMLLINT}}" --strict {{.YAML_PATHS}}'
 

@@ -3,3 +3,8 @@ pytest==9.1.1
 ruff==0.16.6
 yamllint==1.38.0
 pre-commit==4.5.1
+basedpyright==1.40.2
+ast-grep-cli==0.51.0
+coverage==7.16.2
+hypothesis==6.170.1
+pip-audit==2.10.1

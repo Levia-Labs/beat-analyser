@@ -42,6 +42,8 @@ SKIP = (
     "node_modules/",
     # Runtime data: project folders a document names exist only after an upload.
     "uploads/",
+    # Design specs and implementation plans name files before they exist.
+    "docs/superpowers/",
 )
 
 # A path is only treated as claimed when the token carries a separator and a known suffix,

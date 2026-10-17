@@ -38,6 +38,21 @@ tasks:
     cmds:
       - '{{.RUST_RUN}} cargo generate-lockfile'
 
+  audit:
+    desc: RustSec advisories for beatcore/Cargo.lock (cargo-audit in the pinned image; needs network)
+    cmds:
+      # cargo-audit and the advisory database persist in the beatcore-tools volume: the first
+      # run builds the tool (minutes), later runs only fetch new advisories. The database sits
+      # below the mount, not on it: cargo-audit replaces its directory, and a mount point
+      # cannot be replaced (EBUSY).
+      - >-
+        docker run --rm
+        -v "{{.ROOT_DIR}}/beatcore:/src"
+        -v beatcore-cargo:/usr/local/cargo/registry
+        -v beatcore-tools:/opt/tools
+        -w /src {{.RUST_IMAGE}}
+        sh -c "[ -x /opt/tools/bin/cargo-audit ] || cargo install --quiet --locked --root /opt/tools cargo-audit; /opt/tools/bin/cargo-audit audit --db /opt/tools/advisory-db"
+
   analyse:
     desc: 'Run beatcore-cli on a WAV file. Usage: task rust:analyse FILE=.cache/fixtures/fixture-demo.wav'
     requires:

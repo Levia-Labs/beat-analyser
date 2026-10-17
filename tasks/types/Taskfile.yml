@@ -1,0 +1,21 @@
+version: "3"
+
+# basedpyright over app/, tasks/ and tests/ (pyrightconfig.json). Errors that predate the
+# checker live in .basedpyright/baseline.json; basedpyright drops an entry once it is fixed,
+# so the count only falls (docs/adr/0006).
+
+tasks:
+  check:
+    desc: Type check. Fails on an error not in the baseline. Changes nothing else.
+    preconditions:
+      - sh: '"{{.PY}}" -c "import basedpyright"'
+        msg: basedpyright is not in .venv - run task deps:setup
+    cmds:
+      - '"{{.PY}}" -m basedpyright'
+
+  baseline:
+    desc: Accept the current type errors as the ceiling
+    cmds:
+      # Exits 1 while any error exists, baselined or not; the file is written either way.
+      - cmd: '"{{.PY}}" -m basedpyright --writebaseline'
+        ignore_error: true

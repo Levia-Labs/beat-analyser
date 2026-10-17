@@ -34,7 +34,7 @@ def test_invalid_names(name):
 def test_package_and_list(tmp_path):
     folder = storage.project_dir(tmp_path, "song")
     folder.mkdir()
-    (folder / "kick.csv").write_text("0.5000,kick\n")
+    (folder / "kick.csv").write_text("0.5000,kick\n", encoding="utf-8")
     storage.save_meta(folder, "song", key="A minor", bpm=128.0)
 
     archive = storage.package(tmp_path, "song")
@@ -52,6 +52,6 @@ def test_package_and_list(tmp_path):
 
 def test_clear_tracks_keeps_audio_and_meta(tmp_path):
     for name in ("audio.wav", "meta.json", "kick.csv", "bass.csv"):
-        (tmp_path / name).write_text("x")
+        (tmp_path / name).write_text("x", encoding="utf-8")
     storage.clear_tracks(tmp_path)
     assert sorted(p.name for p in tmp_path.iterdir()) == ["audio.wav", "meta.json"]

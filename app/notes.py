@@ -155,7 +155,7 @@ def _decode(frames: np.ndarray, onsets: np.ndarray, min_len: int) -> list[tuple]
 
     # Melodia trick: grow notes from the strongest remaining frames, both directions.
     while np.max(energy) > FRAME_THRESHOLD:
-        mid, freq = np.unravel_index(np.argmax(energy), energy.shape)
+        mid, freq = map(int, np.unravel_index(np.argmax(energy), energy.shape))
         energy[mid, freq] = 0
         i, k = mid + 1, 0
         while i < n_frames - 1 and k < ENERGY_TOL:

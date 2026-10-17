@@ -14,7 +14,10 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `task setup` | `.venv`, dependencies, git hooks, then `doctor` | local, slow first time |
 | `task doctor` | Which tools and imports are present | read |
 | `task test [K=expr]` | pytest, madmom stubbed | read |
-| `task validate` | Every gate | read |
+| `task validate` | Every offline gate; the Stop hook runs it, pre-commit and CI run its parts | read |
+| `task validate:deep` | `validate`, coverage ratchet, deep properties, pip-audit, gitleaks, cargo-audit | read, network |
+| `task test:cov` | Tests under branch coverage; prints only files below 100% | read |
+| `task test:deep` | Property tests at 1000 examples | read |
 | `task analyse FILE=path` | Analyse one local file, print per-track summary. Runs in the image when `.venv` lacks beatcore | local |
 | `task analyse:yt URL=...` | Download and analyse a YouTube video | local, network |
 | `task summary NAME=song` | Events and time range per track | read |
@@ -57,8 +60,16 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `git:update` | Fetch `main`, merge into current branch | local, network |
 | `git:commit [M=...] [SKIP_CHECKS=1]` | Validate, stage, pre-commit, commit, push | pushes, denied to agents |
 | `lint:check`, `lint:run` | ruff and yamllint; `run` formats | read / local |
+| `types:check` | basedpyright against `.basedpyright/baseline.json` | read |
+| `types:baseline` | Accept the current type errors ([ADR 0006](adr/0006-ratcheting-baselines.md)) | local |
+| `sg:check`, `sg:test` | ast-grep project rules / their tests (`tasks/sg/`) | read |
+| `sg:search P='...' [L=]` | Structural code search; single-quote the pattern | read |
+| `security:deps` | pip-audit over `.venv` | read, network |
+| `security:secrets` | gitleaks over the git history, in its image | read, slow first time |
+| `rust:audit` | cargo-audit over `beatcore/Cargo.lock` in the Rust image | read, network, slow first time |
 | `quality:check` | Doc-path and file-length gates | read |
 | `quality:docs`, `quality:long-files:top` | The findings behind the gates | read |
+| `quality:coverage:check` | Coverage of `app/` against its baseline (after `test:cov`) | read |
 | `quality:*:baseline` | Accept current findings ([ADR 0006](adr/0006-ratcheting-baselines.md)) | local |
 | `precommit:setup`, `precommit:run` | Install / run the git hooks | local / read |
 | `uploads:size` | Disk used | read |

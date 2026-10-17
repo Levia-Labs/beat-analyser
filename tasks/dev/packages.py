@@ -53,7 +53,7 @@ def crate(name: str) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("--github", nargs="*", default=[], metavar="OWNER/REPO")
     parser.add_argument("--pypi", nargs="*", default=[], metavar="PACKAGE")
     parser.add_argument("--crates", nargs="*", default=[], metavar="CRATE")

@@ -1,0 +1,5 @@
+# ast-grep: project rules in tasks/sg/rules, one test file each in tasks/sg/tests.
+ruleDirs:
+  - tasks/sg/rules
+testConfigs:
+  - testDir: tasks/sg/tests

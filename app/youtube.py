@@ -42,17 +42,21 @@ def download_audio(vid: str, folder: Path, max_seconds: int, max_bytes: int) -> 
     """
     from yt_dlp import YoutubeDL
 
-    options = {
-        "format": "bestaudio/best",
-        "outtmpl": str(folder / "source.%(ext)s"),
-        "quiet": True,
-        "no_warnings": True,
-        "noplaylist": True,
-        # The container's root file system is read-only; ~/.cache is not writable.
-        "cachedir": False,
-        "max_filesize": max_bytes,
-    }
-    with YoutubeDL(options) as ydl:
+    # A literal in the call, not a variable: yt-dlp types `params` as a TypedDict, and only a
+    # literal is checked against it key by key.
+    with YoutubeDL(
+        {
+            "format": "bestaudio/best",
+            "outtmpl": str(folder / "source.%(ext)s"),
+            "quiet": True,
+            "no_warnings": True,
+            "noplaylist": True,
+            # The container's root file system is read-only; ~/.cache is not writable.
+            # yt-dlp documents False as "no cache"; typeshed's stub allows only str | None.
+            "cachedir": False,  # pyright: ignore[reportArgumentType]
+            "max_filesize": max_bytes,
+        }
+    ) as ydl:
         info = ydl.extract_info(canonical_url(vid), download=False)
         if (info.get("duration") or 0) > max_seconds:
             raise ValueError(f"Video longer than {max_seconds // 60} minutes")

@@ -1,0 +1,17 @@
+id: template-no-inline
+language: html
+severity: error
+message: The CSP forbids inline script and style; move it to app/static/.
+files:
+  - app/templates/**/*.html
+rule:
+  any:
+    - kind: attribute_name
+      regex: '^style$'
+    - all:
+        - kind: script_element
+        - not:
+            has:
+              kind: attribute_name
+              regex: '^src$'
+              stopBy: end

@@ -12,7 +12,10 @@ everyday tasks (`setup`, `test`, `analyse`, `run`, `validate`); `task --list` is
 | [eval/](eval/) | `eval:` | Score beatcore's tempo, beats and onsets against ground truth |
 | [git/](git/) | `git:` | `commit`, `status`, `update` - same commands as the toolkit repository |
 | [lint/](lint/) | `lint:` | ruff and yamllint |
-| [quality/](quality/) | `quality:` | Documentation-path and file-length gates |
+| [quality/](quality/) | `quality:` | Documentation-path, file-length and coverage gates |
+| [types/](types/) | `types:` | basedpyright and its baseline |
+| [sg/](sg/) | `sg:` | ast-grep: project rules, their tests, structural search |
+| [security/](security/) | `security:` | pip-audit and gitleaks; `rust:audit` covers Cargo.lock |
 | [precommit/](precommit/) | `precommit:` | The git hooks |
 | [uploads/](uploads/) | `uploads:` | Runtime data: size, cached ZIPs, deletion behind `CONFIRM=yes` |
 | [claude/](claude/) | `claude:` | Usage budget, hooks, caveman and superpowers plugins |

@@ -1,0 +1,7 @@
+id: template-no-inline
+valid:
+  - '<script src="/static/app.js"></script>'
+  - '<div class="page"></div>'
+invalid:
+  - "<script>alert(1)</script>"
+  - '<div style="color: red"></div>'

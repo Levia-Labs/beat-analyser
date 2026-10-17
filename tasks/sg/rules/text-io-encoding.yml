@@ -1,0 +1,52 @@
+id: text-io-encoding
+language: python
+severity: error
+message: Pass encoding="utf-8". The Windows default is cp1252, and mojibake surfaces far from here.
+rule:
+  all:
+    - kind: call
+    - not:
+        has:
+          field: arguments
+          has:
+            kind: keyword_argument
+            regex: '^encoding\s*='
+    - any:
+        # Path text helpers: always text, whatever the other arguments.
+        - has:
+            field: function
+            kind: attribute
+            regex: '\.(read_text|write_text)$'
+        # The builtin: text unless a binary mode literal appears, positional or mode=.
+        - all:
+            - has:
+                field: function
+                kind: identifier
+                regex: '^open$'
+            - not:
+                has:
+                  field: arguments
+                  kind: string
+                  regex: '^["''][rwax+tU]*b[rwax+tU]*["'']$'
+                  stopBy: end
+        # A .open() method: wave, zipfile and webbrowser have one too, so flag only the
+        # shapes that are Path.open in text mode - no argument, a text mode, or newline=.
+        - all:
+            - has:
+                field: function
+                kind: attribute
+                regex: '\.open$'
+            # Order matters: `any` keeps the first branch that matches structurally, and a
+            # MODE bound to `newline=""` would then fail the constraint and drop the match.
+            - any:
+                - has:
+                    field: arguments
+                    has:
+                      kind: keyword_argument
+                      regex: '^(newline|errors)\s*='
+                - pattern: $P.open()
+                - pattern: $P.open($MODE)
+                - pattern: $P.open($MODE, $$$REST)
+constraints:
+  MODE:
+    regex: '^["''][rwax+tU]{1,3}["'']$'

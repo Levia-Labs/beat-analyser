@@ -1,0 +1,11 @@
+# Branch coverage per file, accepted at these percentages.
+# Regenerate with: task test:cov, then task quality:coverage:baseline
+TOTAL 74.3
+app/analysis.py 87.0
+app/app.py 84.3
+app/cli.py 0.0
+app/key.py 100.0
+app/notes.py 94.8
+app/pipeline.py 92.5
+app/storage.py 93.2
+app/youtube.py 68.1

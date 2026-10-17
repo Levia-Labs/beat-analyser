@@ -1,0 +1,8 @@
+id: app-bare-imports
+valid:
+  - "import storage"
+  - "from storage import is_valid_name"
+invalid:
+  - "from . import storage"
+  - "from .storage import is_valid_name"
+  - "from app import storage"

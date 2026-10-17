@@ -51,7 +51,7 @@ def write_wav(path: Path, data: list[float]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("out", type=Path)
     parser.add_argument("--seconds", type=float, default=4.0)
     parser.add_argument("--bpm", type=float, default=120.0)

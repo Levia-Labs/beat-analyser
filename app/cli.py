@@ -89,7 +89,7 @@ def list_projects(root: Path) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("files", nargs="*", type=Path, help="audio files to analyse")
     parser.add_argument("--root", type=Path, default=Path("uploads"), help="upload root")
     group = parser.add_mutually_exclusive_group()

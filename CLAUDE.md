@@ -23,7 +23,10 @@ virtualenv runs the CLI and the tests.
 
 ```bash
 task test                       # seconds; analysis stubbed, note model run if installed
-task validate                   # lint, tests, doc paths, file length, compose file
+task types:check                # basedpyright against its baseline
+task sg:check                   # ast-grep project rules (tasks/sg/rules)
+task validate                   # lint, types, ast-grep, tests, doc paths, file length, compose
+task validate:deep              # + coverage ratchet, 1000-example properties, security audits
 task rust:test                  # beatcore: synthetic tempo, beat and onset truth
 task rust:check                 # rustfmt and clippy -D warnings
 task dev:fixture                # clip with known events in .cache/fixtures/
@@ -35,7 +38,31 @@ A change under `beatcore/` is verified by `task rust:test` and `task rust:check`
 `task docker:e2e` for the Python binding. A change to `app/notes.py` by `task test K=notes`.
 
 A change to `app/Dockerfile` or `app/requirements.txt` is verified only by `task docker:e2e`.
-If it was not run, say so.
+If it was not run, say so. A dependency change also gets `task security:deps` (Python) or
+`task rust:audit` (beatcore).
+
+A new pure function at a trust boundary (names, URLs, parsing) gets a property in
+`tests/test_properties.py`. A baseline (`types:baseline`, `quality:coverage:baseline`) is
+regenerated only to record progress, never to green a failure (ADR 0006, ADR 0010).
+
+## Finding things cheaply
+
+Every file read stays in context. Ask the local tools first, read second.
+
+1. Relationships ("what calls X", "what depends on Y"): `task graphify:query Q="..."`. The
+   Stop hook refreshes the graph after each validated turn.
+2. Code shape ("every `subprocess.run` without `check=`"): `task sg:search P='...'`, single
+   quotes, `$X` one node, `$$$X` many. Text grep misses calls split across lines.
+3. Literal strings: the Grep tool.
+4. Then Read, with `offset` and `limit` on the lines the search named.
+
+Tasks print compact output already: ruff `concise`, pytest `-q --tb=short`, coverage lists
+only files below 100%. RTK's global hook compresses raw shell commands but does not rewrite
+`task`, so run the gates as `rtk task validate`, `rtk task test`, `rtk task types:check`:
+[.rtk/filters.toml](.rtk/filters.toml) then collapses a clean run to `validate: ok` and keeps
+every failing line. Trust is pinned to the file's hash: after editing it, a person runs
+`rtk trust` again. `rtk gain` shows what it saved. Every task denied in settings.json is
+denied with the `rtk` prefix too; a new deny rule needs both forms.
 
 ## Layout
 
@@ -91,6 +118,9 @@ An approval prompt stops the person's work. Every command must match the allowli
 | deleting a test project | name it `fixture-*`, then `task uploads:fixtures:clean` |
 | reading CSVs or listing `uploads/` | `task summary NAME=`, `task projects` |
 | a grep sweep for "what calls X" | `task graphify:query Q=` |
+| a grep for a call shape | `task sg:search P='yt_dlp.YoutubeDL($$$A)'` |
+| reading code to check a convention | a rule in `tasks/sg/rules/` with a test in `tasks/sg/tests/` |
+| reading code for a None or type slip | `task types:check` |
 
 Do not re-read a file after editing it.
 
@@ -104,3 +134,7 @@ Do not re-read a file after editing it.
 4. Comments explain why. Comments recording what a previous version got wrong stay.
 5. Decisions with non-obvious reasons get an ADR in [docs/adr/](docs/adr/README.md).
 6. Shell inside Taskfiles is not bash: [.claude/rules/taskfile-shell.md](.claude/rules/taskfile-shell.md).
+7. A convention that can be checked structurally becomes an ast-grep rule with a test, not
+   a sentence here. Conventions 1 and 3, and the yt-dlp half of 2, are enforced by
+   `tasks/sg/rules/`.
+8. Text I/O passes `encoding="utf-8"` (rule `text-io-encoding`).
