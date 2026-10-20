@@ -10,12 +10,12 @@ of these and see an obvious improvement; the record is what stops the fix from b
 | [0003](0003-madmom-and-ffmpeg-only.md) | madmom and ffmpeg do all audio I/O; librosa and pydub removed | Superseded by 0009 |
 | [0004](0004-yt-dlp-unpinned.md) | yt-dlp is the one unpinned dependency | Accepted |
 | [0005](0005-name-keyed-projects.md) | Projects are keyed by name and the ZIP is the cache | Accepted |
-| [0006](0006-ratcheting-baselines.md) | Quality gates ratchet against a committed baseline | Accepted |
-| [0007](0007-taskfile-as-the-interface.md) | go-task is the interface for people and agents | Accepted |
+| [0006](0006-ratcheting-baselines.md) | Quality gates ratchet against a committed baseline | Superseded by Crepidoma ADR-0005 |
+| [0007](0007-taskfile-as-the-interface.md) | go-task is the interface for people and agents | Superseded by Crepidoma ADR-0004 |
 | [0008](0008-loopback-without-auth.md) | No authentication; loopback by default, same-origin POSTs | Accepted |
 | [0009](0009-beatcore-and-basic-pitch.md) | beatcore (Rust) and basic-pitch (ONNX) replace madmom | Accepted |
-| [0010](0010-two-tier-local-pipeline.md) | Verification runs locally in two tiers, as tasks | Accepted |
-| [0011](0011-tool-first-agent-loop.md) | Agents pick tools; tools return only what the next decision needs | Accepted |
+| [0010](0010-two-tier-local-pipeline.md) | Verification runs locally in two tiers, as tasks | Superseded by Crepidoma ADR-0002 |
+| [0011](0011-tool-first-agent-loop.md) | Agents pick tools; tools return only what the next decision needs | Superseded by Crepidoma ADR-0001 |
 
 ## Writing one
 

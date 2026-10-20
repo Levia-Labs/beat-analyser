@@ -21,7 +21,7 @@ task rust:test                # beatcore's synthetic tempo, beat and onset tests
 task analyse FILE=clip.wav    # a real run of both engines
 task docker:e2e               # image build, upload, refusal checks
 task run                      # dev server on :5000 (needs beatcore in .venv); task smoke
-task lint:run                 # format Python; task rust:fmt for Rust
+task style:run                 # format Python; task rust:fmt for Rust
 task validate                 # before committing - the same gates as CI and the hooks
 task validate:deep            # before pushing - coverage, deep properties, security audits
 ```
@@ -47,7 +47,7 @@ Not covered: analysis quality on real music (TODO.md), ffmpeg itself and yt-dlp 
 | Gate | Task |
 | --- | --- |
 | Task tree resolves | `task --list-all` |
-| ruff lint and format, yamllint | `task lint:check` |
+| ruff lint and format, yamllint | `task style:check` |
 | Types (basedpyright, baselined) | `task types:check` |
 | Project conventions as ast-grep rules, and their tests | `task sg:check`, `task sg:test` |
 | pytest, properties at 50 examples | `task test` |

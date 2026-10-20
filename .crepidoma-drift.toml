@@ -1,0 +1,20 @@
+# Files this pillar extends on purpose; `task drift` in Crepidoma counts them as extended, not drifted.
+
+[[extended]]
+path = ".gitattributes"
+
+[[extended]]
+path = ".yamllint"
+# Taskfile shell lines are long and the repo ignores uploads/ and vendored skills, so line-length
+# is off and the brace rule is wider; the bracket and comment rules and the shared ignores are not used.
+waive = ["ast-grep/rules/", "brackets:", "build/", "comments:", "configs/ast-grep/rules/", "configs/semgrep/", "dist/", "line-length:", "max-spaces-inside: 1", "max: 120", "min-spaces-from-content: 1", "node_modules/", "semgrep/"]
+
+[[extended]]
+path = "ruff.toml"
+# This file extends the shared one and states only what differs: Python 3.14 target, the container
+# project's rule set, per-file ignores. The shared lines it does not repeat are inherited through `extend`.
+waive = ['"S101", # assert is how pytest checks; per-file globs resolve relative to this file, not the pillar', '"S603", # subprocess call with a list argument', '"S607", # executable resolved through PATH', 'extend-exclude = ["graphify-out"]', 'indent-style = "space"', 'line-ending = "lf"', 'output-format = "concise"', 'select = ["E", "F", "W", "I", "UP", "B", "SIM", "PTH", "RUF", "S"]', 'target-version = "py312"']
+
+[[extended]]
+path = "sgconfig.yml"
+waive = ["ruleDirs|- ast-grep/rules"]

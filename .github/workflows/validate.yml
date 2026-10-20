@@ -43,7 +43,7 @@ jobs:
         run: task --list-all > /dev/null
 
       - name: Lint
-        run: task lint:check
+        run: task style:check
 
       - name: Types
         run: task types:check

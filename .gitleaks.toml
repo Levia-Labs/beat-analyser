@@ -1,0 +1,3 @@
+# Shared rules from Crepidoma.
+[extend]
+path = ".crepidoma/configs/gitleaks.toml"

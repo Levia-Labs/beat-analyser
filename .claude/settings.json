@@ -5,7 +5,8 @@
     "GRAPHIFY_CLAUDE_CLI_MODEL": "haiku",
     "SECURITY_REVIEW_MODEL": "claude-sonnet-5-5",
     "CLAUDE_CODE_DISABLE_ARTIFACT": "1",
-    "CLAUDE_CODE_DISABLE_CRON": "1"
+    "CLAUDE_CODE_DISABLE_CRON": "1",
+    "CREPIDOMA_POOL_TTL": "1800"
   },
   "disableClaudeAiConnectors": true,
   "skillListingMaxDescChars": 250,
@@ -107,9 +108,13 @@
       "Bash(task graphify:update)",
       "Bash(task graphify:update *)",
       "Bash(task lint:check)",
+      "Bash(task style:check)",
       "Bash(task lint:check *)",
+      "Bash(task style:check *)",
       "Bash(task lint:run)",
+      "Bash(task style:run)",
       "Bash(task lint:run *)",
+      "Bash(task style:run *)",
       "Bash(task precommit:autoupdate)",
       "Bash(task precommit:autoupdate *)",
       "Bash(task precommit:run)",
@@ -256,9 +261,13 @@
       "PowerShell(task graphify:update)",
       "PowerShell(task graphify:update *)",
       "PowerShell(task lint:check)",
+      "PowerShell(task style:check)",
       "PowerShell(task lint:check *)",
+      "PowerShell(task style:check *)",
       "PowerShell(task lint:run)",
+      "PowerShell(task style:run)",
       "PowerShell(task lint:run *)",
+      "PowerShell(task style:run *)",
       "PowerShell(task precommit:autoupdate)",
       "PowerShell(task precommit:autoupdate *)",
       "PowerShell(task precommit:run)",
@@ -367,7 +376,18 @@
       "PowerShell(graphify *)",
       "PowerShell(Get-Content *)",
       "PowerShell(Get-ChildItem *)",
-      "PowerShell(Test-Path *)"
+      "PowerShell(Test-Path *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git rev-parse *)",
+      "Bash(git ls-files *)",
+      "Bash(git blame *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(pre-commit run *)"
     ],
     "deny": [
       "PowerShell",
@@ -418,47 +438,25 @@
       "PowerShell(git push *)",
       "PowerShell(rtk git push *)",
       "PowerShell(git reset --hard *)",
-      "PowerShell(git clean *)"
+      "PowerShell(git clean *)",
+      "Bash(rm -rf *)",
+      "Bash(git diff *--output*)",
+      "Bash(git diff *--ext-diff*)",
+      "Bash(git log *--output*)",
+      "Bash(git log *--ext-diff*)",
+      "Bash(git show *--output*)",
+      "Bash(git show *--ext-diff*)"
     ],
     "additionalDirectories": []
   },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/tasks/claude/hooks.py\" pre-tool-use",
-            "timeout": 60
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/tasks/claude/hooks.py\" post-tool-use"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/tasks/claude/hooks.py\" stop",
-            "timeout": 300
-          }
-        ]
-      }
-    ]
-  },
   "extraKnownMarketplaces": {
+    "levia-labs": {
+      "source": {
+        "source": "github",
+        "repo": "Levia-Labs/Crepidoma",
+        "ref": "main"
+      }
+    },
     "caveman": {
       "source": {
         "source": "github",
@@ -467,6 +465,7 @@
     }
   },
   "enabledPlugins": {
+    "crepidoma@levia-labs": true,
     "caveman@caveman": true,
     "claude-code-setup@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
@@ -474,5 +473,6 @@
     "security-guidance@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "frontend-design@anthropic-plugin-directory": true
-  }
+  },
+  "subagentPromptCacheTtl": "1h"
 }

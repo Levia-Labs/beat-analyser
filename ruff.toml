@@ -1,4 +1,6 @@
 # ruff over app/, tasks/ and tests/. The container runs Python 3.14 (app/Dockerfile).
+# Shared rules come from Crepidoma; this file adds the pillar-only settings.
+extend = ".crepidoma/configs/ruff.toml"
 target-version = "py314"
 line-length = 100
 
@@ -33,10 +35,7 @@ known-first-party = [
 
 [lint.per-file-ignores]
 "tests/**" = ["S101"]  # assert is the test framework
-# Vendored from the toolkit repository; kept close to upstream.
-"tasks/claude/budget.py" = ["S", "PTH", "SIM", "UP", "B", "RUF"]
 "tasks/quality/*.py" = ["S"]
-"tasks/claude/hooks.py" = ["S"]
 # urlopen on URLs the operator typed or fixed API hosts; fixture noise is not cryptography.
 "tasks/dev/*.py" = ["S310", "S311"]
 "tasks/docker/hub.py" = ["S310"]  # fixed https://hub.docker.com URLs only

@@ -26,3 +26,12 @@ Dockerfile text eol=lf
 *.rs   text eol=lf
 Cargo.lock text eol=lf
 *.png  binary
+
+# Shared with Crepidoma.
+*.jpg   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.svg binary
+*.cmd text eol=crlf
+*.bat text eol=crlf
