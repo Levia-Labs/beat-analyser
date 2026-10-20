@@ -90,7 +90,7 @@ By design: the port is published on `127.0.0.1`. Read [security.md](security.md)
 
 ### The Stop hook blocked the turn
 
-[tasks/claude/hooks.py](../tasks/claude/hooks.py) ran `task validate` after an edit and it
+The crepidoma plugin's Stop hook ran `task validate` after an edit and it
 failed; the output is attached. Run `task validate` and fix what it names. A missing tool is
 reported, not blocked.
 

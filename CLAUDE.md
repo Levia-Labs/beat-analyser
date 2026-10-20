@@ -19,32 +19,29 @@ virtualenv runs the CLI and the tests.
 3. **`task validate` before saying done.** The Stop hook runs it after any edit to source,
    Taskfiles or docs and blocks the turn on failure.
 
-## The tool-first loop (ADR 0011)
+## Tool-first loop and agents
 
-Every token read stays in context and is paid for again on each later turn.
+Directives, agents and hooks come from the crepidoma plugin (github.com/Levia-Labs/Crepidoma,
+submodule `.crepidoma/`; ADR 0011 is superseded by Crepidoma ADR-0001). Pillar-specific rules:
 
-1. A turn is a tool call with chosen parameters. A tool prints the minimum the next
-   decision needs: pass or fail, counts, deltas, the failing lines. Never read content to
-   hand-write a single-use result.
-2. No task for the job: write a parametrized one first (script, test, task, README row; the
-   `tool-smith` agent does this), then call it. No throwaway inline scripts.
-3. Subagents are named single-job agents from `.claude/agents/`. A hook refuses catch-alls
-   (general-purpose, fork, Explore, Plan). No agent fits: write one. An agent returns a
-   receipt of at most 10 lines, never file contents.
-4. At most 6 lanes at once, hook-enforced. `task claude:lanes` lists them. Lanes share
-   the working tree: give each a disjoint set of paths, let each run scoped gates
-   (`test K=`), and run `task validate` once after they finish.
-5. `task claude:tokens`, `:agents`, `:reads`, `:tools` show where sessions spent. A file
-   high in `claude:tokens:reads` wants a tool that answers the question it was read for.
+1. Lanes share the working tree: give each a disjoint set of paths, let each run scoped gates
+   (`test K=`), and run `task validate` once after they finish. `task claude:lanes` lists lanes.
+2. Gate through `task gate T="style:run,test K=<area>,types:check,sg:check"`, never `validate`
+   mid-lane. A change to `app/Dockerfile` or `app/requirements.txt` also needs
+   `task gate T=docker:e2e`; say so in the receipt when it was not run.
+3. `app/` changes: failing test first in `tests/`; the code conventions below hold. A new pure
+   function at a trust boundary gets a property in `tests/test_properties.py`. Never touch
+   `uploads/`, never regenerate a baseline to pass a gate.
+4. New tool scripts go under `tasks/<namespace>/`, a test in `tests/test_<script>.py` loaded with
+   `importlib.util.spec_from_file_location` as `tests/test_coverage_gate.py` does, a README row and
+   a line in `docs/tasks.md`. New ast-grep rules go in `tasks/sg/rules` with a test in
+   `tasks/sg/tests` and a row in `tasks/sg/README.md`.
+5. Docs: a decision with a non-obvious reason gets an ADR from `docs/adr/template.md`, numbered
+   next, with a row in `docs/adr/README.md`; verify with `task gate T="quality:docs:check"`.
 
-| Agent | One job |
-| --- | --- |
-| [tool-smith](.claude/agents/tool-smith.md) | A parametrized task: script, test, Taskfile entry, README row |
-| [app-implementer](.claude/agents/app-implementer.md) | One bounded change in `app/`, test-first |
-| [beatcore-tuner](.claude/agents/beatcore-tuner.md) | Move one beatcore metric, judged by `task eval:synthetic:diff` |
-| [rule-smith](.claude/agents/rule-smith.md) | A convention as an ast-grep rule with tests |
-| [docs-syncer](.claude/agents/docs-syncer.md) | Docs and ADRs in line with one change |
-| [diff-reviewer](.claude/agents/diff-reviewer.md) | Correctness bugs in a diff, hunks only |
+Pillar agent: [beatcore-tuner](.claude/agents/beatcore-tuner.md) moves one beatcore metric,
+judged by `task eval:synthetic:diff`. Shared agents (toolsmith, implementer, rule-smith,
+docs-syncer, diff-reviewer) come from the plugin.
 
 `cavecrew-investigator` locates code; `task graphify:query` usually answers first.
 
@@ -136,7 +133,7 @@ An approval prompt stops the person's work. Every command must match the allowli
    session.
 4. Files: Read, Write, Edit, Grep, Glob. Never `cat`, `head` or `grep` through the shell.
 5. Never edit `.claude/settings*.json` through the shell or a task: Claude Code always asks
-   before a command changes its own permissions. `task claude:allow:sync` is for a person.
+   before a command changes its own permissions.
 6. `task claude:history:prompts` lists every past command the allowlist did not cover. Read
    it at the start of a long session; turn each repeat into a task.
 
@@ -168,7 +165,9 @@ Do not re-read a file after editing it.
 3. No inline `<script>` or `style=""` in templates: the CSP forbids them.
 4. Comments explain why. Comments recording what a previous version got wrong stay.
 5. Decisions with non-obvious reasons get an ADR in [docs/adr/](docs/adr/README.md).
-6. Shell inside Taskfiles is not bash: [.claude/rules/taskfile-shell.md](.claude/rules/taskfile-shell.md).
+6. Shell inside Taskfiles is not bash (plugin directive `taskfile-shell`). Top-level vars of
+   included Taskfiles share one scope: prefix them with the namespace. Use `{{.PY}}` for the venv
+   interpreter and `{{.SYS_PY}}` for the system one. Pass root vars through the `includes:` entry.
 7. A convention that can be checked structurally becomes an ast-grep rule with a test, not
    a sentence here. Conventions 1 and 3, and the yt-dlp half of 2, are enforced by
    `tasks/sg/rules/`.

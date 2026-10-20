@@ -4,7 +4,7 @@ schema_version = 1
 
 [filters.task-validate]
 description = "Collapse a clean task validate"
-match_command = "^task\\s+(validate|lint:check|quality:check|types:check|sg:check|sg:test|test)\\b"
+match_command = "^task\\s+(validate|style:check|quality:check|types:check|sg:check|sg:test|test)\\b"
 strip_lines_matching = [
   "^All checks passed!$",
   "^\\d+ files? already formatted$",

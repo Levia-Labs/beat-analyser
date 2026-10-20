@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The root Taskfile includes namespaces from the .crepidoma submodule.
+          submodules: true
 
       - uses: actions/setup-python@v5
         with:
@@ -43,7 +46,7 @@ jobs:
         run: task --list-all > /dev/null
 
       - name: Lint
-        run: task lint:check
+        run: task style:check
 
       - name: Types
         run: task types:check

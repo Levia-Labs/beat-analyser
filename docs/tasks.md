@@ -63,7 +63,7 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `git:status` | Uncommitted changes and upstream | read |
 | `git:update` | Fetch `main`, merge into current branch | local, network |
 | `git:commit [M=...] [SKIP_CHECKS=1]` | Validate, stage, pre-commit, commit, push | pushes, denied to agents |
-| `lint:check`, `lint:run` | ruff and yamllint; `run` formats | read / local |
+| `style:check`, `style:run` | ruff and yamllint; `run` formats | read / local |
 | `types:check` | basedpyright against `.basedpyright/baseline.json` | read |
 | `types:baseline` | Accept the current type errors ([ADR 0006](adr/0006-ratcheting-baselines.md)) | local |
 | `sg:check`, `sg:test` | ast-grep project rules / their tests (`tasks/sg/`) | read |
@@ -81,13 +81,10 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `uploads:zips:clean` | Delete cached ZIPs; rebuilt on next request | local |
 | `uploads:clean CONFIRM=yes` | Delete every project and its audio | destructive, denied to agents |
 | `claude:budget`, `claude:resume` | Usage windows | read |
-| `claude:skills:setup`, `claude:skills:verify` | caveman and superpowers plugins | local / read |
 | `claude:history`, `claude:history:prompts`, `claude:history:inline` | Session command log: repeats, approval prompts, one-liners | read |
-| `claude:tokens [SESSION=] [PROJECT=]` | Tokens per session and subagent | read |
-| `claude:tokens:agents`, `:reads`, `:tools` | Subagents by cost / files Read most / result size by tool | read |
+| `claude:spend`, `claude:usage` | Token spend per session and subagent (shared namespace) | read |
 | `claude:lanes`, `claude:lanes:reset` | Subagent lanes in use against the limit of 6 / forget them | read / local |
-| `claude:allow:sync` | Slim `.claude/settings.json`, twin task denies with `rtk`, wire lane hooks | person only, denied to agents |
-| `claude:allow:check`, `claude:allow:report` | Redundant rules, missing twins, unwired hooks: fail / list only | read |
+| `claude:allow:check`, `claude:allow:report` | Permission rules against the Taskfile interface: fail / list only | read |
 | `claude:hooks:check` | Run the Stop hook by hand | read |
 | `graphify:update`, `graphify:query Q=` | Knowledge graph | local / read |
 

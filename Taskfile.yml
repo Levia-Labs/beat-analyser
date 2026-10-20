@@ -40,10 +40,10 @@ includes:
   git: ./tasks/git/Taskfile.yml
   rust: ./tasks/rust/Taskfile.yml
   eval: ./tasks/eval/Taskfile.yml
-  lint: ./tasks/lint/Taskfile.yml
   quality:
     taskfile: ./tasks/quality/Taskfile.yml
     vars: { SYS_PY: "{{.SYS_PY}}", PY: "{{.PY}}" }
+  style: ./tasks/style/Taskfile.yml
   precommit: ./tasks/precommit/Taskfile.yml
   types:
     taskfile: ./tasks/types/Taskfile.yml
@@ -58,10 +58,17 @@ includes:
     taskfile: ./tasks/uploads/Taskfile.yml
     vars: { PY: "{{.PY}}", ROOT: "{{.ROOT}}" }
 
+  # Shared namespaces from the Crepidoma submodule. git, quality, security, test and setup stay
+  # pillar-local: their names collide with tasks this repo already defines.
+  claude: .crepidoma/taskfiles/claude
+  lint: .crepidoma/taskfiles/lint
+  repo: .crepidoma/taskfiles/repo
+  todo: .crepidoma/taskfiles/todo
+  graph: .crepidoma/taskfiles/graph
+  ci: .crepidoma/taskfiles/ci
+  rtk: .crepidoma/taskfiles/rtk
+
   # Optional tooling. Nothing above needs these.
-  claude:
-    taskfile: ./tasks/claude/Taskfile.yml
-    vars: { SYS_PY: "{{.SYS_PY}}" }
   graphify: ./tasks/graphify/Taskfile.yml
 
 tasks:
@@ -206,7 +213,7 @@ tasks:
     desc: Every offline gate - task tree, lint, types, ast-grep, tests, structure, compose file. The Stop hook runs it; pre-commit and CI run its parts.
     cmds:
       - task --list-all > /dev/null
-      - task: lint:check
+      - task: style:check
       - task: test
       - task: quality:check
       - task: docker:config

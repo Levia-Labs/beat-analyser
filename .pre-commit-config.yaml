@@ -1,13 +1,81 @@
 # Commit-time gates: seconds, read-only. Install with `task precommit:setup`.
 # The local hooks call this repository's own tasks, so "linted" has one definition shared by
 # the hook, CI and a person running `task validate`.
+#
+# Shared hooks come from Crepidoma's template; the local hooks below are pillar-only. ruff reads this
+# repo's ruff.toml, which extends the shared one. The shared long-files hook is not used: it counts
+# every text file; `task quality:check` ratchets file length here.
+
+default_install_hook_types: [pre-commit, pre-push]
 
 repos:
+  - repo: https://github.com/Levia-Labs/Crepidoma
+    rev: main
+    hooks:
+      - id: crepidoma-scrub
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff
+        args: [--config, ruff.toml]
+      - id: ruff-format
+        args: [--config, ruff.toml]
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+        args: [--config, .crepidoma/configs/gitleaks.toml]
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+        args: [-c, .yamllint]
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1-1
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.9.10
+    hooks:
+      - id: prettier
+        args: [--config, .crepidoma/configs/.prettierrc]
+  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
+    rev: v1.7.12.25
+    hooks:
+      - id: actionlint
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.31.1
+    hooks:
+      - id: zizmor
+        args: [--config, .crepidoma/configs/zizmor.yml]
+  # rev not pinned in Crepidoma's own config; confirm with `pre-commit autoupdate`.
+  - repo: https://github.com/AleksaC/hadolint-py
+    rev: v2.12.0.3
+    hooks:
+      - id: hadolint
+        args: [--config, .crepidoma/configs/.hadolint.yaml]
+
   - repo: local
     hooks:
       - id: lint
         name: ruff and yamllint
-        entry: task lint:check
+        entry: task style:check
         language: system
         pass_filenames: false
         files: \.(py|ya?ml)$
@@ -46,22 +114,5 @@ repos:
         language: system
         pass_filenames: false
         files: \.(py|ya?ml|md|html|js|css)$
-
-  # Secrets in staged changes. pre-commit installs the Go toolchain the hook needs.
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.30.0
-    hooks:
-      - id: gitleaks
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: mixed-line-ending
-        args: [--fix=lf]
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-      - id: check-merge-conflict
-      - id: check-case-conflict
-      - id: detect-private-key
-      - id: check-added-large-files
-        args: [--maxkb=1024]
+  # eslint is not used: no JavaScript toolchain. ast-grep runs through `task sg:check` above.
+# semgrep and osv-scanner run in CI (see Crepidoma .github/workflows/validate.yml).

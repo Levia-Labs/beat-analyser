@@ -11,16 +11,17 @@ everyday tasks (`setup`, `test`, `analyse`, `run`, `validate`); `task --list` is
 | [rust/](rust/) | `rust:` | The beatcore crate: test, fmt, clippy, CLI - in the pinned Rust image |
 | [eval/](eval/) | `eval:` | Score beatcore's tempo, beats and onsets against ground truth |
 | [git/](git/) | `git:` | `commit`, `status`, `update` - same commands as the toolkit repository |
-| [lint/](lint/) | `lint:` | ruff and yamllint |
+| [style/](style/) | `style:` | ruff and yamllint |
 | [quality/](quality/) | `quality:` | Documentation-path, file-length and coverage gates |
 | [types/](types/) | `types:` | basedpyright and its baseline |
 | [sg/](sg/) | `sg:` | ast-grep: project rules, their tests, structural search |
 | [security/](security/) | `security:` | pip-audit and gitleaks; `rust:audit` covers Cargo.lock |
 | [precommit/](precommit/) | `precommit:` | The git hooks |
 | [uploads/](uploads/) | `uploads:` | Runtime data: size, cached ZIPs, deletion behind `CONFIRM=yes` |
-| [claude/](claude/) | `claude:` | Usage budget, hooks, caveman and superpowers plugins |
 | [graphify/](graphify/) | `graphify:` | A knowledge graph over the repository |
 | [dev/](dev/) | `dev:` | Fixtures, end-to-end checks, encoding, package lookups, the basic-pitch model fetch; `smoke.py` behind root `task smoke` |
+
+`claude:`, `lint:`, `repo:`, `todo:`, `graph:`, `ci:` and `rtk:` come from the Crepidoma submodule (`.crepidoma/taskfiles/`), not from a folder here.
 
 `ruff.toml` here targets Python 3.12: these scripts run on the host's `python3`, not the
 3.14 container.
