@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The root Taskfile includes namespaces from the .crepidoma submodule.
+          submodules: true
 
       - uses: actions/setup-python@v5
         with:
