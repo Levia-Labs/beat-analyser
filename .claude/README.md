@@ -27,7 +27,7 @@ Enabled in `settings.json`, fetched from their marketplace, not vendored.
 | `feature-dev` | `claude-plugins-official` | `/feature-dev` and its explorer, architect, reviewer agents |
 | `security-guidance` | `claude-plugins-official` | Pattern warnings on edit, diff review on Stop |
 | `claude-code-setup` | `claude-plugins-official` | Configuration helpers |
-
+| `frontend-design` | `anthropic-plugin-directory` | Visual design guidance for UI work |
 ## Hooks
 
 All in [tasks/claude/hooks.py](../tasks/claude/hooks.py), invoked through

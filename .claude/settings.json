@@ -472,6 +472,7 @@
     "code-review@claude-plugins-official": true,
     "feature-dev@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "frontend-design@anthropic-plugin-directory": true
   }
 }
