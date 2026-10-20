@@ -25,6 +25,8 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `task repair` | Reanalyse every project | local, slow |
 | `task run [PORT=5000]` | Development server | local |
 | `task smoke [URL=...]` | Probe a running server | read |
+| `task gate T="a,b K=x" [LINES=30]` | Tasks as gates: one line each, decisive failure lines, full log in `.cache/gate/` | as the tasks run |
+| `task outline F="path ..."` | Functions, classes, headings or tasks with line numbers | read |
 
 `ROOT=<dir>` on any of the project tasks points them at a different upload root.
 
@@ -38,6 +40,8 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `rust:check`, `rust:fmt` | rustfmt and clippy / format in place | read / local |
 | `rust:analyse FILE=` | beatcore-cli on a WAV: tempo, beats, labelled onsets | read |
 | `eval:synthetic [SECONDS=]` | Tempo, beat and onset scores on generated clips, in the image | read |
+| `eval:synthetic:diff [THRESHOLD=]` | Means with deltas and only the clips that moved, against the baseline | read |
+| `eval:synthetic:baseline` | Accept the last diff run as the baseline (`.cache/eval/`) | local |
 | `eval:dir DIR=` | Tempo and beat scores on an annotated folder, in the image | read |
 | `rust:lock` | Regenerate `beatcore/Cargo.lock` | local, network |
 | `rust:host:test` | `cargo test` with a host toolchain | read |
@@ -79,8 +83,11 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 | `claude:budget`, `claude:resume` | Usage windows | read |
 | `claude:skills:setup`, `claude:skills:verify` | caveman and superpowers plugins | local / read |
 | `claude:history`, `claude:history:prompts`, `claude:history:inline` | Session command log: repeats, approval prompts, one-liners | read |
-| `claude:allow:sync` | Write per-task allow rules into `.claude/settings.json` | person only, denied to agents |
-| `claude:allow:check`, `claude:allow:report` | Missing per-task rules: fail / list only | read |
+| `claude:tokens [SESSION=] [PROJECT=]` | Tokens per session and subagent | read |
+| `claude:tokens:agents`, `:reads`, `:tools` | Subagents by cost / files Read most / result size by tool | read |
+| `claude:lanes`, `claude:lanes:reset` | Subagent lanes in use against the limit of 6 / forget them | read / local |
+| `claude:allow:sync` | Slim `.claude/settings.json`, twin task denies with `rtk`, wire lane hooks | person only, denied to agents |
+| `claude:allow:check`, `claude:allow:report` | Redundant rules, missing twins, unwired hooks: fail / list only | read |
 | `claude:hooks:check` | Run the Stop hook by hand | read |
 | `graphify:update`, `graphify:query Q=` | Knowledge graph | local / read |
 
@@ -93,5 +100,6 @@ Safety column: **read** changes nothing; **local** writes inside the clone (`.ve
 4. Logic longer than a few lines of shell becomes a script under `tasks/`, named in that
    folder's README.
 5. Add it to this page.
-6. `Bash(task *)` already allows it. A person runs `task claude:allow:sync` to add the
-   explicit rule; `task validate` lists tasks still missing one.
+6. `Bash(task *)` allows it; no per-task rule ([ADR 0011](adr/0011-tool-first-agent-loop.md)).
+7. Its output is what the caller decides on: one line on success, the failing lines on
+   failure, counts and deltas rather than tables. A full log goes to `.cache/`.

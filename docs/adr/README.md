@@ -15,6 +15,7 @@ of these and see an obvious improvement; the record is what stops the fix from b
 | [0008](0008-loopback-without-auth.md) | No authentication; loopback by default, same-origin POSTs | Accepted |
 | [0009](0009-beatcore-and-basic-pitch.md) | beatcore (Rust) and basic-pitch (ONNX) replace madmom | Accepted |
 | [0010](0010-two-tier-local-pipeline.md) | Verification runs locally in two tiers, as tasks | Accepted |
+| [0011](0011-tool-first-agent-loop.md) | Agents pick tools; tools return only what the next decision needs | Accepted |
 
 ## Writing one
 

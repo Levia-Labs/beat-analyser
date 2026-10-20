@@ -19,9 +19,39 @@ virtualenv runs the CLI and the tests.
 3. **`task validate` before saying done.** The Stop hook runs it after any edit to source,
    Taskfiles or docs and blocks the turn on failure.
 
+## The tool-first loop (ADR 0011)
+
+Every token read stays in context and is paid for again on each later turn.
+
+1. A turn is a tool call with chosen parameters. A tool prints the minimum the next
+   decision needs: pass or fail, counts, deltas, the failing lines. Never read content to
+   hand-write a single-use result.
+2. No task for the job: write a parametrized one first (script, test, task, README row; the
+   `tool-smith` agent does this), then call it. No throwaway inline scripts.
+3. Subagents are named single-job agents from `.claude/agents/`. A hook refuses catch-alls
+   (general-purpose, fork, Explore, Plan). No agent fits: write one. An agent returns a
+   receipt of at most 10 lines, never file contents.
+4. At most 6 lanes at once, hook-enforced. `task claude:lanes` lists them. Lanes share
+   the working tree: give each a disjoint set of paths, let each run scoped gates
+   (`test K=`), and run `task validate` once after they finish.
+5. `task claude:tokens`, `:agents`, `:reads`, `:tools` show where sessions spent. A file
+   high in `claude:tokens:reads` wants a tool that answers the question it was read for.
+
+| Agent | One job |
+| --- | --- |
+| [tool-smith](.claude/agents/tool-smith.md) | A parametrized task: script, test, Taskfile entry, README row |
+| [app-implementer](.claude/agents/app-implementer.md) | One bounded change in `app/`, test-first |
+| [beatcore-tuner](.claude/agents/beatcore-tuner.md) | Move one beatcore metric, judged by `task eval:synthetic:diff` |
+| [rule-smith](.claude/agents/rule-smith.md) | A convention as an ast-grep rule with tests |
+| [docs-syncer](.claude/agents/docs-syncer.md) | Docs and ADRs in line with one change |
+| [diff-reviewer](.claude/agents/diff-reviewer.md) | Correctness bugs in a diff, hunks only |
+
+`cavecrew-investigator` locates code; `task graphify:query` usually answers first.
+
 ## Verifying a change
 
 ```bash
+task gate T="rust:test,test K=notes"   # any tasks as gates: one line each, failures excerpted
 task test                       # seconds; analysis stubbed, note model run if installed
 task types:check                # basedpyright against its baseline
 task sg:check                   # ast-grep project rules (tasks/sg/rules)
@@ -54,7 +84,9 @@ Every file read stays in context. Ask the local tools first, read second.
 2. Code shape ("every `subprocess.run` without `check=`"): `task sg:search P='...'`, single
    quotes, `$X` one node, `$$$X` many. Text grep misses calls split across lines.
 3. Literal strings: the Grep tool.
-4. Then Read, with `offset` and `limit` on the lines the search named.
+4. A file's shape: `task outline F="app/app.py docs/tasks.md"`, functions and headings with
+   line numbers.
+5. Then Read, with `offset` and `limit` on the lines the search named.
 
 Tasks print compact output already: ruff `concise`, pytest `-q --tb=short`, coverage lists
 only files below 100%. RTK's global hook compresses raw shell commands but does not rewrite
@@ -80,7 +112,7 @@ denied with the `rtk` prefix too; a new deny rule needs both forms.
 1. Orchestration: Opus (`claude-opus-5-5`). Subagents: Sonnet (`claude-sonnet-5-5`), set as
    `CLAUDE_CODE_SUBAGENT_MODEL` in [.claude/settings.json](.claude/settings.json).
 2. `task claude:budget` before a batch of agents. A PreToolUse hook refuses new agents at
-   95 percent of any usage window.
+   95 percent of any usage window, a catch-all agent type, and a seventh lane.
 
 ## Skills and plugins
 
@@ -121,6 +153,9 @@ An approval prompt stops the person's work. Every command must match the allowli
 | a grep for a call shape | `task sg:search P='yt_dlp.YoutubeDL($$$A)'` |
 | reading code to check a convention | a rule in `tasks/sg/rules/` with a test in `tasks/sg/tests/` |
 | reading code for a None or type slip | `task types:check` |
+| reading a whole file to find one function | `task outline F=path`, then Read with offset |
+| reading a gate's full output | `task gate T="docker:e2e"` |
+| reading the 36-row `eval:synthetic` table | `task eval:synthetic:diff` |
 
 Do not re-read a file after editing it.
 

@@ -22,6 +22,7 @@ Usage (inside the image, where beatcore is built - task eval:synthetic, task eva
 """
 
 import argparse
+import json
 import subprocess
 import sys
 import tempfile
@@ -186,10 +187,45 @@ def report(rows: list[tuple[str, dict]]) -> None:
     print(f"{'mean over ' + str(len(rows)) + ' clips':<24} {'':>7} {means}")
 
 
+def as_table(rows: list[tuple[str, dict]]) -> dict[str, dict[str, float]]:
+    return {name: {k: float(v) for k, v in row.items()} for name, row in rows}
+
+
+def diff(rows: list[tuple[str, dict]], baseline: dict, threshold: float) -> None:
+    """Means against the baseline, then only the clip scores that moved by the threshold.
+
+    The full table is 36 rows; a tuning loop needs to know what moved (ADR 0011).
+    """
+    current = as_table(rows)
+    columns = [c for c in ("acc1", "acc2", "beatF", "kick", "snare", "hh") if c in rows[0][1]]
+    cells = []
+    for column in columns:
+        now = float(np.mean([r[column] for r in current.values()]))
+        before = [r[column] for r in baseline.values() if column in r]
+        delta = f" ({now - float(np.mean(before)):+.2f})" if before else ""
+        cells.append(f"{column} {now:.2f}{delta}")
+    print(f"mean over {len(current)}: " + "  ".join(cells))
+    if not baseline:
+        print("no baseline: task eval:synthetic:baseline saves this run as one")
+        return
+    moved = [
+        f"  {name} {column} {baseline[name][column]:.2f} > {row[column]:.2f}"
+        for name, row in current.items()
+        if name in baseline
+        for column in columns
+        if column in baseline[name] and abs(row[column] - baseline[name][column]) >= threshold
+    ]
+    print(f"{len(moved)} clip score(s) moved by {threshold} or more")
+    print("\n".join(moved[:25]))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("source", help="`synthetic`, or a folder of audio and .beats files")
     parser.add_argument("--seconds", type=float, default=20.0)
+    parser.add_argument("--save", type=Path, help="write the scores here as JSON")
+    parser.add_argument("--baseline", type=Path, help="print only what moved against this")
+    parser.add_argument("--threshold", type=float, default=0.05)
     args = parser.parse_args()
 
     synthetic = args.source == "synthetic"
@@ -197,7 +233,16 @@ def main() -> int:
     if not rows:
         print("no clips with annotations found", file=sys.stderr)
         return 1
-    report(rows)
+    if args.save:
+        args.save.write_text(json.dumps(as_table(rows), indent=1), encoding="utf-8")
+    if args.baseline:
+        try:
+            baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            baseline = {}
+        diff(rows, baseline, args.threshold)
+    else:
+        report(rows)
     return 0
 
 

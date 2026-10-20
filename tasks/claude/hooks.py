@@ -7,12 +7,15 @@ document marks the tree dirty, and the turn cannot end until `task validate` is 
 
 A second mechanism guards the allowance. An agent started at 96% of a usage window dies
 mid-write and loses what it was holding, so a new agent is refused once any window is at the
-ceiling, with the time the session comes back.
+ceiling, with the time the session comes back. lanes.py refuses catch-all agent types and a
+seventh concurrent lane (ADR 0011).
 
 Events, read as JSON on stdin:
-  post-tool-use  after Edit/Write/MultiEdit - marks the tree dirty when the file is in scope
-  pre-tool-use   before Agent - refuses a new agent while a usage window is at the ceiling
-  stop           at the end of a turn - validates if dirty, blocks on failure
+  post-tool-use   after Edit/Write/MultiEdit - marks the tree dirty when the file is in scope
+  pre-tool-use    before Agent - refuses at the usage ceiling, a catch-all type, or 6 lanes
+  subagent-start  a lane starts running
+  subagent-stop   a lane is freed
+  stop            at the end of a turn - validates if dirty, blocks on failure
 
 The marker lives under .git, which is never committed.
 
@@ -22,10 +25,13 @@ decision as JSON on stdout rather than as a non-zero exit.
 
 import contextlib
 import json
+import re
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+import lanes  # tasks/claude/lanes.py: the script's own folder is on sys.path
 
 ROOT = Path(__file__).resolve().parents[2]
 MARKER = ROOT / ".git" / "beat-analyser-dirty"
@@ -34,6 +40,8 @@ CEILING = 95.0
 USAGE_CACHE = ROOT / ".git" / "claude-usage.json"
 # The usage endpoint answers 429 to a tight poll. One reading serves every check inside this.
 CACHE_SECONDS = 60
+
+PROGRESS = re.compile(r"^[.s]+\s+\[\s*\d+%\]$")
 
 WATCHED_SUFFIXES = (".yml", ".yaml", ".py", ".md", ".sh", ".html", ".js", ".css", ".toml")
 SKIP = ("graphify-out/", "uploads/", ".claude/skills/", ".venv/")
@@ -124,25 +132,37 @@ def span(seconds: int) -> str:
     return f"{hours}h {rest // 60}m" if hours else f"{rest // 60}m"
 
 
-def pre_tool_use(event: dict) -> int:
-    if event.get("tool_name") != "Agent":
-        return 0
-
+def budget_refusal() -> str | None:
     reading = usage_reading()
     if not reading.get("over_ceiling"):
-        return 0
+        return None
 
     spent = ", ".join(
         "{} at {:.0f}%".format(row["label"], row["utilization"])
         for row in reading.get("windows", [])
         if row["utilization"] >= CEILING
     )
-    reason = (
+    return (
         f"Usage is at the {CEILING:g}% ceiling ({spent}). Do not dispatch this agent: one "
         "started now dies mid-write and loses what it was holding.\n"
         f"Write down where the work stands and resume in "
         f"{span(reading.get('wait_seconds', 0))} with `task claude:resume`."
     )
+
+
+def pre_tool_use(event: dict) -> int:
+    if event.get("tool_name") != "Agent":
+        return 0
+
+    reason = budget_refusal()
+    if reason is None:
+        with lanes.locked_state() as state:
+            reason = lanes.refusal(event.get("tool_input") or {}, state)
+            if reason is None:
+                key = str(event.get("tool_use_id") or time.time())
+                lanes.reserve(state, key, time.time())
+    if reason is None:
+        return 0
     print(
         json.dumps(
             {
@@ -182,7 +202,12 @@ def stop(event: dict) -> int:
                 )
             )
             return 0
-        tail = output.strip().splitlines()[-40:]
+        # pytest's progress rows carry no reason; without them the 40 lines are the failure.
+        tail = [
+            line
+            for line in output.strip().splitlines()
+            if line.strip() and not PROGRESS.match(line)
+        ][-40:]
         print(
             json.dumps(
                 {
@@ -211,6 +236,14 @@ def main() -> int:
         return pre_tool_use(event)
     if event_name == "stop":
         return stop(event)
+    if event_name in ("subagent-start", "subagent-stop"):
+        agent = str(event.get("agent_id") or "")
+        with lanes.locked_state() as state:
+            if event_name == "subagent-start":
+                lanes.started(state, agent, time.time())
+            else:
+                lanes.stopped(state, agent)
+        return 0
 
     print(f"unknown hook event '{event_name}'", file=sys.stderr)
     return 1

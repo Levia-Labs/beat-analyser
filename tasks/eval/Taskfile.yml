@@ -17,6 +17,30 @@ tasks:
     cmds:
       - '{{.EVAL_RUN}} python /eval/eval.py synthetic --seconds {{.SECONDS | default 20}}'
 
+  # The tuning loop: change beatcore, task docker:build, then diff. Scores live in
+  # .cache/eval/ (gitignored), mounted writable; the scripts stay read-only.
+  synthetic:diff:
+    desc: 'Mean scores with their change, and only the clips that moved, against the saved baseline. Usage: task eval:synthetic:diff [THRESHOLD=0.05] [SECONDS=20]'
+    cmds:
+      - mkdir -p .cache/eval
+      - >-
+        docker run --rm
+        -v "{{.ROOT_DIR}}/tasks/eval:/eval:ro"
+        -v "{{.ROOT_DIR}}/.cache/eval:/out"
+        beat-analyser:latest
+        python /eval/eval.py synthetic --seconds {{.SECONDS | default 20}}
+        --save /out/synthetic-latest.json --baseline /out/synthetic-baseline.json
+        --threshold {{.THRESHOLD | default 0.05}}
+
+  synthetic:baseline:
+    desc: Accept the last eval:synthetic:diff run as the baseline later diffs compare with
+    preconditions:
+      - sh: test -f .cache/eval/synthetic-latest.json
+        msg: No run to accept. Run task eval:synthetic:diff first.
+    cmds:
+      - cp .cache/eval/synthetic-latest.json .cache/eval/synthetic-baseline.json
+      - echo "baseline saved"
+
   dir:
     desc: 'Tempo and beat scores on a folder of audio with .beats annotations (Ballroom format). Usage: task eval:dir DIR=path'
     requires:

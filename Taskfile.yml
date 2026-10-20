@@ -188,6 +188,20 @@ tasks:
     cmds:
       - '"{{.SYS_PY}}" tasks/dev/smoke.py "{{.URL}}"'
 
+  gate:
+    desc: 'Run tasks as gates - one line each, decisive lines on failure, full log in .cache/gate/. Usage: task gate T="rust:test,test K=notes" [LINES=30]'
+    requires:
+      vars: [T]
+    cmds:
+      - '"{{.SYS_PY}}" tasks/dev/gate.py --lines {{.LINES | default 30}}{{range $g := splitList "," .T}} "{{trim $g}}"{{end}}'
+
+  outline:
+    desc: 'Classes, functions, headings or tasks of files, with line numbers - Read only the part needed. Usage: task outline F="app/app.py docs/tasks.md"'
+    requires:
+      vars: [F]
+    cmds:
+      - '"{{.SYS_PY}}" tasks/dev/outline.py {{.F}}'
+
   validate:
     desc: Every offline gate - task tree, lint, types, ast-grep, tests, structure, compose file. The Stop hook runs it; pre-commit and CI run its parts.
     cmds:

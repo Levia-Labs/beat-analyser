@@ -32,18 +32,48 @@ tasks:
     cmds:
       - '"{{.SYS_PY}}" tasks/claude/history.py --inline'
 
+  tokens:
+    desc: 'Tokens per session and subagent, largest first. Usage: task claude:tokens [SESSION=id-prefix] [PROJECT=path] [TOP=15]'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/tokens.py --top {{.TOP | default 15}}{{if .SESSION}} --session {{.SESSION}}{{end}}{{if .PROJECT}} --project "{{.PROJECT}}"{{end}}'
+
+  tokens:tools:
+    desc: 'Tool result characters fed back to the model, by tool. Usage: task claude:tokens:tools [SESSION=] [PROJECT=]'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/tokens.py --tools --top {{.TOP | default 15}}{{if .SESSION}} --session {{.SESSION}}{{end}}{{if .PROJECT}} --project "{{.PROJECT}}"{{end}}'
+
+  tokens:agents:
+    desc: 'Subagents by tokens spent, with their type and description. Usage: task claude:tokens:agents [PROJECT=]'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/tokens.py --agents --top {{.TOP | default 15}}{{if .SESSION}} --session {{.SESSION}}{{end}}{{if .PROJECT}} --project "{{.PROJECT}}"{{end}}'
+
+  tokens:reads:
+    desc: 'Files Read most, with characters fed back: each top row wants a summarising task. Usage: task claude:tokens:reads [SESSION=] [PROJECT=]'
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/tokens.py --reads --top {{.TOP | default 15}}{{if .SESSION}} --session {{.SESSION}}{{end}}{{if .PROJECT}} --project "{{.PROJECT}}"{{end}}'
+
+  lanes:
+    desc: Subagent lanes in use against the limit of 6, with their age
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/lanes.py'
+
+  lanes:reset:
+    desc: Forget every lane - for lanes a crashed session left behind
+    cmds:
+      - '"{{.SYS_PY}}" tasks/claude/lanes.py --reset'
+
   allow:sync:
-    desc: Write an allow rule for every task into .claude/settings.json. Run by a person - agents are denied it.
+    desc: Slim .claude/settings.json to Bash(task *), twin task denies with rtk, wire the lane hooks. Run by a person - agents are denied it.
     cmds:
       - '"{{.SYS_PY}}" tasks/claude/allow_tasks.py'
 
   allow:check:
-    desc: Fail when a task has no allow rule in .claude/settings.json. Changes nothing.
+    desc: Fail on a redundant or dead permission rule, a deny without its rtk twin, or an unwired lane hook. Changes nothing.
     cmds:
       - '"{{.SYS_PY}}" tasks/claude/allow_tasks.py --check'
 
   allow:report:
-    desc: List tasks with no allow rule, never fail. What task validate runs.
+    desc: The allow:check findings, never failing. What task validate runs.
     cmds:
       - '"{{.SYS_PY}}" tasks/claude/allow_tasks.py --check --warn'
 
