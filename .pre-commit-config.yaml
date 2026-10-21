@@ -11,7 +11,7 @@ default_stages: [pre-commit, pre-push]
 
 repos:
   - repo: https://github.com/Levia-Labs/Crepidoma
-    rev: v0.3.1
+    rev: v0.3.2
     hooks:
       - id: crepidoma-scrub
       - id: crepidoma-scrub-msg
