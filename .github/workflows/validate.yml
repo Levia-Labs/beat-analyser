@@ -33,13 +33,16 @@ jobs:
       # astral-sh/setup-uv v10.3.0, pinned by commit
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
 
-      - name: Install task
-        run: curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/local/bin
+      # arduino/setup-task v3.0.0, pinned by commit
+      - uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       # yt-dlp too: without it, basedpyright cannot resolve the import in app/youtube.py.
       - name: Install test and lint tooling
         run: |
           python -m venv .venv
+          # shellcheck disable=SC2046 # word splitting is the point: one pip argument per pinned line
           .venv/bin/python -m pip install --quiet -r requirements-dev.txt \
             $(grep -E '^(Flask|Werkzeug|numpy|scipy|onnxruntime)==|^yt-dlp$' app/requirements.txt) \
             ./beatcore
