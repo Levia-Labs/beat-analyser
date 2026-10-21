@@ -42,7 +42,7 @@ jobs:
       - name: Install test and lint tooling
         run: |
           python -m venv .venv
-          # shellcheck disable=SC2046
+          # shellcheck disable=SC2046 # word splitting is the point: one pip argument per pinned line
           .venv/bin/python -m pip install --quiet -r requirements-dev.txt \
             $(grep -E '^(Flask|Werkzeug|numpy|scipy|onnxruntime)==|^yt-dlp$' app/requirements.txt) \
             ./beatcore
