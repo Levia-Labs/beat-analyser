@@ -6,28 +6,28 @@ agent and command costs listing tokens in every session: add one only when
 
 ## Files
 
-| Path | What it is |
-| --- | --- |
-| `settings.json` | Models, permissions, hooks, plugins. Tracked. |
-| `settings.local.json` | Per-machine overrides: skill toggles, status line, extra read paths. Gitignored. |
-| `agents/beatcore-tuner.md` | The pillar-only subagent; the shared agents come from the crepidoma plugin |
-| `skills/humanizer/` | Strip AI-writing tells from prose. Vendored from [blader/humanizer](https://github.com/blader/humanizer) |
+| Path                             | What it is                                                                                               |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `settings.json`                  | Models, permissions, hooks, plugins. Tracked.                                                            |
+| settings.local.json (gitignored) | Per-machine overrides: skill toggles, status line, extra read paths. Gitignored.                         |
+| `agents/beatcore-tuner.md`       | The pillar-only subagent; the shared agents come from the crepidoma plugin                               |
+| `skills/humanizer/`              | Strip AI-writing tells from prose. Vendored from [blader/humanizer](https://github.com/blader/humanizer) |
 
 ## Plugins
 
 Enabled in `settings.json`, fetched from their marketplace, not vendored.
 `task claude:skills:setup` registers caveman and superpowers at user scope as well.
 
-| Plugin | Source | Gives |
-| --- | --- | --- |
-| `crepidoma` | `levia-labs` ([Levia-Labs/Crepidoma](https://github.com/Levia-Labs/Crepidoma)) | Shared directives, agents, hooks; opts the repo in to the plugin's task gates |
-| `superpowers` | `claude-plugins-official` ([obra/superpowers](https://github.com/obra/superpowers)) | Brainstorming, TDD, systematic debugging, planning, verification skills |
-| `caveman` | `caveman` ([JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman)) | Compressed reply prose, `/caveman-*` skills, `cavecrew-*` agents |
-| `code-review` | `claude-plugins-official` | `/code-review` |
-| `feature-dev` | `claude-plugins-official` | `/feature-dev` and its explorer, architect, reviewer agents |
-| `security-guidance` | `claude-plugins-official` | Pattern warnings on edit, diff review on Stop |
-| `claude-code-setup` | `claude-plugins-official` | Configuration helpers |
-| `frontend-design` | `anthropic-plugin-directory` | Visual design guidance for UI work |
+| Plugin            | Source                                                                              | Gives                                                                         |
+| ----------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| crepidoma         | `levia-labs` ([Levia-Labs/Crepidoma](https://github.com/Levia-Labs/Crepidoma))      | Shared directives, agents, hooks; opts the repo in to the plugin's task gates |
+| superpowers       | `claude-plugins-official` ([obra/superpowers](https://github.com/obra/superpowers)) | Brainstorming, TDD, systematic debugging, planning, verification skills       |
+| caveman           | `caveman` ([JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman))       | Compressed reply prose, `/caveman-*` skills, `cavecrew-*` agents              |
+| code-review       | `claude-plugins-official`                                                           | `/code-review`                                                                |
+| feature-dev       | `claude-plugins-official`                                                           | `/feature-dev` and its explorer, architect, reviewer agents                   |
+| security-guidance | `claude-plugins-official`                                                           | Pattern warnings on edit, diff review on Stop                                 |
+| claude-code-setup | `claude-plugins-official`                                                           | Configuration helpers                                                         |
+| frontend-design   | `anthropic-plugin-directory`                                                        | Visual design guidance for UI work                                            |
 
 ## Hooks
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Coverage ratchet over app/, from the JSON report task test:cov writes.
+"""Coverage ratchet over app/, from the JSON report task coverage:run writes.
 
 Per file and in total, coverage may hold or rise, never fall below the committed baseline. A
 file the baseline has never seen must reach NEW_FILE_FLOOR. Tolerance absorbs float noise
@@ -11,8 +11,8 @@ were present; on a machine missing one, the files that depend on it are reported
 compared instead of failing. Run with the venv interpreter so the imports are visible.
 
 Usage:
-  python tasks/quality/coverage.py --check            # fail on a drop
-  python tasks/quality/coverage.py --update-baseline  # accept the current numbers
+  python tasks/coverage/coverage.py --check            # fail on a drop
+  python tasks/coverage/coverage.py --update-baseline  # accept the current numbers
 """
 
 import importlib.util
@@ -55,12 +55,14 @@ def check_fresh(report: Path, files: list[Path]) -> None:
     built = report.stat().st_mtime
     newer = [f for f in files if f.stat().st_mtime > built]
     if newer:
-        raise SystemExit(f"coverage report is older than {newer[0].name}: run task test:cov first")
+        raise SystemExit(
+            f"coverage report is older than {newer[0].name}: run task coverage:run first"
+        )
 
 
 def load_current(path: Path) -> dict[str, float]:
     if not path.is_file():
-        raise SystemExit(f"no coverage report at {path}: run task test:cov first")
+        raise SystemExit(f"no coverage report at {path}: run task coverage:run first")
     data = json.loads(path.read_text(encoding="utf-8"))
     current = {
         name.replace("\\", "/"): entry["summary"]["percent_covered"]
@@ -86,7 +88,7 @@ def read_baseline() -> tuple[dict[str, float], set[str]]:
 def write_baseline(current: dict[str, float], tools: set[str]) -> None:
     header = (
         "# Branch coverage per file, accepted at these percentages.\n"
-        "# Regenerate with: task test:cov, then task quality:coverage:baseline\n"
+        "# Regenerate with: task coverage:run, then task coverage:baseline\n"
         f"# tools: {' '.join(sorted(tools))}\n"
     )
     body = "".join(f"{name} {percent:.2f}\n" for name, percent in sorted(current.items()))
@@ -122,7 +124,7 @@ def main() -> int:
         return 0
 
     if not BASELINE.exists():
-        print("no coverage baseline yet: run task quality:coverage:baseline", file=sys.stderr)
+        print("no coverage baseline yet: run task coverage:baseline", file=sys.stderr)
         return 1
     baseline, recorded_with = read_baseline()
     missing = recorded_with - tools

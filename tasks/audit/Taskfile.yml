@@ -1,0 +1,13 @@
+version: "3"
+
+# The networked audit the shared `security:deps` does not do: it reads uv.lock or a root
+# requirements.txt, and this repo pins neither. Run by task validate:deep.
+
+tasks:
+  venv:
+    desc: Known vulnerabilities in the packages installed in .venv (pip-audit; needs network)
+    preconditions:
+      - sh: '"{{.PY}}" -c "import pip_audit"'
+        msg: pip-audit is not in .venv - run task deps:setup
+    cmds:
+      - '"{{.PY}}" -m pip_audit --progress-spinner off --skip-editable'

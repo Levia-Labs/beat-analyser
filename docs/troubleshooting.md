@@ -84,7 +84,7 @@ By design: the port is published on `127.0.0.1`. Read [security.md](security.md)
 
 ## Development
 
-### `task test` fails with `No module named pytest`
+### `task test:run` fails with `No module named pytest`
 
 `task setup` (or `task deps:setup`) has not run in this clone.
 

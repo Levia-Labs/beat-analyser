@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[1] / "tasks" / "quality" / "coverage.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "tasks" / "coverage" / "coverage.py"
 spec = importlib.util.spec_from_file_location("coverage_gate", SCRIPT)
 assert spec and spec.loader
 gate = importlib.util.module_from_spec(spec)
@@ -44,7 +44,7 @@ def test_a_file_whose_tests_need_a_missing_tool_is_not_compared():
 
 
 def test_missing_report_says_what_to_run(tmp_path):
-    with pytest.raises(SystemExit, match="task test:cov"):
+    with pytest.raises(SystemExit, match="task coverage:run"):
         gate.load_current(tmp_path / "absent.json")
 
 
@@ -68,4 +68,4 @@ def test_a_missing_baseline_says_what_to_run(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(gate, "sources", list)
     monkeypatch.setattr("sys.argv", ["coverage.py", "--check"])
     assert gate.main() == 1
-    assert "task quality:coverage:baseline" in capsys.readouterr().err
+    assert "task coverage:baseline" in capsys.readouterr().err
