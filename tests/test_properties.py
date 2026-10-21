@@ -1,7 +1,7 @@
 """Properties of the pure functions at the trust boundary and in the CSV writer.
 
 Example tests pin known cases; these search for the inputs nobody thought of. Profiles are
-in conftest.py: `task test` runs 50 examples, `task test:deep` 1000.
+in conftest.py: `task test:run` runs 50 examples, `task props:deep` 1000.
 """
 
 import ntpath
@@ -71,8 +71,8 @@ URL = st.builds(
             "YOUTUBE.com",
             "youtube.com.evil.test",
             "evil.test",
-            "youtube.com@evil.test",
-            "evil.test@youtube.com",
+            "youtube.com@evil.test",  # scrub:allow - URL userinfo attack input, not an email
+            "evil.test@youtube.com",  # scrub:allow - URL userinfo attack input, not an email
             "evil.test#youtube.com",
             "youtube.com:443",
         ]

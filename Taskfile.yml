@@ -10,7 +10,7 @@ silent: true
 #
 # EVERY DAY
 #   task analyse FILE=song.mp3   analyse one local file, print a per-track summary
-#   task test                    the test suite (no madmom needed)
+#   task test:run                the test suite (no madmom needed)
 #   task validate                every offline gate - what the hooks and the Stop hook run
 #   task validate:deep           validate plus coverage, deep properties, security audits
 #   task run                     the web UI on http://127.0.0.1:5000 (development server)
@@ -37,31 +37,38 @@ includes:
   docker:
     taskfile: ./tasks/docker/Taskfile.yml
     vars: { SYS_PY: "{{.SYS_PY}}" }
-  git: ./tasks/git/Taskfile.yml
   rust: ./tasks/rust/Taskfile.yml
   eval: ./tasks/eval/Taskfile.yml
-  quality:
-    taskfile: ./tasks/quality/Taskfile.yml
-    vars: { SYS_PY: "{{.SYS_PY}}", PY: "{{.PY}}" }
-  style: ./tasks/style/Taskfile.yml
-  precommit: ./tasks/precommit/Taskfile.yml
+  coverage:
+    taskfile: ./tasks/coverage/Taskfile.yml
+    vars: { PY: "{{.PY}}" }
   types:
     taskfile: ./tasks/types/Taskfile.yml
     vars: { PY: "{{.PY}}" }
   sg:
     taskfile: ./tasks/sg/Taskfile.yml
     vars: { BIN: "{{.BIN}}" }
-  security:
-    taskfile: ./tasks/security/Taskfile.yml
-    vars: { PY: "{{.PY}}" }
   uploads:
     taskfile: ./tasks/uploads/Taskfile.yml
     vars: { PY: "{{.PY}}", ROOT: "{{.ROOT}}" }
 
-  # Shared namespaces from the Crepidoma submodule. git, quality, security, test and setup stay
-  # pillar-local: their names collide with tasks this repo already defines.
+  # Shared namespaces from the Crepidoma submodule. Root configs (ruff.toml, .yamllint,
+  # pyrightconfig.json, sgconfig.yml, .gitleaks.toml) reach them through include vars.
   claude: .crepidoma/taskfiles/claude
-  lint: .crepidoma/taskfiles/lint
+  lint:
+    taskfile: .crepidoma/taskfiles/lint
+    vars:
+      LINT_CFG: "{{.ROOT_DIR}}"
+      # The versions pinned in requirements-dev.txt, not whatever uvx resolves.
+      LINT_RUFF: '"{{.PY}}" -m ruff'
+      LINT_YAMLLINT: '"{{.PY}}" -m yamllint'
+  git: .crepidoma/taskfiles/git
+  quality:
+    taskfile: .crepidoma/taskfiles/quality
+    vars: { QUALITY_CONFIGS: "{{.ROOT_DIR}}" }
+  security: .crepidoma/taskfiles/security
+  test: .crepidoma/taskfiles/test
+  setup: .crepidoma/taskfiles/setup
   repo: .crepidoma/taskfiles/repo
   todo: .crepidoma/taskfiles/todo
   graph: .crepidoma/taskfiles/graph
@@ -81,7 +88,7 @@ tasks:
     desc: Make this clone ready to work on - virtualenv, dependencies, git hooks
     cmds:
       - task: deps:setup
-      - task: precommit:setup
+      - task: setup:hooks
       - task: doctor
 
   doctor:
@@ -108,31 +115,25 @@ tasks:
           echo "  .venv     MISSING - run task setup"
         fi
 
-  test:
-    desc: 'Run the test suite. Usage: task test [K=expression] - beatcore and network not needed'
-    cmds:
-      - '"{{.PY}}" -m pytest {{if .K}}-k "{{.K}}"{{end}} {{.CLI_ARGS}}'
-
-  test:deep:
+  props:deep:
     desc: Property tests at 1000 examples each (Hypothesis deep profile)
     env:
       HYPOTHESIS_PROFILE: deep
     cmds:
       - '"{{.PY}}" -m pytest tests/test_properties.py {{.CLI_ARGS}}'
 
-  test:cov:
-    desc: Tests under branch coverage; lists only files below 100% and their missing lines
+  sync:
+    desc: Fetch main and merge it into the current branch
     cmds:
-      - '"{{.PY}}" -m coverage run -m pytest {{.CLI_ARGS}}'
-      - '"{{.PY}}" -m coverage report'
-      - '"{{.PY}}" -m coverage json -q'
+      - git fetch origin main
+      - git merge origin/main --no-edit
 
   # app/cli.py on the host when .venv has beatcore, otherwise in the built image - so a
   # machine without a Rust toolchain can still analyse. INPUT is a host file to mount.
   _cli:
     internal: true
     vars:
-      INPUT_ABS: '{{if .INPUT}}{{if osIsAbs .INPUT}}{{.INPUT}}{{else}}{{.ROOT_DIR}}/{{.INPUT}}{{end}}{{end}}'
+      INPUT_ABS: "{{if .INPUT}}{{if osIsAbs .INPUT}}{{.INPUT}}{{else}}{{.ROOT_DIR}}/{{.INPUT}}{{end}}{{end}}"
     cmds:
       - |
         if "{{.PY}}" -c "import beatcore; beatcore.analyse" 2> /dev/null; then
@@ -142,12 +143,11 @@ tasks:
           docker run --rm \
             -v "{{.ROOT_DIR}}/{{.ROOT}}:/app/uploads" \
             {{if .INPUT}}-v "{{osDir .INPUT_ABS}}:/input:ro"{{end}} \
-            beat-analyser:latest \
-            python cli.py {{if .INPUT}}"/input/{{osBase .INPUT_ABS}}"{{end}} {{.ARGS}} --root /app/uploads
+            beat-analyser:latest python cli.py {{if .INPUT}}"/input/{{osBase .INPUT_ABS}}"{{end}} {{.ARGS}} --root /app/uploads
         fi
 
   analyse:
-    desc: 'Analyse local audio and print a per-track summary. Usage: task analyse FILE=path/to/song.mp3 [ROOT=uploads]'
+    desc: "Analyse local audio and print a per-track summary. Usage: task analyse FILE=path/to/song.mp3 [ROOT=uploads]"
     requires:
       vars: [FILE]
     cmds:
@@ -155,7 +155,7 @@ tasks:
         vars: { INPUT: "{{.FILE}}" }
 
   analyse:yt:
-    desc: 'Download a YouTube video and analyse it. Usage: task analyse:yt URL=https://youtu.be/<id>'
+    desc: "Download a YouTube video and analyse it. Usage: task analyse:yt URL=https://youtu.be/<id>"
     requires:
       vars: [URL]
     cmds:
@@ -163,7 +163,7 @@ tasks:
         vars: { ARGS: '--youtube "{{.URL}}"' }
 
   summary:
-    desc: 'Events and time range per track of one analysed project. Usage: task summary NAME=song'
+    desc: "Events and time range per track of one analysed project. Usage: task summary NAME=song"
     requires:
       vars: [NAME]
     cmds:
@@ -181,7 +181,7 @@ tasks:
         vars: { ARGS: "--repair" }
 
   run:
-    desc: 'Web UI on the development server. Usage: task run [PORT=5000]'
+    desc: "Web UI on the development server. Usage: task run [PORT=5000]"
     env:
       PORT: '{{.PORT | default "5000"}}'
       UPLOAD_ROOT: "{{.ROOT}}"
@@ -189,14 +189,14 @@ tasks:
       - '"{{.PY}}" -W ignore app/app.py'
 
   smoke:
-    desc: 'Probe a running server - index, security headers, /folders. Usage: task smoke [URL=http://127.0.0.1:5000]'
+    desc: "Probe a running server - index, security headers, /folders. Usage: task smoke [URL=http://127.0.0.1:5000]"
     vars:
       URL: '{{.URL | default "http://127.0.0.1:5000"}}'
     cmds:
       - '"{{.SYS_PY}}" tasks/dev/smoke.py "{{.URL}}"'
 
   gate:
-    desc: 'Run tasks as gates - one line each, decisive lines on failure, full log in .cache/gate/. Usage: task gate T="rust:test,test K=notes" [LINES=30]'
+    desc: 'Run tasks as gates - one line each, decisive lines on failure, full log in .cache/gate/. Usage: task gate T="rust:test,test:run -- -k notes" [LINES=30]'
     requires:
       vars: [T]
     cmds:
@@ -209,13 +209,30 @@ tasks:
     cmds:
       - '"{{.SYS_PY}}" tasks/dev/outline.py {{.F}}'
 
+  # The shared lint passes one --config to ruff, so tasks/ruff.toml (Python 3.12: these scripts
+  # run on the host's python3) is not read there. tasks/ is excluded from that run in ruff.toml
+  # and linted here with its own config.
+  hostpy:check:
+    desc: ruff lint and format check over tasks/ at its Python 3.12 target. Changes nothing.
+    cmds:
+      - '"{{.PY}}" -m ruff check --config tasks/ruff.toml --output-format concise tasks'
+      - '"{{.PY}}" -m ruff format --check --config tasks/ruff.toml tasks'
+
+  hostpy:run:
+    desc: ruff format and autofix over tasks/ at its Python 3.12 target
+    cmds:
+      - '"{{.PY}}" -m ruff format --config tasks/ruff.toml tasks'
+      - '"{{.PY}}" -m ruff check --fix --config tasks/ruff.toml tasks'
+
   validate:
     desc: Every offline gate - task tree, lint, types, ast-grep, tests, structure, compose file. The Stop hook runs it; pre-commit and CI run its parts.
     cmds:
       - task --list-all > /dev/null
-      - task: style:check
-      - task: test
-      - task: quality:check
+      - task: lint:python:check
+      - task: hostpy:check
+      - task: lint:yaml:check
+      - task: test:run
+      - task: quality:gate
       - task: docker:config
       # Last: on a .venv that predates them, their precondition makes the Stop hook skip
       # the rest of the run, and the gates above have already run by then.
@@ -228,9 +245,10 @@ tasks:
     desc: validate, then coverage ratchet, deep property tests and security audits. Before a push; needs network.
     cmds:
       - task: validate
-      - task: test:cov
-      - task: quality:coverage:check
-      - task: test:deep
+      - task: coverage:run
+      - task: coverage:check
+      - task: props:deep
+      - task: audit:venv
       - task: security:deps
       - task: security:secrets
       - task: rust:audit

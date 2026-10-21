@@ -25,8 +25,8 @@ Directives, agents and hooks come from the crepidoma plugin (github.com/Levia-La
 submodule `.crepidoma/`; ADR 0011 is superseded by Crepidoma ADR-0001). Pillar-specific rules:
 
 1. Lanes share the working tree: give each a disjoint set of paths, let each run scoped gates
-   (`test K=`), and run `task validate` once after they finish. `task claude:lanes` lists lanes.
-2. Gate through `task gate T="style:run,test K=<area>,types:check,sg:check"`, never `validate`
+   (`test:run -- -k <expr>`), and run `task validate` once after they finish. `task claude:lanes` lists lanes.
+2. Gate through `task gate T="lint:python:run,test:run -- -k <area>,types:check,sg:check"`, never `validate`
    mid-lane. A change to `app/Dockerfile` or `app/requirements.txt` also needs
    `task gate T=docker:e2e`; say so in the receipt when it was not run.
 3. `app/` changes: failing test first in `tests/`; the code conventions below hold. A new pure
@@ -37,7 +37,7 @@ submodule `.crepidoma/`; ADR 0011 is superseded by Crepidoma ADR-0001). Pillar-s
    a line in `docs/tasks.md`. New ast-grep rules go in `tasks/sg/rules` with a test in
    `tasks/sg/tests` and a row in `tasks/sg/README.md`.
 5. Docs: a decision with a non-obvious reason gets an ADR from `docs/adr/template.md`, numbered
-   next, with a row in `docs/adr/README.md`; verify with `task gate T="quality:docs:check"`.
+   next, with a row in `docs/adr/README.md`; verify with `task gate T="quality:docs"`.
 
 Pillar agent: [beatcore-tuner](.claude/agents/beatcore-tuner.md) moves one beatcore metric,
 judged by `task eval:synthetic:diff`. Shared agents (toolsmith, implementer, rule-smith,
@@ -48,8 +48,8 @@ docs-syncer, diff-reviewer) come from the plugin.
 ## Verifying a change
 
 ```bash
-task gate T="rust:test,test K=notes"   # any tasks as gates: one line each, failures excerpted
-task test                       # seconds; analysis stubbed, note model run if installed
+task gate T="rust:test,test:run -- -k notes"   # any tasks as gates: one line each, failures excerpted
+task test:run                   # seconds; analysis stubbed, note model run if installed
 task types:check                # basedpyright against its baseline
 task sg:check                   # ast-grep project rules (tasks/sg/rules)
 task validate                   # lint, types, ast-grep, tests, doc paths, file length, compose
@@ -62,14 +62,14 @@ task docker:e2e                 # build image, upload a fixture, check refusals,
 ```
 
 A change under `beatcore/` is verified by `task rust:test` and `task rust:check`, then
-`task docker:e2e` for the Python binding. A change to `app/notes.py` by `task test K=notes`.
+`task docker:e2e` for the Python binding. A change to `app/notes.py` by `task test:run -- -k notes`.
 
 A change to `app/Dockerfile` or `app/requirements.txt` is verified only by `task docker:e2e`.
 If it was not run, say so. A dependency change also gets `task security:deps` (Python) or
 `task rust:audit` (beatcore).
 
 A new pure function at a trust boundary (names, URLs, parsing) gets a property in
-`tests/test_properties.py`. A baseline (`types:baseline`, `quality:coverage:baseline`) is
+`tests/test_properties.py`. A baseline (`types:baseline`, `coverage:baseline`) is
 regenerated only to record progress, never to green a failure (ADR 0006, ADR 0010).
 
 ## Finding things cheaply
@@ -87,7 +87,7 @@ Every file read stays in context. Ask the local tools first, read second.
 
 Tasks print compact output already: ruff `concise`, pytest `-q --tb=short`, coverage lists
 only files below 100%. RTK's global hook compresses raw shell commands but does not rewrite
-`task`, so run the gates as `rtk task validate`, `rtk task test`, `rtk task types:check`:
+`task`, so run the gates as `rtk task validate`, `rtk task test:run`, `rtk task types:check`:
 [.rtk/filters.toml](.rtk/filters.toml) then collapses a clean run to `validate: ok` and keeps
 every failing line. Trust is pinned to the file's hash: after editing it, a person runs
 `rtk trust` again. `rtk gain` shows what it saved. Every task denied in settings.json is
@@ -95,14 +95,14 @@ denied with the `rtk` prefix too; a new deny rule needs both forms.
 
 ## Layout
 
-| Path | What it is |
-| --- | --- |
-| `app/` | The service. Modules listed in [app/README.md](app/README.md) |
-| `beatcore/` | Rust: onsets, drum classes, tempo, beats ([beatcore/README.md](beatcore/README.md)) |
-| `tests/` | pytest. `conftest.py` stubs madmom out |
-| `tasks/` | Taskfile namespaces and the scripts behind them ([tasks/README.md](tasks/README.md)) |
-| `docs/` | Architecture, API, configuration, security, troubleshooting, ADRs |
-| `uploads/` | Runtime data, gitignored. Never commit it, never delete it unasked |
+| Path        | What it is                                                                           |
+| ----------- | ------------------------------------------------------------------------------------ |
+| `app/`      | The service. Modules listed in [app/README.md](app/README.md)                        |
+| `beatcore/` | Rust: onsets, drum classes, tempo, beats ([beatcore/README.md](beatcore/README.md))  |
+| `tests/`    | pytest. `conftest.py` stubs madmom out                                               |
+| `tasks/`    | Taskfile namespaces and the scripts behind them ([tasks/README.md](tasks/README.md)) |
+| `docs/`     | Architecture, API, configuration, security, troubleshooting, ADRs                    |
+| `uploads/`  | Runtime data, gitignored. Never commit it, never delete it unasked                   |
 
 ## Models
 
@@ -137,22 +137,22 @@ An approval prompt stops the person's work. Every command must match the allowli
 6. `task claude:history:prompts` lists every past command the allowlist did not cover. Read
    it at the start of a long session; turn each repeat into a task.
 
-| Instead of | Use |
-| --- | --- |
-| a `python -c` that writes a test WAV | `task dev:fixture NAME=fixture-x` |
-| `curl -F file=@... /upload`, checking a ZIP by hand | `task dev:e2e URL=...` |
-| `docker compose up`, sleep, curl, `down` | `task docker:e2e` |
-| `curl api.github.com`, `pypi.org/pypi/.../json` | `task dev:packages GITHUB="o/r" PYPI="pkg"` |
-| `file`, `iconv` on a suspect file | `task dev:encoding`, `task dev:encoding:fix` |
-| deleting a test project | name it `fixture-*`, then `task uploads:fixtures:clean` |
-| reading CSVs or listing `uploads/` | `task summary NAME=`, `task projects` |
-| a grep sweep for "what calls X" | `task graphify:query Q=` |
-| a grep for a call shape | `task sg:search P='yt_dlp.YoutubeDL($$$A)'` |
-| reading code to check a convention | a rule in `tasks/sg/rules/` with a test in `tasks/sg/tests/` |
-| reading code for a None or type slip | `task types:check` |
-| reading a whole file to find one function | `task outline F=path`, then Read with offset |
-| reading a gate's full output | `task gate T="docker:e2e"` |
-| reading the 36-row `eval:synthetic` table | `task eval:synthetic:diff` |
+| Instead of                                          | Use                                                          |
+| --------------------------------------------------- | ------------------------------------------------------------ |
+| a `python -c` that writes a test WAV                | `task dev:fixture NAME=fixture-x`                            |
+| `curl -F file=@... /upload`, checking a ZIP by hand | `task dev:e2e URL=...`                                       |
+| `docker compose up`, sleep, curl, `down`            | `task docker:e2e`                                            |
+| `curl api.github.com`, `pypi.org/pypi/.../json`     | `task dev:packages GITHUB="o/r" PYPI="pkg"`                  |
+| `file`, `iconv` on a suspect file                   | `task dev:encoding`, `task dev:encoding:fix`                 |
+| deleting a test project                             | name it `fixture-*`, then `task uploads:fixtures:clean`      |
+| reading CSVs or listing `uploads/`                  | `task summary NAME=`, `task projects`                        |
+| a grep sweep for "what calls X"                     | `task graphify:query Q=`                                     |
+| a grep for a call shape                             | `task sg:search P='yt_dlp.YoutubeDL($$$A)'`                  |
+| reading code to check a convention                  | a rule in `tasks/sg/rules/` with a test in `tasks/sg/tests/` |
+| reading code for a None or type slip                | `task types:check`                                           |
+| reading a whole file to find one function           | `task outline F=path`, then Read with offset                 |
+| reading a gate's full output                        | `task gate T="docker:e2e"`                                   |
+| reading the 36-row `eval:synthetic` table           | `task eval:synthetic:diff`                                   |
 
 Do not re-read a file after editing it.
 

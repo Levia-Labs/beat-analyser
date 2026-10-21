@@ -1,0 +1,24 @@
+version: "3"
+
+# Per-file branch coverage of app/ against a committed baseline that ratchets up only
+# (docs/adr/0006). The shared `test:cov` ratchets the total; this gate also holds each file.
+
+tasks:
+  run:
+    desc: Tests under branch coverage; lists only files below 100% and their missing lines
+    cmds:
+      - '"{{.PY}}" -m coverage run -m pytest {{.CLI_ARGS}}'
+      - '"{{.PY}}" -m coverage report'
+      - '"{{.PY}}" -m coverage json -q'
+
+  check:
+    desc: Fail when a file's coverage falls below the baseline (run task coverage:run first)
+    cmds:
+      # The venv interpreter: the gate checks which optional tools (onnxruntime, beatcore)
+      # the tests could import.
+      - '"{{.PY}}" tasks/coverage/coverage.py --check'
+
+  baseline:
+    desc: Accept the current coverage as the floor (run task coverage:run first)
+    cmds:
+      - '"{{.PY}}" tasks/coverage/coverage.py --update-baseline'

@@ -4,7 +4,7 @@ extend = ".crepidoma/configs/ruff.toml"
 target-version = "py314"
 line-length = 100
 
-exclude = [".venv", "graphify-out", "uploads", ".claude/skills"]
+exclude = [".crepidoma", "tasks", "docs/superpowers", ".venv", "graphify-out", "uploads", ".claude/skills"]
 
 [lint]
 select = [
@@ -35,7 +35,6 @@ known-first-party = [
 
 [lint.per-file-ignores]
 "tests/**" = ["S101"]  # assert is the test framework
-"tasks/quality/*.py" = ["S"]
 # urlopen on URLs the operator typed or fixed API hosts; fixture noise is not cryptography.
 "tasks/dev/*.py" = ["S310", "S311"]
 "tasks/docker/hub.py" = ["S310"]  # fixed https://hub.docker.com URLs only

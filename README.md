@@ -64,14 +64,14 @@ Full schema: [docs/output.md](docs/output.md).
 
 ## API
 
-| Method | Path | Does |
-| --- | --- | --- |
-| GET | `/` | Web UI |
-| POST | `/upload` | Form field `file`. Returns the ZIP |
-| POST | `/download_yt` | JSON `{"url": "..."}`. Returns the ZIP |
-| GET | `/folders` | Every project with file sizes and `meta.json` |
-| GET | `/download/<name>` | A project's ZIP |
-| POST | `/repair` | Reanalyse every project. Slow |
+| Method | Path               | Does                                          |
+| ------ | ------------------ | --------------------------------------------- |
+| GET    | `/`                | Web UI                                        |
+| POST   | `/upload`          | Form field `file`. Returns the ZIP            |
+| POST   | `/download_yt`     | JSON `{"url": "..."}`. Returns the ZIP        |
+| GET    | `/folders`         | Every project with file sizes and `meta.json` |
+| GET    | `/download/<name>` | A project's ZIP                               |
+| POST   | `/repair`          | Reanalyse every project. Slow                 |
 
 Details and error codes: [docs/api.md](docs/api.md).
 

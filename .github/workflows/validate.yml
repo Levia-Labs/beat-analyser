@@ -18,14 +18,20 @@ jobs:
   gates:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout v7.0.1, pinned by commit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: false
           # The root Taskfile includes namespaces from the .crepidoma submodule.
           submodules: true
 
-      - uses: actions/setup-python@v5
+      # actions/setup-python v7.0.0, pinned by commit
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.14"
+
+      # astral-sh/setup-uv v10.3.0, pinned by commit
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
 
       - name: Install task
         run: curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/local/bin
@@ -46,7 +52,7 @@ jobs:
         run: task --list-all > /dev/null
 
       - name: Lint
-        run: task style:check
+        run: task lint:python:check hostpy:check lint:yaml:check
 
       - name: Types
         run: task types:check
@@ -58,10 +64,10 @@ jobs:
         run: task sg:test
 
       - name: Tests
-        run: task test
+        run: task test:run
 
       - name: Structure gates
-        run: task quality:check
+        run: task quality:gate
 
       - name: Compose file
         run: task docker:config
@@ -72,7 +78,10 @@ jobs:
       run:
         working-directory: beatcore
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout v7.0.1, pinned by commit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - name: Format
         run: cargo fmt --check
       - name: Clippy
@@ -84,6 +93,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout v7.0.1, pinned by commit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - name: Build the image
         run: docker compose build

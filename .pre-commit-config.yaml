@@ -1,18 +1,20 @@
-# Commit-time gates: seconds, read-only. Install with `task precommit:setup`.
+# Commit-time gates: seconds, read-only. Install with `task setup:hooks`.
 # The local hooks call this repository's own tasks, so "linted" has one definition shared by
 # the hook, CI and a person running `task validate`.
 #
 # Shared hooks come from Crepidoma's template; the local hooks below are pillar-only. ruff reads this
-# repo's ruff.toml, which extends the shared one. The shared long-files hook is not used: it counts
-# every text file; `task quality:check` ratchets file length here.
+# repo's ruff.toml, which extends the shared one. The shared long-files hook is not used:
+# `task quality:gate` runs the same ratchet over every tracked file.
 
-default_install_hook_types: [pre-commit, pre-push]
+default_install_hook_types: [pre-commit, pre-push, commit-msg]
+default_stages: [pre-commit, pre-push]
 
 repos:
   - repo: https://github.com/Levia-Labs/Crepidoma
-    rev: main
+    rev: v0.3.0
     hooks:
       - id: crepidoma-scrub
+      - id: crepidoma-scrub-msg
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -75,7 +77,7 @@ repos:
     hooks:
       - id: lint
         name: ruff and yamllint
-        entry: task style:check
+        entry: task lint:python:check hostpy:check lint:yaml:check
         language: system
         pass_filenames: false
         files: \.(py|ya?ml)$
@@ -103,14 +105,14 @@ repos:
 
       - id: tests
         name: pytest
-        entry: task test
+        entry: task test:run
         language: system
         pass_filenames: false
         files: ^(app|tests)/
 
       - id: structure
         name: documentation paths and file length
-        entry: task quality:check
+        entry: task quality:gate
         language: system
         pass_filenames: false
         files: \.(py|ya?ml|md|html|js|css)$

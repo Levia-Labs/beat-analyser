@@ -1,4 +1,4 @@
-# task test:cov. Branch coverage of the service; tasks/ and tests/ are not measured.
+# task coverage:run. Branch coverage of the service; tasks/ and tests/ are not measured.
 [run]
 branch = True
 source = app

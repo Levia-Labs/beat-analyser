@@ -5,25 +5,25 @@ version: "3"
 # Fixtures go to .cache/fixtures/ (gitignored).
 
 vars:
-  FIXTURES: .cache/fixtures
+  DEV_FIXTURES: .cache/fixtures
 
 tasks:
   fixture:
-    desc: 'Synthetic clip with known kicks, hats and an A4 note (WAV and MP3). Usage: task dev:fixture [NAME=fixture-demo] [SECONDS=4] [BPM=120]'
+    desc: "Synthetic clip with known kicks, hats and an A4 note (WAV and MP3). Usage: task dev:fixture [NAME=fixture-demo] [SECONDS=4] [BPM=120]"
     vars:
       NAME: '{{.NAME | default "fixture-demo"}}'
     cmds:
-      - '"{{.SYS_PY}}" tasks/dev/fixture.py "{{.FIXTURES}}/{{.NAME}}.wav" --seconds {{.SECONDS | default 4}} --bpm {{.BPM | default 120}} --mp3'
+      - '"{{.SYS_PY}}" tasks/dev/fixture.py "{{.DEV_FIXTURES}}/{{.NAME}}.wav" --seconds {{.SECONDS | default 4}} --bpm {{.BPM | default 120}} --mp3'
 
   e2e:
-    desc: 'Upload a fixture to a running server and check ZIP, CSRF and URL refusals. Usage: task dev:e2e [URL=http://127.0.0.1:5000]'
+    desc: "Upload a fixture to a running server and check ZIP, CSRF and URL refusals. Usage: task dev:e2e [URL=http://127.0.0.1:5000]"
     cmds:
       # A cached ZIP from the last run would be served without analysis, and the check
       # would pass on stale output. Fixture projects only; nothing else is touched.
       - task: :uploads:fixtures:clean
       - task: fixture
         vars: { NAME: fixture-e2e }
-      - '"{{.SYS_PY}}" tasks/dev/e2e.py "{{.FIXTURES}}/fixture-e2e.mp3" --url "{{.URL | default "http://127.0.0.1:5000"}}"'
+      - '"{{.SYS_PY}}" tasks/dev/e2e.py "{{.DEV_FIXTURES}}/fixture-e2e.mp3" --url "{{.URL | default "http://127.0.0.1:5000"}}"'
 
   encoding:
     desc: List tracked text files that are not UTF-8 without a BOM. Changes nothing.
@@ -36,7 +36,7 @@ tasks:
       - '"{{.SYS_PY}}" tasks/dev/encoding.py --fix'
 
   basic-pitch:
-    desc: 'Fetch basic-pitch''s ONNX model and licence from its PyPI wheel, sha256-verified. Usage: task dev:basic-pitch [VERSION=0.4.0]'
+    desc: "Fetch basic-pitch's ONNX model and licence from its PyPI wheel, sha256-verified. Usage: task dev:basic-pitch [VERSION=0.4.0]"
     cmds:
       - '"{{.SYS_PY}}" tasks/dev/basic_pitch.py --version {{.VERSION | default "0.4.0"}}'
 
