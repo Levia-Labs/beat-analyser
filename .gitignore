@@ -32,6 +32,7 @@ graphify-out/
 # lists them.
 .claude/settings.local.json
 .claude/skills/*
+!.claude/skills/README.md
 !.claude/skills/humanizer/
 .claude/plugins/
 
