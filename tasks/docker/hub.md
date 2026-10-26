@@ -1,8 +1,16 @@
+![beat-analyser logo: a waveform turned into drum events](https://raw.githubusercontent.com/Levia-Labs/beat-analyser/main/docs/logo.svg)
+
 # beat-analyser
 
-Turns a song into timed rhythm and note events. Upload an audio file or paste a YouTube URL,
-get back a ZIP with one CSV per instrument track: kick, snare, hi-hat, beat grid, bass, chords
-and melody, plus the detected tempo and key.
+**Turn a song into timed drum, beat and note events.**
+
+[![validate](https://github.com/Levia-Labs/beat-analyser/actions/workflows/validate.yml/badge.svg)](https://github.com/Levia-Labs/beat-analyser/actions/workflows/validate.yml)
+[![built on Crepidoma](https://img.shields.io/badge/built%20on-Crepidoma-6d28d9.svg)](https://github.com/Levia-Labs/Crepidoma)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](https://github.com/Levia-Labs/beat-analyser/blob/main/LICENSE)
+
+Upload an audio file or paste a YouTube URL, get back a ZIP with one CSV per instrument
+track: kick, snare, hi-hat, beat grid, bass, chords and melody, plus the detected tempo and
+key.
 
 Source, issues and full documentation: <https://github.com/Levia-Labs/beat-analyser>
 
@@ -43,22 +51,22 @@ A `docker-compose.yml` with the same hardening is in the source repository.
 
 ## Configuration
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `MAX_UPLOAD_MB` | `200` | Largest upload, and largest YouTube audio download |
-| `YT_MAX_MINUTES` | `20` | Longest YouTube video accepted |
-| `UPLOAD_ROOT` | `/app/uploads` | Where projects are stored. Mount a volume here |
+| Variable         | Default        | Meaning                                            |
+| ---------------- | -------------- | -------------------------------------------------- |
+| `MAX_UPLOAD_MB`  | `200`          | Largest upload, and largest YouTube audio download |
+| `YT_MAX_MINUTES` | `20`           | Longest YouTube video accepted                     |
+| `UPLOAD_ROOT`    | `/app/uploads` | Where projects are stored. Mount a volume here     |
 
 ## API
 
-| Method | Path | Does |
-| --- | --- | --- |
-| GET | `/` | Web UI |
-| POST | `/upload` | Multipart field `file` (`.wav .mp3 .flac .ogg .m4a`). Returns the ZIP |
-| POST | `/download_yt` | JSON `{"url": "..."}`. Returns the ZIP |
-| GET | `/folders` | Every analysed project with file sizes and metadata |
-| GET | `/download/<name>` | A project's ZIP |
-| POST | `/repair` | Reanalyse every stored project. Slow |
+| Method | Path               | Does                                                                  |
+| ------ | ------------------ | --------------------------------------------------------------------- |
+| GET    | `/`                | Web UI                                                                |
+| POST   | `/upload`          | Multipart field `file` (`.wav .mp3 .flac .ogg .m4a`). Returns the ZIP |
+| POST   | `/download_yt`     | JSON `{"url": "..."}`. Returns the ZIP                                |
+| GET    | `/folders`         | Every analysed project with file sizes and metadata                   |
+| GET    | `/download/<name>` | A project's ZIP                                                       |
+| POST   | `/repair`          | Reanalyse every stored project. Slow                                  |
 
 Errors are JSON: `{"error": "..."}`. Results are cached by name, so a second upload of
 `song.mp3` returns the first result immediately.
@@ -94,8 +102,8 @@ container runs unprivileged and read-only apart from the uploads volume and `/tm
 
 ## Tags
 
-| Tag | What it is |
-| --- | --- |
+| Tag      | What it is                          |
+| -------- | ----------------------------------- |
 | `latest` | Current `main` build. `linux/amd64` |
 
 ## Limits
@@ -104,6 +112,12 @@ container runs unprivileged and read-only apart from the uploads volume and `/tm
    label, so a kick and hi-hat struck together count once.
 2. One global tempo per song; tempo changes are not followed.
 3. Drum-only audio gives key `unknown`.
+
+## Part of Levia Labs
+
+1. [Crepidoma](https://github.com/Levia-Labs/Crepidoma): the base every Levia Labs project
+   stands on, a Claude Code plugin with shared Task namespaces, configs and ADRs.
+2. [Levia-Labs on GitHub](https://github.com/Levia-Labs): every public project.
 
 ## Licence
 
