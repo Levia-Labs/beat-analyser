@@ -1,5 +1,6 @@
 import { Link, Route, Routes } from "react-router";
 import Logo from "./components/Logo";
+import Home from "./screens/Home";
 
 export default function App() {
   return (
@@ -12,7 +13,7 @@ export default function App() {
       </header>
       <main className="page">
         <Routes>
-          <Route path="/" element={<section className="card">Home</section>} />
+          <Route path="/" element={<Home />} />
           <Route path="/p/:name" element={<section className="card">Viewer</section>} />
           <Route
             path="*"

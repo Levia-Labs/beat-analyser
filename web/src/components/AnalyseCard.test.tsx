@@ -1,0 +1,72 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError, postAnalysis } from "../api";
+import AnalyseCard from "./AnalyseCard";
+
+// ES module exports cannot be spied on in place; mock the module, keep the real ApiError.
+vi.mock("../api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../api")>();
+  return { ...actual, postAnalysis: vi.fn() };
+});
+const post = vi.mocked(postAnalysis);
+
+const config = { extensions: [".mp3", ".wav"], max_upload_mb: 1 };
+
+beforeEach(() => {
+  post.mockReset();
+});
+
+function audio(bytes: number) {
+  return new File([new Uint8Array(bytes)], "song.mp3", { type: "audio/mpeg" });
+}
+
+describe("AnalyseCard", () => {
+  it("enables Analyse only once a file is chosen", async () => {
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    const go = screen.getByRole("button", { name: "Analyse" });
+    expect(go).toBeDisabled();
+    await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
+    expect(go).toBeEnabled();
+    expect(screen.getByText("song.mp3")).toBeInTheDocument();
+  });
+
+  it("refuses a file over the limit without sending it", async () => {
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    await userEvent.upload(screen.getByLabelText("Audio file"), audio(2 * 1024 * 1024));
+    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("limit is 1 MB");
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it("reports the new project's name when the upload succeeds", async () => {
+    post.mockResolvedValue({ name: "song" });
+    const onDone = vi.fn();
+    render(<AnalyseCard config={config} onDone={onDone} />);
+    await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
+    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    expect(onDone).toHaveBeenCalledWith("song");
+  });
+
+  it("shows the server's error and keeps the form for a retry", async () => {
+    post.mockRejectedValue(new ApiError("Processing failed: boom", 500));
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
+    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Processing failed: boom");
+    expect(screen.getByRole("button", { name: "Analyse" })).toBeEnabled();
+  });
+
+  it("sends a YouTube URL as JSON to /download_yt", async () => {
+    post.mockResolvedValue({ name: "dQw4w9WgXcQ" });
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    await userEvent.click(screen.getByRole("tab", { name: "YouTube" }));
+    await userEvent.type(screen.getByLabelText("YouTube URL"), "https://youtu.be/dQw4w9WgXcQ");
+    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    expect(post).toHaveBeenCalledWith(
+      "/download_yt",
+      JSON.stringify({ url: "https://youtu.be/dQw4w9WgXcQ" }),
+      expect.any(Function),
+    );
+  });
+});
