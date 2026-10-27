@@ -153,6 +153,9 @@ An approval prompt stops the person's work. Every command must match the allowli
 | reading a whole file to find one function           | `task outline F=path`, then Read with offset                 |
 | reading a gate's full output                        | `task gate T="docker:e2e"`                                   |
 | reading the 36-row `eval:synthetic` table           | `task eval:synthetic:diff`                                   |
+| reading site-packages to check a library's API      | `task dev:pyapi -- pkg.module:Class.method`                  |
+| `git add`, `git commit`, re-stage after a hook      | `task dev:commit COAUTHOR="..." -- "msg" path...`            |
+| `bash <plugin path>/scripts/task-brief ...`         | `task dev:sdd:brief PLAN= N=`, `task dev:sdd:review`         |
 
 Do not re-read a file after editing it.
 
