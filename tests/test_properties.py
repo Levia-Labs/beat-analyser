@@ -187,7 +187,20 @@ def test_progress_ids_are_32_lowercase_hex(value):
 
 QUERY_ARGS = st.dictionaries(
     st.sampled_from(
-        ["q", "key", "status", "bpm_min", "bpm_max", "sort", "order", "offset", "limit", "x"]
+        [
+            "q",
+            "key",
+            "status",
+            "bpm_min",
+            "bpm_max",
+            "dur_min",
+            "dur_max",
+            "sort",
+            "order",
+            "offset",
+            "limit",
+            "x",
+        ]
     ),
     st.text(max_size=12),
 )
@@ -204,8 +217,9 @@ def test_catalog_parse_returns_a_bounded_query_or_refuses(args):
     assert query.offset >= 0
     assert 1 <= query.limit <= catalog.MAX_LIMIT
     assert query.status in ("", "built", "pending")
-    assert query.key == "" or query.key in catalog.KEYS or query.key in catalog.MODES
-    for bound in (query.bpm_min, query.bpm_max):
+    assert all(key in catalog.KEYS or key in catalog.MODES for key in query.keys)
+    assert len(set(query.keys)) == len(query.keys)
+    for bound in (query.bpm_min, query.bpm_max, query.dur_min, query.dur_max):
         assert bound is None or math.isfinite(bound)
 
 
