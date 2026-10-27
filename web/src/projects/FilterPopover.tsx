@@ -61,7 +61,7 @@ export default function FilterPopover({
             // The first field, not the close button: Escape then closes the panel at once.
             const panel = event.currentTarget as HTMLElement;
             const field = panel.querySelector<HTMLElement>(
-              "input, [role='checkbox'], button:not(.popover-x)",
+              "input, [role='checkbox'], button:not(.popover-x):not(.clear-filter)",
             );
             event.preventDefault();
             (field ?? panel).focus();

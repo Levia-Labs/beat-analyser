@@ -83,6 +83,16 @@ describe("key search", () => {
     expect(within(again).getAllByRole("checkbox")).toHaveLength(26);
   });
 
+  it("opening Key focuses the key search; opening Status focuses its first checkbox", async () => {
+    await show();
+    const keys = await openKeys();
+    expect(within(keys).getByRole("searchbox", { name: "Search keys" })).toHaveFocus();
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(trigger("Filter Status"));
+    const status = await screen.findByRole("dialog", { name: "Status filter" });
+    expect(within(status).getByRole("checkbox", { name: "Built" })).toHaveFocus();
+  });
+
   it("the Status checklist has no search", async () => {
     await show();
     await userEvent.click(trigger("Filter Status"));

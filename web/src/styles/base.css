@@ -67,8 +67,7 @@ h3 {
   height: 28px;
 }
 
-.btn,
-button.btn {
+.btn {
   position: relative;
   font: inherit;
   color: var(--ink);

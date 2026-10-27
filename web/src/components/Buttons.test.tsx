@@ -47,6 +47,15 @@ describe("the Add button", () => {
   });
 });
 
+// jsdom does not evaluate the media query that shows .filters-button on a phone; this checks the
+// class that library.css hides on desktop.
+describe("the phone Filters button", () => {
+  it("carries filters-button next to btn", async () => {
+    await show();
+    expect(screen.getByRole("button", { name: /^Filters/ })).toHaveClass("btn", "filters-button");
+  });
+});
+
 describe("clear icons", () => {
   it("every per-column clear is an icon-only btn with the filter-x icon", async () => {
     await show("/?q=zz&bpm_min=90&status=built&key=minor&dur_min=3");
