@@ -18,10 +18,10 @@ ENV VITE_COMMIT=$VITE_COMMIT
 RUN npm run build
 
 
-FROM rust:1.90-slim AS rust
+FROM rust:1.98-slim AS rust
 
 
-FROM python:3.14.2-slim AS build
+FROM python:3.14.7-slim AS build
 
 # gcc is the linker rustc calls. The base image tag is pinned; an unpinned apt package takes
 # Debian security updates on rebuild.
@@ -48,7 +48,7 @@ COPY beatcore /tmp/beatcore
 RUN pip install --no-cache-dir /tmp/beatcore
 
 
-FROM python:3.14.2-slim
+FROM python:3.14.7-slim
 
 # The base image tag is pinned; an unpinned apt package takes Debian security updates on rebuild.
 # hadolint ignore=DL3008
