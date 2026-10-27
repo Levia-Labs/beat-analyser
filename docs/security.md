@@ -9,19 +9,26 @@ Anyone who can reach the port can upload audio, make the server download from Yo
 fill the disk and start `/repair`, which reanalyses every song. Put it behind a reverse
 proxy with authentication and request-size limits, or keep it on loopback.
 
+The MCP endpoint is published on the same `BIND`. It refuses to start there without
+`MCP_TOKEN`; set a long random one (`openssl rand -hex 32`).
+
 ## What is protected
 
-| Threat | Protection | Where |
-| --- | --- | --- |
-| Remote code execution through the Werkzeug debugger | Debugger never enabled; gunicorn in the container | `app/app.py`, `app/Dockerfile` |
-| Path traversal through an upload name or `/download/<name>` | Names sanitised and matched against one pattern before any path is built | `storage.project_name`, `storage.is_valid_name` |
-| yt-dlp fetching from an arbitrary host | Client URL reduced to an 11-character video ID and rebuilt as a youtube.com URL | `youtube.video_id` |
-| Oversize uploads and downloads | `MAX_UPLOAD_MB` on both; `YT_MAX_MINUTES` on video length | `app/app.py`, `youtube.download_audio` |
-| Cross-site request forgery (a web page POSTing to localhost) | POSTs with a foreign `Origin` or `Sec-Fetch-Site: cross-site` refused | `same_origin_posts_only` in `app/app.py` |
-| Stored XSS through project or file names | Page built with `textContent`, never `innerHTML`; strict CSP with no inline script | `app/static/app.js`, `CSP` in `app/app.py` |
-| Tampered CDN assets | Bootstrap loaded with Subresource Integrity hashes | `app/templates/index.html` |
-| Container breakout impact | Non-root user, read-only root file system, all capabilities dropped, `no-new-privileges` | `app/Dockerfile`, `docker-compose.yml` |
-| Concurrent writes to one project | Lock per project name | `app/pipeline.py` |
+| Threat                                                       | Protection                                                                                           | Where                                                                |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Remote code execution through the Werkzeug debugger          | Debugger never enabled; gunicorn in the container                                                    | `app/app.py`, `app/Dockerfile`                                       |
+| Path traversal through an upload name or `/download/<name>`  | Names sanitised and matched against one pattern before any path is built                             | `storage.project_name`, `storage.is_valid_name`                      |
+| yt-dlp fetching from an arbitrary host                       | Client URL reduced to an 11-character video ID and rebuilt as a youtube.com URL                      | `youtube.video_id`                                                   |
+| Oversize uploads and downloads                               | `MAX_UPLOAD_MB` on both; `YT_MAX_MINUTES` on video length                                            | `app/app.py`, `youtube.download_audio`                               |
+| Cross-site request forgery (a web page POSTing to localhost) | POSTs with a foreign `Origin` or `Sec-Fetch-Site: cross-site` refused                                | `same_origin_posts_only` in `app/app.py`                             |
+| Stored XSS through project or file names                     | Page built with `textContent`, never `innerHTML`; strict CSP with no inline script                   | `app/static/app.js`, `CSP` in `app/app.py`                           |
+| Tampered CDN assets                                          | Bootstrap loaded with Subresource Integrity hashes                                                   | `app/templates/index.html`                                           |
+| Container breakout impact                                    | Non-root user, read-only root file system, all capabilities dropped, `no-new-privileges`             | `app/Dockerfile`, `docker-compose.yml`                               |
+| Concurrent writes to one project                             | Lock per project name                                                                                | `app/pipeline.py`                                                    |
+| DNS rebinding against the MCP endpoint                       | Without a token: `Host` and `Origin` must be `127.0.0.1` or `localhost` on `MCP_PORT`                | `create_app` in `app/mcp_server.py`                                  |
+| Unauthenticated MCP access off loopback                      | `MCP_TOKEN` bearer token, constant-time compare; no start without it on a public `BIND`              | `app/mcp_server.py`                                                  |
+| A second writer racing the project lock                      | The MCP service mounts `uploads/` read-only and analyses through the web app                         | `docker-compose.yml`, [ADR 0012](adr/0012-mcp-as-a-sibling-proxy.md) |
+| Oversize MCP requests                                        | Request bodies capped at `MAX_UPLOAD_MB` x 1.5 + 1 MB, so a base64 upload up to `MAX_UPLOAD_MB` fits | `body_limit` in `app/mcp_server.py`                                  |
 
 ## What is not
 

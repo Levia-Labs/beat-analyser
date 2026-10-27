@@ -84,7 +84,8 @@ Percussion IDs are 128 to 130, beats 131, notes their MIDI pitch. Full schema:
 | GET    | `/download/<name>` | A project's ZIP                               |
 | POST   | `/repair`          | Reanalyse every project. Slow                 |
 
-Details and error codes: [docs/api.md](docs/api.md). Read [docs/security.md](docs/security.md)
+Details and error codes: [docs/api.md](docs/api.md). Agents can connect over MCP:
+[docs/mcp.md](docs/mcp.md). Read [docs/security.md](docs/security.md)
 before exposing the service beyond loopback.
 
 ## Documentation

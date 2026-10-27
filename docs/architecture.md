@@ -21,16 +21,16 @@ storage.package ──► <root>/<name>_tracks.zip   written aside, then swapped
 
 ## Modules
 
-| Module | Knows about | Does not know about |
-| --- | --- | --- |
-| `app.py` | HTTP, Flask config, headers | madmom, file layout details |
-| `cli.py` | argparse, printing | HTTP |
-| `pipeline.py` | the build order, locking | where audio comes from |
-| `analysis.py` | which engine writes which track | folders other than the one it is given |
-| `notes.py` | basic-pitch's model and decoding | tracks, files |
-| `beatcore` (Rust) | DSP: STFT, onsets, tempo, beats | Python, files other than one WAV |
-| `storage.py` | file layout, names, ZIPs | audio |
-| `youtube.py` | URLs, yt-dlp | everything else |
+| Module            | Knows about                      | Does not know about                    |
+| ----------------- | -------------------------------- | -------------------------------------- |
+| `app.py`          | HTTP, Flask config, headers      | madmom, file layout details            |
+| `cli.py`          | argparse, printing               | HTTP                                   |
+| `pipeline.py`     | the build order, locking         | where audio comes from                 |
+| `analysis.py`     | which engine writes which track  | folders other than the one it is given |
+| `notes.py`        | basic-pitch's model and decoding | tracks, files                          |
+| `beatcore` (Rust) | DSP: STFT, onsets, tempo, beats  | Python, files other than one WAV       |
+| `storage.py`      | file layout, names, ZIPs         | audio                                  |
+| `youtube.py`      | URLs, yt-dlp                     | everything else                        |
 
 `app.py` and `cli.py` are two front ends to `pipeline.py`; nothing in the pipeline imports
 Flask.
@@ -79,3 +79,10 @@ loads once, threads so a long analysis does not block the UI. The worker timeout
 minutes. The image is built in three stages: the official `rust` image supplies the
 toolchain, a Python stage builds the beatcore wheel and the virtualenv, and only the
 virtualenv reaches the runtime stage.
+
+## The MCP service
+
+A second compose service runs the same image under uvicorn and serves MCP at `/mcp`
+([mcp.md](mcp.md)). It reads `uploads/` read-only. An analysis tool queues a job (`jobs.py`)
+that posts the audio to the web app (`backend.py`), so every project is still built by
+`pipeline.build` in the web app's process ([ADR 0012](adr/0012-mcp-as-a-sibling-proxy.md)).

@@ -8,10 +8,10 @@ name; gunicorn loads the Flask object `app` from `app.py` in this directory.
 | `app.py`                          | Flask routes, request validation, same-origin check on POST, security headers                                   |
 | `pipeline.py`                     | One project from audio to ZIP, with a lock per project name; `repair_all`                                       |
 | `analysis.py`                     | Calls beatcore (rhythm) and `notes` (pitch), writes the track CSVs, ffmpeg decode                               |
-| `jobs.py`                         | in-memory registry of MCP analysis jobs, one per project name, run in a thread pool                             |
+| `jobs.py`                         | MCP analysis jobs: one per project name, two at a time, at most eight pending                                   |
 | `backend.py`                      | Client for the web app's `/upload` and `/download_yt`, used by the MCP jobs                                     |
-| `mcp_server.py`                   | The MCP service: the tools over Streamable HTTP at /mcp, optional bearer token                                  |
-| `mcp_tools.py`                    | The MCP tools: start analyses, poll them, read events; every argument checked before use                        |
+| `mcp_server.py`                   | The MCP service: tool registration, Streamable HTTP at /mcp, token and Host checks                              |
+| `mcp_tools.py`                    | The MCP tools and their argument checks; reads projects, never writes them                                      |
 | `notes.py`                        | basic-pitch note transcription on onnxruntime - a port, changes listed in its header                            |
 | `key.py`                          | Musical key from the notes: Krumhansl-Schmuckler profiles, `unknown` when nothing fits                          |
 | `models/`                         | The basic-pitch ONNX model and its licence ([models/README.md](models/README.md))                               |
