@@ -1,0 +1,18 @@
+/* Palette, radius and type from saber-tooth (its react worktree, src/styles/tokens.css),
+   so the two tools look like one family. Dark only. */
+:root {
+  --stage: #110e1f;
+  --panel: #1a1630;
+  --panel-2: #231e40;
+  --line: #2c2650;
+  --red: #e0303a;
+  --blue: #2e9be6;
+  --ink: #ece9f7;
+  --muted: #a39fbf;
+  --amber: #e8a33d;
+  --green: #3dd68c;
+  --radius: 8px;
+  --gap: 12px;
+  --font: Bahnschrift, "DIN Alternate", "DIN 2014", system-ui, sans-serif;
+  color-scheme: dark;
+}

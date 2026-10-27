@@ -16,6 +16,7 @@ everyday tasks (`setup`, `analyse`, `run`, `sync`, `validate`); `task --list` is
 | [audit/](audit/)       | `audit:`    | pip-audit over `.venv`; `rust:audit` covers Cargo.lock                                                                   |
 | [uploads/](uploads/)   | `uploads:`  | Runtime data: size, cached ZIPs, deletion behind `CONFIRM=yes`                                                           |
 | [graphify/](graphify/) | `graphify:` | A knowledge graph over the repository                                                                                    |
+| [web/](web/)           | `web:`      | The React SPA in `web/`: install, lock, dev server, build, test, format, check                                           |
 | [dev/](dev/)           | `dev:`      | Fixtures, end-to-end checks, encoding, package lookups, the basic-pitch model fetch; `smoke.py` behind root `task smoke` |
 
 `claude:`, `lint:`, `git:`, `quality:`, `security:`, `test:`, `setup:`, `repo:`, `todo:`, `graph:`, `ci:` and `rtk:` come from the Crepidoma submodule (`.crepidoma/taskfiles`), not from a folder here.
