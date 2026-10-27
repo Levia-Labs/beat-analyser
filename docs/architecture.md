@@ -90,11 +90,11 @@ The UI is a React single-page app in `web/` (Vite, TypeScript, plain CSS), chose
 [ADR 0013](adr/0013-react-spa-served-by-flask.md). `npm run build` writes `web/dist`; in the
 image that is `/app/web`, and `WEB_DIST` points Flask at it.
 
-| Route                 | Answer                                                                    |
-| --------------------- | ------------------------------------------------------------------------- |
-| `/` and `/p/<name>`   | The built `index.html`, uncached; 503 until `task web:build` has run      |
-| `/assets/<file>`      | Hashed build output, cached for a year; paths outside the folder give 404 |
-| everything in the API | JSON, see [api.md](api.md)                                                |
+| Route                      | Answer                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| `/`, `/about`, `/p/<name>` | The built `index.html`, uncached, open without sign-in; 503 until `task web:build` has run |
+| `/assets/<file>`           | Hashed build output, cached for a year; paths outside the folder give 404                  |
+| everything in the API      | JSON, see [api.md](api.md)                                                                 |
 
 The home screen posts an upload or a YouTube URL with `Accept: application/json` and an
 `X-Progress-Id` it chose, then polls `GET /progress/<id>` while the POST is open, so the page

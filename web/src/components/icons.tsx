@@ -88,6 +88,15 @@ const ICONS = {
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </>
   ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5.5M12 7.8v.1" />
+    </>
+  ),
+  "external-link": (
+    <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+  ),
   logout: <path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9" />,
 } satisfies Record<string, ReactNode>;
 

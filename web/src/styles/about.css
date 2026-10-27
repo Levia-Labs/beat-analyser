@@ -1,0 +1,30 @@
+/* The About page: saber-tooth's page style, plain headings and muted text, no cards. */
+.about {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+}
+.about h2 {
+  margin: 1rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.about p,
+.about ol {
+  margin: 0;
+}
+.about ol {
+  padding-left: 1.3rem;
+}
+.about code {
+  color: var(--ink);
+}
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.about-version {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+}

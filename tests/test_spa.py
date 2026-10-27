@@ -23,6 +23,12 @@ def test_viewer_route_serves_the_same_index(client, web_dist):
     assert b'<div id="root">' in response.data
 
 
+def test_about_route_serves_the_same_index(client, web_dist):
+    response = client.get("/about")
+    assert response.status_code == 200
+    assert b'<div id="root">' in response.data
+
+
 def test_add_route_is_gone(client, web_dist):
     assert client.get("/add").status_code == 404
 

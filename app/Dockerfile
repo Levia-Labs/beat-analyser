@@ -12,6 +12,9 @@ WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY web/ ./
+# The About page shows this; after the COPY so a new commit rebuilds only the SPA build.
+ARG VITE_COMMIT=dev
+ENV VITE_COMMIT=$VITE_COMMIT
 RUN npm run build
 
 

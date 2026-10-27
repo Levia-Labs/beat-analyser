@@ -18,7 +18,9 @@ from netutil import is_loopback
 
 COOKIE = "ba_session"
 # The SPA shell must load to show the sign-in page; /config tells it whether to.
-OPEN_ENDPOINTS = frozenset({"index", "viewer", "assets", "client_config", "login", "logout"})
+OPEN_ENDPOINTS = frozenset(
+    {"index", "viewer", "about", "assets", "client_config", "login", "logout"}
+)
 MIN_TOKEN_LENGTH = 16
 LOCKED_MESSAGE = "Too many failed sign-ins; wait a minute"
 

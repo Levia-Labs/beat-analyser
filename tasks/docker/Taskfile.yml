@@ -4,9 +4,16 @@ version: "3"
 # The first build compiles madmom and takes a long time; later builds reuse the dependency
 # layer unless app/requirements.txt changes.
 
+# The About page shows the commit the image was built from; compose reads it from the env.
+vars:
+  DOCKER_COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo dev
+
 tasks:
   build:
     desc: Build the image (the first build is slow - madmom compiles from source)
+    env:
+      VITE_COMMIT: "{{.DOCKER_COMMIT}}"
     cmds:
       - docker compose build
 
@@ -17,6 +24,8 @@ tasks:
 
   up:
     desc: "Start the service and its MCP endpoint in the background. Usage: task docker:up [PORT=8002] [MCP_PORT=8001] [BIND=127.0.0.1]"
+    env:
+      VITE_COMMIT: "{{.DOCKER_COMMIT}}"
     cmds:
       - docker compose up -d --build
       - echo "http://localhost:${PORT:-8002}  (task docker:logs to follow)"
@@ -76,6 +85,7 @@ tasks:
     env:
       PORT: "{{.PORT}}"
       MCP_PORT: "{{.MCP_PORT}}"
+      VITE_COMMIT: "{{.DOCKER_COMMIT}}"
     cmds:
       # Own compose project: down removes only the e2e containers, never those of docker:up.
       - defer: docker compose -p beat-analyser-e2e down
