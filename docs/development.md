@@ -13,6 +13,12 @@ With `cargo` on PATH, `task deps:setup` also builds beatcore into `.venv` (`task
 alone rebuilds it). Without, every Rust task runs in the pinned `rust` image and the analysis
 tasks run in the app image.
 
+For the web app ([ADR 0013](adr/0013-react-spa-served-by-flask.md)) add Node 22 and run
+`task web:install` once. Then work side by side: `task run` (API on 5000) in one terminal,
+`task web:dev` in another, and open <http://localhost:5173>. The Vite proxy presents Flask's
+own `Origin`, so POSTs pass the same-origin check. `task run` alone serves the SPA only after
+`task web:build`.
+
 ## Loop
 
 ```bash
@@ -21,6 +27,9 @@ task rust:test                # beatcore's synthetic tempo, beat and onset tests
 task analyse FILE=clip.wav    # a real run of both engines
 task docker:e2e               # image build, upload, refusal checks
 task run                      # dev server on :5000 (needs beatcore in .venv); task smoke
+task web:build                # build web/dist; without it task run alone serves a 503 at /
+task web:dev                  # Vite on :5173 beside task run; proxies the API to :5000
+task web:check                # typecheck, eslint, prettier and vitest over web/
 task lint:python:run           # format Python; task rust:fmt for Rust
 task validate                 # before committing - the same gates as CI and the hooks
 task validate:deep            # before pushing - coverage, deep properties, security audits

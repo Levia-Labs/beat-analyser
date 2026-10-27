@@ -17,6 +17,7 @@ of these and see an obvious improvement; the record is what stops the fix from b
 | [0010](0010-two-tier-local-pipeline.md)   | Verification runs locally in two tiers, as tasks                  | Superseded by Crepidoma ADR-0002 |
 | [0011](0011-tool-first-agent-loop.md)     | Agents pick tools; tools return only what the next decision needs | Superseded by Crepidoma ADR-0001 |
 | [0012](0012-mcp-as-a-sibling-proxy.md)    | MCP as a sibling service that proxies to the web app              | Accepted                         |
+| [0013](0013-react-spa-served-by-flask.md) | React SPA built in a Node stage and served by Flask               | Accepted                         |
 
 ## Writing one
 

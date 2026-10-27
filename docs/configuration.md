@@ -6,7 +6,8 @@ shell or a `.env` file next to `docker-compose.yml`.
 | Variable         | Default                                 | Read by                  | Meaning                                                                             |
 | ---------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------- |
 | `BIND`           | `127.0.0.1`                             | compose                  | Host address the port is published on. `0.0.0.0` exposes the service to the network |
-| `PORT`           | `80` (compose), `5000` (`task run`)     | compose, `app.py`        | Port                                                                                |
+| `PORT`           | `8002` (compose), `5000` (`task run`)   | compose, `app.py`        | Port                                                                                |
+| `WEB_DIST`       | `web/dist` (`/app/web` in the image)    | app                      | Folder holding the built web app: `index.html` and its assets                       |
 | `MAX_UPLOAD_MB`  | `200`                                   | app                      | Largest upload, and largest YouTube audio download                                  |
 | `YT_MAX_MINUTES` | `20`                                    | app                      | Longest YouTube video accepted                                                      |
 | `UPLOAD_ROOT`    | `uploads` (`/app/uploads` in the image) | app                      | Where projects live                                                                 |
