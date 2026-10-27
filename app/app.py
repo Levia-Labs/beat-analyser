@@ -19,7 +19,6 @@ import pipeline
 import storage
 import youtube
 
-ALLOWED_EXTENSIONS = {".wav", ".mp3", ".flac", ".ogg", ".m4a"}
 MB = 1024 * 1024
 
 # Bootstrap comes from jsDelivr with SRI; everything else is same-origin. No inline script or
@@ -97,7 +96,7 @@ def http_error(exc: HTTPException):
 
 @app.get("/")
 def index():
-    return render_template("index.html", accept=",".join(sorted(ALLOWED_EXTENSIONS)))
+    return render_template("index.html", accept=",".join(sorted(storage.ALLOWED_EXTENSIONS)))
 
 
 @app.post("/upload")
@@ -106,8 +105,10 @@ def upload():
     if file is None or not file.filename:
         return error("No file uploaded", 400)
     extension = Path(file.filename).suffix.lower()
-    if extension not in ALLOWED_EXTENSIONS:
-        return error(f"Unsupported file type; use {', '.join(sorted(ALLOWED_EXTENSIONS))}", 400)
+    if extension not in storage.ALLOWED_EXTENSIONS:
+        return error(
+            f"Unsupported file type; use {', '.join(sorted(storage.ALLOWED_EXTENSIONS))}", 400
+        )
     try:
         name = storage.project_name(file.filename)
     except ValueError as exc:
