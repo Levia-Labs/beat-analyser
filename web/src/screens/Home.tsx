@@ -1,14 +1,5 @@
-import { getProjects } from "../api";
-import ProjectList from "../components/ProjectList";
-import { message, useLoad } from "../useLoad";
+import ProjectsScreen from "../projects/ProjectsScreen";
 
 export default function Home() {
-  const projects = useLoad(getProjects);
-  return (
-    <ProjectList
-      projects={projects.data}
-      error={message(projects.error)}
-      loading={projects.loading}
-    />
-  );
+  return <ProjectsScreen />;
 }

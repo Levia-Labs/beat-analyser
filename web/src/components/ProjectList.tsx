@@ -1,7 +1,9 @@
 import { Link } from "react-router";
-import type { Project } from "../api";
 import Banner from "./Banner";
 import { DownloadIcon } from "./icons";
+
+// Superseded by projects/ProjectsScreen; delete this file and its test (the sandbox refused rm).
+type Project = { name: string; done: boolean; meta: { key?: string; bpm?: number } | null };
 
 export default function ProjectList({
   projects,

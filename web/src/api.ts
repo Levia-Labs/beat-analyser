@@ -2,7 +2,16 @@
 // text, so the UI shows what Flask said.
 
 export type Meta = { name?: string; key?: string; bpm?: number } | null;
-export type Project = { name: string; done: boolean; meta: Meta };
+export type ProjectItem = {
+  name: string;
+  done: boolean;
+  key: string | null;
+  bpm: number | null;
+  duration: number | null;
+  created: string | null;
+  size: number;
+};
+export type ProjectsPage = { items: ProjectItem[]; total: number };
 export type Config = { extensions: string[]; max_upload_mb: number };
 export type Progress = {
   stages: string[];
@@ -80,7 +89,8 @@ export const renameProject = (name: string, to: string) =>
   });
 export const getConfig = () => get<Config>("/config");
 export const getProgress = (id: string) => get<Progress>(`/progress/${id}`);
-export const getProjects = () => get<Project[]>("/projects");
+export const getProjects = (params: URLSearchParams) =>
+  get<ProjectsPage>(`/projects?${params.toString()}`);
 export const getEvents = (name: string) =>
   get<Events>(`/projects/${encodeURIComponent(name)}/events`);
 
