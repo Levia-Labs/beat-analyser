@@ -5,6 +5,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { Icon } from "./components/icons";
 import Logo from "./components/Logo";
 import SignIn from "./components/SignIn";
+import About from "./screens/About";
 import Home from "./screens/Home";
 import NotFound from "./screens/NotFound";
 import { ViewerRoute } from "./screens/Viewer";
@@ -44,11 +45,17 @@ export default function App() {
             <span className="red">Beat</span> <span className="blue">Analyser</span>
           </span>
         </Link>
-        {auth && (
-          <button type="button" className="btn sign-out" onClick={signOut}>
-            <Icon name="logout" /> Sign out
-          </button>
-        )}
+        <div className="masthead-end">
+          <Link to="/about" className="btn plain about-link" aria-label="About">
+            <Icon name="info" />
+            <span className="label-hide-mobile">About</span>
+          </Link>
+          {auth && (
+            <button type="button" className="btn sign-out" onClick={signOut}>
+              <Icon name="logout" /> Sign out
+            </button>
+          )}
+        </div>
       </header>
       <main className="page">
         {locked ? (
@@ -65,6 +72,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/p/:name" element={<ViewerRoute />} />
+              <Route path="/about" element={<About />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ErrorBoundary>

@@ -10,6 +10,7 @@ import "./styles/overlays.css";
 import "./styles/library.css";
 import "./styles/rows.css";
 import "./styles/viewer.css";
+import "./styles/about.css";
 
 const root = document.getElementById("root");
 if (root) {

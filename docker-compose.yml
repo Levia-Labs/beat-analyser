@@ -4,6 +4,9 @@ services:
     build:
       context: .
       dockerfile: app/Dockerfile
+      args:
+        # Shown on the About page; the docker tasks set it from git.
+        VITE_COMMIT: ${VITE_COMMIT:-dev}
     image: beat-analyser:latest
     # Loopback only by default. BIND=0.0.0.0 exposes it to the network, and the app refuses
     # to start there without WEB_TOKEN - see docs/security.md first.
