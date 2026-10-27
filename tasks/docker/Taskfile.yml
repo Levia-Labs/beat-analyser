@@ -19,6 +19,8 @@ tasks:
 
   rebuild:
     desc: Build without cache - picks up a new yt-dlp release
+    env:
+      VITE_COMMIT: "{{.DOCKER_COMMIT}}"
     cmds:
       - docker compose build --no-cache
 
