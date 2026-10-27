@@ -42,3 +42,18 @@ def client(upload_root, monkeypatch):
     monkeypatch.setattr(analysis, "analyse", fake_analyse)
     app_module.app.config.update(TESTING=True, UPLOAD_ROOT=upload_root)
     return app_module.app.test_client()
+
+
+@pytest.fixture
+def web_dist(tmp_path, monkeypatch):
+    """A stand-in for `task web:build` output: index.html and one hashed asset."""
+    dist = tmp_path / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text(
+        '<!doctype html><div id="root"></div>'
+        '<script type="module" src="/assets/app-abc123.js"></script>',
+        encoding="utf-8",
+    )
+    (dist / "assets" / "app-abc123.js").write_text("console.log(1)", encoding="utf-8")
+    monkeypatch.setitem(app_module.app.config, "WEB_DIST", dist)
+    return dist

@@ -9,7 +9,7 @@ def upload(client, name="song.wav", data=None, **headers):
     return client.post("/upload", data=body, content_type="multipart/form-data", headers=headers)
 
 
-def test_index_has_csp_and_no_inline_script(client):
+def test_index_has_csp_and_no_inline_script(client, web_dist):
     response = client.get("/")
     assert response.status_code == 200
     assert "script-src 'self'" in response.headers["Content-Security-Policy"]
