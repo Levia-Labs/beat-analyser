@@ -10,6 +10,7 @@ uploaded filename or a URL path segment, so this is the path-traversal boundary.
 
 import json
 import re
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -75,6 +76,29 @@ def package(root: Path, name: str) -> Path:
                 archive.write(path, arcname=f"{name}/{path.name}")
     partial.replace(target)
     return target
+
+
+def delete_project(root: Path, name: str) -> None:
+    """Remove a project's folder and ZIP. name is already validated."""
+    folder = project_dir(root, name)
+    if folder.is_dir():
+        shutil.rmtree(folder)
+    zip_path(root, name).unlink(missing_ok=True)
+
+
+def rename_project(root: Path, old: str, new: str) -> None:
+    """Move the folder, fix the name in meta.json, rebuild the ZIP under its new prefix."""
+    built = zip_path(root, old).is_file()
+    target = project_dir(root, new)
+    project_dir(root, old).rename(target)
+    meta = target / META_NAME
+    if meta.is_file():
+        data = json.loads(meta.read_text(encoding="utf-8"))
+        data["name"] = new
+        meta.write_text(json.dumps(data), encoding="utf-8")
+    zip_path(root, old).unlink(missing_ok=True)
+    if built:
+        package(root, new)
 
 
 def list_projects(root: Path) -> dict[str, dict]:

@@ -6,7 +6,8 @@ once used to write the same CSVs concurrently. Different projects still run in p
 
 import logging
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import analysis
@@ -21,6 +22,39 @@ _locks_guard = threading.Lock()
 def _lock(name: str) -> threading.Lock:
     with _locks_guard:
         return _locks.setdefault(name, threading.Lock())
+
+
+class Busy(Exception):
+    """A project is being analysed; its folder must not move or vanish under the analysis."""
+
+
+@contextmanager
+def try_lock(*names: str) -> Iterator[None]:
+    """Hold every named project's lock, or raise Busy at once. Sorted, so two renames that
+    name the same pair cannot deadlock."""
+    held: list[threading.Lock] = []
+    try:
+        for name in sorted(set(names)):
+            lock = _lock(name)
+            if not lock.acquire(blocking=False):
+                raise Busy(name)
+            held.append(lock)
+        yield
+    finally:
+        for lock in reversed(held):
+            lock.release()
+
+
+def delete(root: Path, name: str) -> None:
+    with try_lock(name):
+        storage.delete_project(root, name)
+
+
+def rename(root: Path, old: str, new: str) -> None:
+    with try_lock(old, new):
+        if storage.project_dir(root, new).exists() or storage.zip_path(root, new).exists():
+            raise FileExistsError(new)
+        storage.rename_project(root, old, new)
 
 
 def _ignore(stage: str) -> None:

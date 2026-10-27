@@ -79,9 +79,9 @@ def build_or_error(name: str, place_audio, tracker: progress.Tracker):
 
 @app.before_request
 def same_origin_posts_only():
-    """Refuse cross-site POSTs. A page on any other site could otherwise submit the upload
-    form or trigger /repair against a server on localhost."""
-    if request.method != "POST":
+    """Refuse cross-site writes. A page on any other site could otherwise submit the upload
+    form, trigger /repair or DELETE a project on a server on localhost."""
+    if request.method in ("GET", "HEAD", "OPTIONS"):
         return None
     if request.headers.get("Sec-Fetch-Site") == "cross-site":
         return error("Cross-origin request refused", 403)
@@ -201,6 +201,43 @@ def project_events(name: str):
     if not storage.is_valid_name(name) or not storage.zip_path(root, name).is_file():
         return error("Project not found", 404)
     return jsonify(events.project_events(root, name))
+
+
+def project_exists(root: Path, name: str) -> bool:
+    return storage.is_valid_name(name) and (
+        storage.project_dir(root, name).is_dir() or storage.zip_path(root, name).is_file()
+    )
+
+
+@app.delete("/projects/<name>")
+def delete_project(name: str):
+    root = upload_root()
+    if not project_exists(root, name):
+        return error("Project not found", 404)
+    try:
+        pipeline.delete(root, name)
+    except pipeline.Busy:
+        return error("Project is being analysed", 409)
+    return "", 204
+
+
+@app.post("/projects/<name>/rename")
+def rename_project(name: str):
+    root = upload_root()
+    target = str((request.get_json(silent=True) or {}).get("to", "")).strip()
+    if not project_exists(root, name):
+        return error("Project not found", 404)
+    if not storage.is_valid_name(target):
+        return error("Use letters, digits, dot, dash or underscore, up to 100 characters", 400)
+    if target == name:
+        return jsonify(name=name)
+    try:
+        pipeline.rename(root, name, target)
+    except pipeline.Busy:
+        return error("Project is being analysed", 409)
+    except FileExistsError:
+        return error(f"A project called {target} exists", 409)
+    return jsonify(name=target)
 
 
 @app.get("/download/<name>")
