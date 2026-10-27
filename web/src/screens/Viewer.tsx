@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApiError, deleteProject, getEvents, renameProject } from "../api";
 import Banner from "../components/Banner";
@@ -19,6 +19,20 @@ export default function Viewer({ name }: { name: string }) {
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const renameButton = useRef<HTMLButtonElement>(null);
+  const deleteButton = useRef<HTMLButtonElement>(null);
+
+  // Every mode change drops the old error; closing returns focus to the button that opened it.
+  function open(next: "rename" | "delete") {
+    setProblem(null);
+    setMode(next);
+  }
+  function close() {
+    const opener = mode === "rename" ? renameButton : deleteButton;
+    setProblem(null);
+    setMode("view");
+    opener.current?.focus();
+  }
 
   async function act(action: () => Promise<void>) {
     setBusy(true);
@@ -85,17 +99,29 @@ export default function Viewer({ name }: { name: string }) {
         <a className="chip" href={`/download/${encodeURIComponent(name)}`} download>
           ZIP
         </a>
-        <button type="button" className="chip" onClick={() => setMode("rename")} disabled={busy}>
+        <button
+          ref={renameButton}
+          type="button"
+          className="chip"
+          onClick={() => open("rename")}
+          disabled={busy}
+        >
           Rename
         </button>
-        <button type="button" className="chip" onClick={() => setMode("delete")} disabled={busy}>
+        <button
+          ref={deleteButton}
+          type="button"
+          className="chip"
+          onClick={() => open("delete")}
+          disabled={busy}
+        >
           Delete
         </button>
       </section>
       {problem && <Banner message={problem} />}
       {mode === "rename" && (
         <section className="card">
-          <RenameForm name={name} busy={busy} onSave={rename} onCancel={() => setMode("view")} />
+          <RenameForm name={name} busy={busy} onSave={rename} onCancel={close} />
         </section>
       )}
       {mode === "delete" && (
@@ -105,7 +131,7 @@ export default function Viewer({ name }: { name: string }) {
           confirm={`Delete ${name}`}
           busy={busy}
           onConfirm={remove}
-          onCancel={() => setMode("view")}
+          onCancel={close}
         />
       )}
       <Timeline events={events.data} />

@@ -93,6 +93,48 @@ describe("Viewer", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("ignores Escape while a delete is in flight", async () => {
+    events.mockResolvedValue(project);
+    remove.mockReturnValue(new Promise(() => {}));
+    at("/p/song");
+    await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete song" }));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("Escape closes an idle dialog and returns focus to Delete", async () => {
+    events.mockResolvedValue(project);
+    at("/p/song");
+    const opener = await screen.findByRole("button", { name: "Delete" });
+    await userEvent.click(opener);
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+  });
+
+  it("returns focus to Rename after cancelling the form", async () => {
+    events.mockResolvedValue(project);
+    at("/p/song");
+    const opener = await screen.findByRole("button", { name: "Rename" });
+    await userEvent.click(opener);
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(opener).toHaveFocus();
+  });
+
+  it("clears a stale error when the form is cancelled", async () => {
+    events.mockResolvedValue(project);
+    rename.mockRejectedValue(new ApiError("A project called tune exists", 409));
+    at("/p/song");
+    await userEvent.click(await screen.findByRole("button", { name: "Rename" }));
+    await userEvent.clear(screen.getByLabelText("New name"));
+    await userEvent.type(screen.getByLabelText("New name"), "tune");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByRole("alert");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("renames and opens the project under its new name", async () => {
     events.mockResolvedValue(project);
     rename.mockResolvedValue({ name: "tune" });

@@ -21,11 +21,12 @@ export default function ConfirmDialog({
   // On the document, not the dialog: a keydown handler on a non-interactive element fails jsx-a11y.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancel();
+      // Closing mid-request would hide a delete that still completes and navigates away.
+      if (event.key === "Escape" && !busy) onCancel();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onCancel]);
+  }, [busy, onCancel]);
   return (
     <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
       <p id="confirm-title">
