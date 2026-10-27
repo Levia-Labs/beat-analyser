@@ -14,6 +14,8 @@ runs without beatcore or the note model. Run all with `task test:run`, a subset 
 | `test_app.py`           | Flask routes: CSP, upload, refusals, folders, download, repair          |
 | `test_backend.py`       | The MCP web app client: multipart body, error messages, unreachable     |
 | `test_coverage_gate.py` | The coverage ratchet                                                    |
+| `test_commit.py`        | The path-scoped commit helper against a temporary git repo              |
+| `test_pyapi.py`         | The Python API inspector: attribute, listing, refusals                  |
 | `test_key.py`           | Key detection from pitch classes                                        |
 | `test_jobs.py`          | the MCP job registry: dedupe per name, pending cap, error capture       |
 | `test_mcp_e2e.py`       | The MCP end-to-end script: tool reply reading, polling to completion    |
