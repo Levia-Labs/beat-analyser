@@ -9,11 +9,14 @@ gunicorn==23.0.0 ; sys_platform != "win32"
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.3
+# The MCP service (app/mcp_server.py, docs/mcp.md). Its own dependencies resolve at install.
+mcp==2.3.0
 numpy==2.4.4
 # Runs basic-pitch's note model (app/notes.py, app/models/nmp.onnx). See docs/adr/0009.
 onnxruntime==1.31.0
 packaging==26.0
 scipy==1.17.1
+uvicorn==0.54.0
 Werkzeug==3.1.9
 # Unpinned on purpose: YouTube changes break old releases within weeks. See docs/adr/0004.
 yt-dlp

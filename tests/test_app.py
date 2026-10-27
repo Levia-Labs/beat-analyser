@@ -74,6 +74,67 @@ def test_download_yt_rejects_foreign_url(client):
     assert client.post("/download_yt", data="nope").status_code == 400
 
 
+def test_upload_converts_a_non_wav_and_removes_the_source(client, upload_root, monkeypatch):
+    import analysis
+
+    seen = {}
+
+    def to_wav(source, wav):
+        seen["source"] = source
+        seen["bytes"] = source.read_bytes()
+        wav.write_bytes(wav_bytes())
+
+    monkeypatch.setattr(analysis, "to_wav", to_wav)
+    response = upload(client, name="song.mp3", data=b"mp3 bytes")
+    assert response.status_code == 200
+    assert seen["bytes"] == b"mp3 bytes"
+    assert not seen["source"].exists()
+
+
+def test_download_yt_converts_the_download_and_removes_it(client, upload_root, monkeypatch):
+    import analysis
+    import youtube
+
+    seen = {}
+
+    def download_audio(vid, folder, max_seconds, max_bytes):
+        seen["args"] = (vid, max_seconds, max_bytes)
+        source = folder / "download.m4a"
+        source.write_bytes(b"m4a bytes")
+        seen["source"] = source
+        return source
+
+    def to_wav(source, wav):
+        wav.write_bytes(wav_bytes())
+
+    monkeypatch.setattr(youtube, "download_audio", download_audio)
+    monkeypatch.setattr(analysis, "to_wav", to_wav)
+    response = client.post("/download_yt", json={"url": "https://youtu.be/dQw4w9WgXcQ"})
+    assert response.status_code == 200
+    assert seen["args"][0] == "dQw4w9WgXcQ"
+    assert not seen["source"].exists()
+
+
+def test_a_build_failure_is_a_json_error(client, monkeypatch):
+    import pipeline
+
+    def refuse(*args):
+        raise ValueError("Audio too long")
+
+    monkeypatch.setattr(pipeline, "build", refuse)
+    response = upload(client)
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Audio too long"
+
+    def crash(*args):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(pipeline, "build", crash)
+    response = upload(client)
+    assert response.status_code == 500
+    assert "boom" in response.get_json()["error"]
+
+
 def test_repair_rebuilds(client, upload_root):
     upload(client)
     (upload_root / "song" / "kick.csv").unlink()

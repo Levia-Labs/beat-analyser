@@ -16,10 +16,11 @@ tasks:
       - docker compose build --no-cache
 
   up:
-    desc: 'Start the service in the background. Usage: task docker:up [PORT=80] [BIND=127.0.0.1]'
+    desc: "Start the service and its MCP endpoint in the background. Usage: task docker:up [PORT=80] [MCP_PORT=8001] [BIND=127.0.0.1]"
     cmds:
       - docker compose up -d --build
       - echo "http://localhost:${PORT:-80}  (task docker:logs to follow)"
+      - echo "MCP  http://localhost:${MCP_PORT:-8001}/mcp  (docs/mcp.md)"
 
   down:
     desc: Stop and remove the container. uploads/ on the host is kept.
@@ -63,22 +64,27 @@ tasks:
 
   # Publishes to Docker Hub: run by a person, denied to agents like docker push.
   hub:publish:
-    desc: 'Publish tasks/docker/hub.md as the Docker Hub page. Uses the docker login credentials, or DOCKERHUB_USERNAME and DOCKERHUB_TOKEN'
+    desc: "Publish tasks/docker/hub.md as the Docker Hub page. Uses the docker login credentials, or DOCKERHUB_USERNAME and DOCKERHUB_TOKEN"
     cmds:
       - '"{{.SYS_PY}}" tasks/docker/hub.py --apply'
 
   e2e:
-    desc: 'Build, start on a spare port, run task dev:e2e against it, stop. Usage: task docker:e2e [PORT=8099]'
+    desc: "Build, start on spare ports, run task dev:e2e and dev:mcp:e2e against it, stop. Usage: task docker:e2e [PORT=8099] [MCP_PORT=8098]"
     vars:
       PORT: '{{.PORT | default "8099"}}'
+      MCP_PORT: '{{.MCP_PORT | default "8098"}}'
     env:
       PORT: "{{.PORT}}"
+      MCP_PORT: "{{.MCP_PORT}}"
     cmds:
       - defer: docker compose down
-      # --wait blocks until the healthcheck passes, so no sleep and no retry loop.
+      # --wait blocks until both healthchecks pass, so no sleep and no retry loop.
       - docker compose up -d --build --wait
       - task: :dev:e2e
         vars: { URL: "http://127.0.0.1:{{.PORT}}" }
       - task: :summary
         vars: { NAME: fixture-e2e }
+      # After the summary: dev:mcp:e2e clears fixture projects before its own run.
+      - task: :dev:mcp:e2e
+        vars: { URL: "http://127.0.0.1:{{.MCP_PORT}}/mcp" }
       - docker images beat-analyser --format "image {{"{{"}}.Size{{"}}"}}"

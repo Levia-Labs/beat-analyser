@@ -23,7 +23,56 @@ services:
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/folders', timeout=5)"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/folders', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: "no"
+
+  # MCP for agents (docs/mcp.md). Same image, its own process. uploads/ is read-only here:
+  # analyses go through the backend's endpoints, whose project lock is per process
+  # (docs/adr/0012).
+  mcp:
+    container_name: beat-analyser-mcp
+    image: beat-analyser:latest
+    # Built by the backend service; never pulled.
+    pull_policy: never
+    command: ["uvicorn", "mcp_server:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+    ports:
+      - "${BIND:-127.0.0.1}:${MCP_PORT:-8001}:8001"
+    environment:
+      BACKEND_URL: http://backend:8000
+      BIND: "${BIND:-127.0.0.1}"
+      MCP_PORT: "${MCP_PORT:-8001}"
+      MCP_TOKEN: "${MCP_TOKEN:-}"
+      MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-200}"
+    volumes:
+      - ./uploads:/app/uploads:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      backend:
+        condition: service_healthy
+    # A TCP connect, not an HTTP call: with MCP_TOKEN set, an unauthenticated request is 401.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; socket.create_connection(('127.0.0.1', 8001), 5).close()",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

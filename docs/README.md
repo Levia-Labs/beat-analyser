@@ -6,6 +6,7 @@ Reference documentation. Start from the root [README.md](../README.md); agents s
 | ---------------------------------------- | -------------------------------------------------- |
 | [architecture.md](architecture.md)       | Modules and the processing pipeline                |
 | [api.md](api.md)                         | HTTP endpoints and error codes                     |
+| [mcp.md](mcp.md)                         | MCP tools for agents, connecting, the token        |
 | [output.md](output.md)                   | ZIP, `meta.json` and CSV schema                    |
 | [configuration.md](configuration.md)     | Environment variables                              |
 | [security.md](security.md)               | What is protected, what is not, before exposing it |

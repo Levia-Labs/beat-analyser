@@ -4,15 +4,18 @@ Example tests pin known cases; these search for the inputs nobody thought of. Pr
 in conftest.py: `task test:run` runs 50 examples, `task props:deep` 1000.
 """
 
+import base64
 import ntpath
 import posixpath
 import string
 from urllib.parse import urlsplit
 
+import pytest
 from hypothesis import example, given
 from hypothesis import strategies as st
 
 import analysis
+import mcp_tools
 import notes
 import storage
 import youtube
@@ -141,3 +144,31 @@ def test_merge_repeats_keeps_amplitude_in_range(found):
     amplitudes = [amp for *_, amp in found]
     for *_, amp in notes.merge_repeats(found):
         assert min(amplitudes) - 1e-9 <= amp <= max(amplitudes) + 1e-9
+
+
+EXTENSION = st.sampled_from([*sorted(storage.ALLOWED_EXTENSIONS), ".MP3", ".txt", ""])
+
+
+@given(FILENAME, EXTENSION, st.binary(max_size=64))
+def test_check_audio_returns_the_bytes_or_refuses(stem, extension, data):
+    try:
+        name, ext, decoded = mcp_tools.check_audio(
+            stem + extension, base64.b64encode(data).decode(), 64
+        )
+    except ValueError:
+        return
+    assert storage.is_valid_name(name)
+    assert ext in storage.ALLOWED_EXTENSIONS
+    assert decoded == data
+
+
+@given(st.binary(min_size=65, max_size=300), st.booleans())
+def test_check_audio_refuses_more_than_the_limit(data, wrapped):
+    encoded = base64.encodebytes(data) if wrapped else base64.b64encode(data)
+    with pytest.raises(ValueError):
+        mcp_tools.check_audio("a.wav", encoded.decode(), 64)
+
+
+@given(st.binary(min_size=1, max_size=300))
+def test_check_audio_accepts_wrapped_base64(data):
+    assert mcp_tools.check_audio("a.wav", base64.encodebytes(data).decode(), 300)[2] == data

@@ -18,6 +18,8 @@ from werkzeug.utils import secure_filename
 AUDIO_NAME = "audio.wav"
 META_NAME = "meta.json"
 ZIP_SUFFIX = "_tracks.zip"
+# Audio types accepted from an upload. Shared by the web app and the MCP tools.
+ALLOWED_EXTENSIONS = {".wav", ".mp3", ".flac", ".ogg", ".m4a"}
 
 # No separators, no leading dot, bounded length. secure_filename already strips separators;
 # this is the second check, applied to names that never went through it (URL segments).
