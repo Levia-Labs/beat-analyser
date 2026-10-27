@@ -9,12 +9,15 @@ uploaded filename or a URL path segment, so this is the path-traversal boundary.
 """
 
 import json
+import logging
 import re
 import shutil
 import zipfile
 from pathlib import Path
 
 from werkzeug.utils import secure_filename
+
+log = logging.getLogger(__name__)
 
 AUDIO_NAME = "audio.wav"
 META_NAME = "meta.json"
@@ -89,16 +92,32 @@ def delete_project(root: Path, name: str) -> None:
 def rename_project(root: Path, old: str, new: str) -> None:
     """Move the folder, fix the name in meta.json, rebuild the ZIP under its new prefix."""
     built = zip_path(root, old).is_file()
+    source = project_dir(root, old)
     target = project_dir(root, new)
-    project_dir(root, old).rename(target)
-    meta = target / META_NAME
-    if meta.is_file():
-        data = json.loads(meta.read_text(encoding="utf-8"))
-        data["name"] = new
-        meta.write_text(json.dumps(data), encoding="utf-8")
+    # Prepare the new meta before anything moves: a corrupt meta.json must not strand a
+    # half-renamed project, so it is left as it is.
+    original = None
+    renamed = None
+    if (source / META_NAME).is_file():
+        original = (source / META_NAME).read_text(encoding="utf-8")
+        try:
+            data = json.loads(original)
+            data["name"] = new
+            renamed = json.dumps(data)
+        except ValueError, TypeError:
+            log.warning("meta.json of %s is unreadable; renaming without rewriting it", old)
+    source.rename(target)
+    try:
+        if renamed is not None:
+            (target / META_NAME).write_text(renamed, encoding="utf-8")
+        if built:
+            package(root, new)
+    except BaseException:
+        if original is not None:
+            (target / META_NAME).write_text(original, encoding="utf-8")
+        target.rename(source)
+        raise
     zip_path(root, old).unlink(missing_ok=True)
-    if built:
-        package(root, new)
 
 
 def list_projects(root: Path) -> dict[str, dict]:

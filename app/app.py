@@ -250,8 +250,11 @@ def delete_project(name: str):
 @app.post("/projects/<name>/rename")
 def rename_project(name: str):
     root = upload_root()
-    target = str((request.get_json(silent=True) or {}).get("to", "")).strip()
-    if not project_exists(root, name):
+    body = request.get_json(silent=True)
+    wanted = body.get("to") if isinstance(body, dict) else None
+    target = wanted.strip() if isinstance(wanted, str) else ""
+    # Renaming moves the folder, so a ZIP-only project has nothing to move.
+    if not project_exists(root, name) or not storage.project_dir(root, name).is_dir():
         return error("Project not found", 404)
     if not storage.is_valid_name(target):
         return error("Use letters, digits, dot, dash or underscore, up to 100 characters", 400)

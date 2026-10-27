@@ -2,8 +2,10 @@
 
 import io
 import json
+import shutil
 import zipfile
 
+import app as app_module
 import pipeline
 import storage
 from conftest import wav_bytes
@@ -75,6 +77,49 @@ def test_rename_while_analysing_is_409(client, upload_root):
     with pipeline._lock("song"):
         assert client.post("/projects/song/rename", json={"to": "tune"}).status_code == 409
     assert (upload_root / "song").is_dir()
+
+
+def test_rename_survives_corrupt_meta(client, upload_root):
+    make(client)
+    (upload_root / "song" / storage.META_NAME).write_text("{not json", encoding="utf-8")
+    response = client.post("/projects/song/rename", json={"to": "tune"})
+    assert response.get_json() == {"name": "tune"}
+    assert (upload_root / "tune").is_dir()
+    assert not (upload_root / "song").exists()
+    assert storage.zip_path(upload_root, "tune").is_file()
+    assert not storage.zip_path(upload_root, "song").exists()
+
+
+def test_rename_packaging_failure_keeps_the_old_project(client, upload_root, monkeypatch):
+    make(client)
+
+    def boom(root, name):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(storage, "package", boom)
+    monkeypatch.setitem(app_module.app.config, "PROPAGATE_EXCEPTIONS", False)
+    response = client.post("/projects/song/rename", json={"to": "tune"})
+    assert response.status_code == 500
+    assert (upload_root / "song").is_dir()
+    assert not (upload_root / "tune").exists()
+    assert storage.zip_path(upload_root, "song").is_file()
+    meta = json.loads((upload_root / "song" / storage.META_NAME).read_text(encoding="utf-8"))
+    assert meta["name"] == "song"
+
+
+def test_rename_zip_only_project_is_404(client, upload_root):
+    make(client)
+    shutil.rmtree(upload_root / "song")
+    assert client.post("/projects/song/rename", json={"to": "tune"}).status_code == 404
+    assert storage.zip_path(upload_root, "song").is_file()
+
+
+def test_rename_refuses_malformed_bodies(client):
+    make(client)
+    assert client.post("/projects/song/rename", json=[]).status_code == 400
+    assert client.post("/projects/song/rename", json="tune").status_code == 400
+    assert client.post("/projects/song/rename", json={"to": None}).status_code == 400
+    assert client.post("/projects/song/rename", json={"to": 5}).status_code == 400
 
 
 def test_try_lock_releases_after_busy():
