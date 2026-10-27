@@ -9,6 +9,7 @@ shell or a `.env` file next to `docker-compose.yml`.
 | `PORT`           | `8002` (compose), `5000` (`task run`)   | compose, `app.py`        | Port                                                                                |
 | `WEB_DIST`       | `web/dist` (`/app/web` in the image)    | app                      | Folder holding the built web app: `index.html` and its assets                       |
 | `MAX_UPLOAD_MB`  | `200`                                   | app                      | Largest upload, and largest YouTube audio download                                  |
+| `MAX_ANALYSES`   | `2`                                     | app                      | Analyses running at once; a request that would start another gets 429               |
 | `YT_MAX_MINUTES` | `20`                                    | app                      | Longest YouTube video accepted                                                      |
 | `UPLOAD_ROOT`    | `uploads` (`/app/uploads` in the image) | app                      | Where projects live                                                                 |
 | `HOST`           | `127.0.0.1`                             | `app.py` dev server      | Listen address for `task run`                                                       |

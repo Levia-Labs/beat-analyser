@@ -20,7 +20,13 @@ request is open.
 | 200    | ZIP attachment `<name>_tracks.zip`, or `{"name": "song"}` for JSON       |
 | 400    | No file, unsupported extension, or a file name with no usable characters |
 | 413    | Larger than `MAX_UPLOAD_MB`                                              |
+| 429    | `MAX_ANALYSES` analyses already running; nothing changed, retry shortly  |
 | 500    | Decoding or analysis failed; the message says why                        |
+
+A name that already has a result is compared by the SHA-256 of the audio: the same audio
+returns the cached ZIP, different audio under the same name replaces the project and is
+analysed again ([ADR 0014](adr/0014-content-hash-projects.md)). A cached result is served
+even when `MAX_ANALYSES` is reached.
 
 ```bash
 curl -F file=@song.mp3 -o song_tracks.zip http://localhost:8002/upload
@@ -37,6 +43,7 @@ named after the video ID. `Accept: application/json` and `X-Progress-Id` work as
 | ------ | ------------------------------------------------------------------------------------------- |
 | 200    | ZIP attachment `<video id>_tracks.zip`, or `{"name": "<video id>"}` for JSON                |
 | 400    | Not a YouTube URL, video longer than `YT_MAX_MINUTES`, or audio larger than `MAX_UPLOAD_MB` |
+| 429    | `MAX_ANALYSES` analyses already running; nothing changed, retry shortly                     |
 | 500    | Download or analysis failed                                                                 |
 
 ## `GET /config`

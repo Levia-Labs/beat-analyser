@@ -109,6 +109,18 @@ def test_failing_hook_prints_capped_output(repo, capsys):
     assert out[-1] == "50"
 
 
+def test_staged_deletion_is_committed(repo):
+    git(repo, "rm", "-q", "seed.txt")
+    assert run(repo, "chore: drop seed", "seed.txt") == 0
+    assert git(repo, "show", "--name-status", "--format=", "HEAD").split() == ["D", "seed.txt"]
+
+
+def test_unstaged_deletion_is_committed(repo):
+    (repo / "seed.txt").unlink()
+    assert run(repo, "chore: drop seed", "seed.txt") == 0
+    assert git(repo, "show", "--name-status", "--format=", "HEAD").split() == ["D", "seed.txt"]
+
+
 @given(st.lists(st.text(min_size=1, max_size=5), min_size=1, max_size=40))
 def test_tail_never_exceeds_cap(lines):
     assert len(commit.tail("\n".join(lines), 20)) <= 20

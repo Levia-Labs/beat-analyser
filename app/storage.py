@@ -8,6 +8,7 @@ Every name that reaches the file system passes `is_valid_name` first. The name c
 uploaded filename or a URL path segment, so this is the path-traversal boundary.
 """
 
+import hashlib
 import json
 import logging
 import re
@@ -56,9 +57,35 @@ def zip_path(root: Path, name: str) -> Path:
     return root / f"{name}{ZIP_SUFFIX}"
 
 
-def save_meta(folder: Path, name: str, key: str = "unknown", bpm: float = 0.0) -> None:
-    """Write meta.json. bpm comes from beatcore, key from key.estimate over the notes."""
+def sha256_of(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def audio_hash(folder: Path) -> str | None:
+    """The hash of the audio a project was built from: meta.json's `audio_sha256`, or for a
+    project built before it existed the hash of audio.wav itself. None when neither exists."""
+    try:
+        recorded = json.loads((folder / META_NAME).read_text(encoding="utf-8"))["audio_sha256"]
+        if isinstance(recorded, str):
+            return recorded
+    except OSError, ValueError, KeyError, TypeError:
+        pass
+    wav = folder / AUDIO_NAME
+    return sha256_of(wav) if wav.is_file() else None
+
+
+def save_meta(
+    folder: Path, name: str, key: str = "unknown", bpm: float = 0.0, audio_sha256: str = ""
+) -> None:
+    """Write meta.json. bpm comes from beatcore, key from key.estimate over the notes,
+    audio_sha256 from the audio.wav the analysis ran on (ADR 0014)."""
     meta = {"name": name, "key": key, "bpm": bpm}
+    if audio_sha256:
+        meta["audio_sha256"] = audio_sha256
     (folder / META_NAME).write_text(json.dumps(meta), encoding="utf-8")
 
 

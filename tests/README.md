@@ -14,8 +14,11 @@ runs without beatcore or the note model. Run all with `task test:run`, a subset 
 | `test_api.py`           | JSON answers for the SPA: name instead of ZIP, config, projects, events     |
 | `test_app.py`           | Flask routes: CSP, upload, refusals, folders, download, repair              |
 | `test_backend.py`       | The MCP web app client: multipart body, error messages, unreachable         |
+| `test_collision.py`     | Name collisions: same audio cached, different audio reanalysed, failures    |
+| `test_limit.py`         | The MAX_ANALYSES cap: 429 without writes, cached results served at the cap  |
 | `test_coverage_gate.py` | The coverage ratchet                                                        |
 | `test_commit.py`        | The path-scoped commit helper against a temporary git repo                  |
+| `test_gate.py`          | The gate runner's output on a console that cannot encode a failure mark     |
 | `test_e2e_spa.py`       | The SPA check of the end-to-end script                                      |
 | `test_pyapi.py`         | The Python API inspector: attribute, listing, refusals                      |
 | `test_events.py`        | Shared event reading: lane order, malformed rows, project list, events      |

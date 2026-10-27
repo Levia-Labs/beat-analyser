@@ -32,13 +32,9 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
 - [ ] One global tempo; songs with tempo changes get one grid.
 - [x] Key from the notes (`app/key.py`, Krumhansl-Schmuckler).
 - [x] Re-triggered held notes are merged (`notes.merge_repeats`).
-- [ ] beatcore holds the GIL while it runs (seconds per song). Releasing it needs PyO3's
-      `detach`, whose name changed across 0.2x releases - pin first, then add.
 
 ## Behaviour
 
-- [ ] Name collisions return a stale result ([ADR 0005](docs/adr/0005-name-keyed-projects.md)).
-      Store a content hash in `meta.json` and reanalyse on mismatch.
 - [ ] `/repair` and long analyses run inside the request. A job queue with a status endpoint
       would free the UI and survive a browser closing.
 
@@ -46,20 +42,15 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
 
 - [ ] Optional token authentication for a shared deployment
       ([ADR 0008](docs/adr/0008-loopback-without-auth.md)).
-- [ ] No rate limiting.
 
 ## Tooling
 
-- [ ] CI does not build the image on push (slow). A cached build job would catch Dockerfile
-      breakage earlier.
-- [ ] No dependency update automation (Dependabot or Renovate) for the pinned packages.
-
 ## 1 tasks/dev/gate.py raises UnicodeEncodeError on a failing gate under a cp1250 console (U+2716)
 
-status: open
+status: done
 class: bug
 
 ## 2 dev:commit fails on a path whose deletion is already staged (git add: pathspec did not match); use git add -A -- <path> or skip add for staged deletions
 
-status: open
+status: done
 class: bug

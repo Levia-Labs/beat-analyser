@@ -77,7 +77,9 @@ Deep tier, `task validate:deep`, by hand before a push:
 
 `task validate` runs the Python-side gates, offline. CI
 ([.github/workflows/validate.yml](../.github/workflows/validate.yml)) runs those and the Rust
-job on every push; the image build runs on manual dispatch.
+job on every push; the `image` job also builds `app/Dockerfile` with a GitHub Actions layer cache.
+Dependabot ([.github/dependabot.yml](../.github/dependabot.yml)) opens weekly grouped minor and
+patch updates for pip, cargo, npm, docker and actions, and skips yt-dlp.
 
 ## Dependencies
 

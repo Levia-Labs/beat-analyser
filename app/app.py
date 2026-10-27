@@ -8,6 +8,7 @@ who can reach the port.
 
 import logging
 import os
+import threading
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -45,6 +46,11 @@ app.config.update(
     YT_MAX_SECONDS=int(os.environ.get("YT_MAX_MINUTES", "20")) * 60,
 )
 
+# Analyses are CPU-bound and hold a decoded track in memory; a burst of uploads would starve
+# the host. Taken without waiting, so an excess request answers 429 instead of queueing.
+ANALYSES = threading.BoundedSemaphore(max(1, int(os.environ.get("MAX_ANALYSES", "2"))))
+BUSY_MESSAGE = "Too many analyses running; try again shortly"
+
 
 def upload_root() -> Path:
     root = Path(app.config["UPLOAD_ROOT"])
@@ -67,7 +73,10 @@ def wants_json() -> bool:
 
 def build_or_error(name: str, place_audio, tracker: progress.Tracker):
     try:
-        path = pipeline.build(upload_root(), name, place_audio, tracker.stage)
+        path = pipeline.build(upload_root(), name, place_audio, tracker.stage, ANALYSES)
+    except pipeline.TooBusy:
+        tracker.finish(BUSY_MESSAGE)
+        return error(BUSY_MESSAGE, 429)
     except ValueError as exc:
         tracker.finish(str(exc))
         return error(str(exc), 400)

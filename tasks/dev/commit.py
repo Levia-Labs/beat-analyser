@@ -3,10 +3,11 @@
 Commands:
     commit.py "<message>" <path> [<path>...] [--coauthor "Name <email>"]
 
-Stages the paths, runs `git commit -m <message> -- <paths>` so nothing else is committed,
-and on failure re-stages any of those paths the hooks rewrote (prettier, ruff format) and
-retries once. Prints `committed <short-hash> <subject>` on success; on failure at most 20
-lines of hook output and exit 1. Never pushes, never uses --no-verify. Exit 2 on usage errors.
+Stages the paths (`git add -A`; deletions via `git rm --cached`), runs
+`git commit -m <message> -- <paths>` so nothing else is committed, and on failure re-stages
+any of those paths the hooks rewrote (prettier, ruff format) and retries once. Prints
+`committed <short-hash> <subject>` on success; on failure at most 20 lines of hook output and
+exit 1. Never pushes, never uses --no-verify. Exit 2 on usage errors.
 
 Usage: task dev:commit COAUTHOR="Name <email>" -- "feat(x): msg" path1 path2
 """
@@ -15,6 +16,7 @@ import argparse
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 CAP = 20
 
@@ -57,9 +59,18 @@ def rewritten(repo: str, paths: list[str]) -> list[str]:
 def run(repo: str, message: str, paths: list[str], coauthor: str) -> tuple[int, list[str]]:
     if not paths:
         return 1, ["no paths given"]
-    added = git(repo, "add", "--", *paths)
-    if added.returncode:
-        return 1, tail(added.stderr + added.stdout)
+    present = [p for p in paths if (Path(repo) / p).exists()]
+    gone = [p for p in paths if p not in present]
+    # `git add` rejects a path that is neither on disk nor untracked-but-listed, which is the
+    # case once its deletion is staged; `git rm --cached` accepts staged and unstaged deletions.
+    for args in (
+        ["add", "-A", "--", *present] if present else [],
+        ["rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", *gone] if gone else [],
+    ):
+        if args:
+            staged = git(repo, *args)
+            if staged.returncode:
+                return 1, tail(staged.stderr + staged.stdout)
     args = commit_args(message, coauthor, paths)
     done = git(repo, *args)
     if done.returncode:

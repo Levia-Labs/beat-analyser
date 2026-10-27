@@ -1,6 +1,6 @@
 # 0005. Projects are keyed by name and the ZIP is the cache
 
-- **Status:** Accepted
+- **Status:** Superseded by [0014](0014-content-hash-projects.md)
 - **Date:** 2026-10-15
 
 ## Context
