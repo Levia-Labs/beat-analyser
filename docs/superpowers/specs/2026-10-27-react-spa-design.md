@@ -17,6 +17,9 @@ analysed events so results are visible without unzipping.
    stage in `app/Dockerfile`. One container; Node never runs at runtime.
 3. Visuals: saber-tooth's palette, radius and font stack; the beat-analyser logo in the header.
 4. The web service is published on port 8002 by default (was 80), next to MCP on 8001.
+5. Projects can be deleted and renamed from the UI.
+6. The analyse card shows live progress from the server: the analysis stages, and the download
+   percentage for YouTube.
 
 ## Facts the design rests on
 
@@ -126,6 +129,38 @@ form-action 'self'`. jsDelivr is gone.
 4. `/folders` and `/download/<name>` are unchanged.
 5. `events.py` holds `tracks(folder)`, `rows(path)`, `labels(folder)`, `summary(folder)` and
    `meta(folder)`, moved from `mcp_tools.py` (which imports them). Flask never imports `mcp`.
+   It also holds `project_list(root)`, served as `GET /projects` (`[{name, done, meta}]`):
+   `/folders` lists files but not whether the sibling ZIP exists.
+6. `DELETE /projects/<name>`: `204`; removes the folder and the ZIP. `404` for an invalid or
+   unknown name, `409 "Project is being analysed"` when that project's lock is held (tried
+   without waiting).
+7. `POST /projects/<name>/rename` with `{"to": "<new>"}`: `200 {"name": "<new>"}`. Moves the
+   folder, rewrites `meta.json`'s name and rebuilds the ZIP (it stores files under a `<name>/`
+   prefix), removes the old ZIP. `400` for a name `storage.is_valid_name` refuses, `404` for an
+   unknown project, `409` when the target exists or either project is being analysed. Renaming
+   a YouTube project (named by video ID) means submitting that URL again starts a fresh
+   analysis under the ID.
+8. Progress: `POST /upload` and `POST /download_yt` accept `X-Progress-Id` (32 lowercase hex).
+   `GET /progress/<id>`: `200 {"stages", "stage", "done", "total", "fraction", "finished",
+"error", "elapsed"}`, `404` for an unknown or invalid ID. Stages: `download` (YouTube only,
+   with yt-dlp's download fraction), `decode`, `rhythm`, `notes`, `key`, `package`; no
+   fraction inside a stage otherwise. `app/progress.py` keeps a thread-safe in-memory
+   registry; finished entries expire after 10 minutes. `pipeline.build` and `analysis.analyse`
+   take an optional stage callback; `youtube.download_audio` an optional fraction callback.
+   Polling, not a stream: gunicorn has 4 threads, and a stream would hold one per analysis.
+   One worker is required: a second process would not see the first one's entries (ADR).
+9. The same-origin check covers every method except GET, HEAD and OPTIONS (was POST only), so
+   a page on another site cannot DELETE.
+
+### Viewer actions and progress UI
+
+1. Viewer header: "Rename" opens an inline field with Save and Cancel; success navigates to
+   `/p/<new>`. "Delete" opens a confirm dialog ("Delete <name>? Audio, CSVs and ZIP are
+   removed.") with Delete and Cancel; success navigates home. Errors show in a banner.
+2. Analyse card: while the POST is open, the SPA polls `GET /progress/<id>` every second and
+   shows the stages as a compact list, done ones ticked, the current one highlighted, with a
+   percentage during a YouTube download. A failed poll is ignored; the POST's own answer
+   decides success or failure.
 
 ## Error handling
 
@@ -171,5 +206,4 @@ form-action 'self'`. jsDelivr is gone.
 
 1. Audio playback.
 2. A light theme.
-3. Deleting or renaming projects from the UI.
-4. Live progress from the server during an analysis.
+3. A percentage inside the analysis stages (only the YouTube download has one).
