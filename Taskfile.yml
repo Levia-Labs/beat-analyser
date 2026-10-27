@@ -190,11 +190,11 @@ tasks:
       - '"{{.PY}}" -W ignore app/app.py'
 
   smoke:
-    desc: "Probe a running server - index, security headers, /folders. Usage: task smoke [URL=http://127.0.0.1:5000]"
+    desc: "Probe a running server - index, security headers, /folders. Usage: task smoke [URL=http://127.0.0.1:5000] [TOKEN=]"
     vars:
       URL: '{{.URL | default "http://127.0.0.1:5000"}}'
     cmds:
-      - '"{{.SYS_PY}}" tasks/dev/smoke.py "{{.URL}}"'
+      - '"{{.SYS_PY}}" tasks/dev/smoke.py "{{.URL}}"{{if .TOKEN}} --token "{{.TOKEN}}"{{end}}'
 
   gate:
     desc: 'Run tasks as gates - one line each, decisive lines on failure, full log in .cache/gate/. Usage: task gate T="rust:test,test:run -- -k notes" [LINES=30]'
