@@ -4,6 +4,16 @@
 export type Meta = { name?: string; key?: string; bpm?: number } | null;
 export type Project = { name: string; done: boolean; meta: Meta };
 export type Config = { extensions: string[]; max_upload_mb: number };
+export type Progress = {
+  stages: string[];
+  stage: string;
+  done: number;
+  total: number;
+  fraction: number | null;
+  finished: boolean;
+  error: string | null;
+  elapsed: number;
+};
 export type Row = [number, number];
 export type Events = {
   name: string;
@@ -57,6 +67,7 @@ async function get<T>(url: string): Promise<T> {
 }
 
 export const getConfig = () => get<Config>("/config");
+export const getProgress = (id: string) => get<Progress>(`/progress/${id}`);
 export const getProjects = () => get<Project[]>("/projects");
 export const getEvents = (name: string) =>
   get<Events>(`/projects/${encodeURIComponent(name)}/events`);
@@ -66,11 +77,13 @@ export function postAnalysis(
   endpoint: "/upload" | "/download_yt",
   body: FormData | string,
   onProgress: (fraction: number) => void,
+  progressId?: string,
 ): Promise<{ name: string }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", endpoint);
     xhr.setRequestHeader("Accept", "application/json");
+    if (progressId) xhr.setRequestHeader("X-Progress-Id", progressId);
     if (typeof body === "string") xhr.setRequestHeader("Content-Type", "application/json");
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress(event.loaded / event.total);

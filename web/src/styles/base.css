@@ -252,3 +252,26 @@ button,
     transition: none !important;
   }
 }
+
+.stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.stages .done {
+  color: var(--green);
+}
+.stages .done::before {
+  content: "✓ ";
+}
+.stages .now {
+  color: var(--amber);
+}
+.stages .now .num {
+  margin-left: 4px;
+}

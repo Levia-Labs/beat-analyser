@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, postAnalysis } from "../api";
@@ -7,7 +7,7 @@ import AnalyseCard from "./AnalyseCard";
 // ES module exports cannot be spied on in place; mock the module, keep the real ApiError.
 vi.mock("../api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../api")>();
-  return { ...actual, postAnalysis: vi.fn() };
+  return { ...actual, postAnalysis: vi.fn(), getProgress: vi.fn(() => new Promise(() => {})) };
 });
 const post = vi.mocked(postAnalysis);
 
@@ -16,6 +16,12 @@ const config = { extensions: [".mp3", ".wav"], max_upload_mb: 1 };
 beforeEach(() => {
   post.mockReset();
 });
+
+// Pasting is one event; typing 28 keys one by one took long enough under load to hit timeouts.
+async function paste(text: string) {
+  await userEvent.click(screen.getByLabelText("YouTube URL"));
+  await userEvent.paste(text);
+}
 
 function audio(bytes: number) {
   return new File([new Uint8Array(bytes)], "song.mp3", { type: "audio/mpeg" });
@@ -45,7 +51,7 @@ describe("AnalyseCard", () => {
     render(<AnalyseCard config={config} onDone={onDone} />);
     await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
     await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
-    expect(onDone).toHaveBeenCalledWith("song");
+    await waitFor(() => expect(onDone).toHaveBeenCalledWith("song"));
   });
 
   it("shows the server's error and keeps the form for a retry", async () => {
@@ -75,7 +81,7 @@ describe("AnalyseCard", () => {
     post.mockReturnValue(new Promise(() => {}));
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
     await userEvent.click(screen.getByRole("tab", { name: "YouTube" }));
-    await userEvent.type(screen.getByLabelText("YouTube URL"), "https://youtu.be/dQw4w9WgXcQ");
+    await paste("https://youtu.be/dQw4w9WgXcQ");
     await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
     const report = post.mock.calls[0]![2];
     act(() => report(0.5));
@@ -87,12 +93,15 @@ describe("AnalyseCard", () => {
     post.mockResolvedValue({ name: "dQw4w9WgXcQ" });
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
     await userEvent.click(screen.getByRole("tab", { name: "YouTube" }));
-    await userEvent.type(screen.getByLabelText("YouTube URL"), "https://youtu.be/dQw4w9WgXcQ");
+    await paste("https://youtu.be/dQw4w9WgXcQ");
     await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    // The resolved POST sets state after the click returns; wait for the card to settle.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Analyse" })).toBeEnabled());
     expect(post).toHaveBeenCalledWith(
       "/download_yt",
       JSON.stringify({ url: "https://youtu.be/dQw4w9WgXcQ" }),
       expect.any(Function),
+      expect.stringMatching(/^[0-9a-f]{32}$/),
     );
   });
 });

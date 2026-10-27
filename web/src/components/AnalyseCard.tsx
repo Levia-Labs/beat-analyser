@@ -1,6 +1,7 @@
 import { useEffect, useId, useState, type DragEvent, type FormEvent } from "react";
-import { ApiError, postAnalysis, type Config } from "../api";
+import { ApiError, getProgress, postAnalysis, type Config, type Progress } from "../api";
 import Banner from "./Banner";
+import StageList from "./StageList";
 
 const MB = 1024 * 1024;
 
@@ -43,9 +44,27 @@ export default function AnalyseCard({
   const [url, setUrl] = useState("");
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [dragging, setDragging] = useState(false);
+  const [progressId, setProgressId] = useState<string | null>(null);
+  const [server, setServer] = useState<Progress | null>(null);
   const inputId = useId();
   const busy = phase.kind === "uploading" || phase.kind === "analysing";
   const accept = config?.extensions.join(",") ?? "";
+
+  // Poll while the POST is open. A failed poll is ignored: the POST's own answer decides.
+  useEffect(() => {
+    if (!progressId) return;
+    let live = true;
+    const timer = window.setInterval(() => {
+      getProgress(progressId).then(
+        (state) => live && setServer(state),
+        () => undefined,
+      );
+    }, 1000);
+    return () => {
+      live = false;
+      window.clearInterval(timer);
+    };
+  }, [progressId]);
 
   function choose(chosen: File | undefined) {
     if (!chosen || busy) return;
@@ -83,19 +102,28 @@ export default function AnalyseCard({
       endpoint = "/download_yt";
       setPhase({ kind: "analysing", since: Date.now() });
     }
+    const id = crypto.randomUUID().replaceAll("-", "");
+    setProgressId(id);
+    setServer(null);
     try {
-      const { name } = await postAnalysis(endpoint, body, (fraction) =>
-        setPhase((current) =>
-          fraction < 1 && endpoint === "/upload"
-            ? { kind: "uploading", fraction }
-            : current.kind === "analysing"
-              ? current
-              : { kind: "analysing", since: Date.now() },
-        ),
+      const { name } = await postAnalysis(
+        endpoint,
+        body,
+        (fraction) =>
+          setPhase((current) =>
+            fraction < 1 && endpoint === "/upload"
+              ? { kind: "uploading", fraction }
+              : current.kind === "analysing"
+                ? current
+                : { kind: "analysing", since: Date.now() },
+          ),
+        id,
       );
+      setProgressId(null);
       setPhase({ kind: "idle" });
       onDone(name);
     } catch (error) {
+      setProgressId(null);
       setPhase({
         kind: "error",
         message: error instanceof ApiError ? error.message : "Something went wrong",
@@ -177,6 +205,7 @@ export default function AnalyseCard({
           Analysing <Elapsed since={phase.since} />
         </p>
       )}
+      {busy && server && <StageList progress={server} />}
       {phase.kind === "error" && <Banner message={phase.message} />}
 
       <button
