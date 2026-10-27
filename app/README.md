@@ -10,6 +10,7 @@ name; gunicorn loads the Flask object `app` from `app.py` in this directory.
 | `analysis.py`                     | Calls beatcore (rhythm) and `notes` (pitch), writes the track CSVs, ffmpeg decode                               |
 | `jobs.py`                         | in-memory registry of MCP analysis jobs, one per project name, run in a thread pool                             |
 | `backend.py`                      | Client for the web app's `/upload` and `/download_yt`, used by the MCP jobs                                     |
+| `mcp_server.py`                   | The MCP service: the tools over Streamable HTTP at /mcp, optional bearer token                                  |
 | `mcp_tools.py`                    | The MCP tools: start analyses, poll them, read events; every argument checked before use                        |
 | `notes.py`                        | basic-pitch note transcription on onnxruntime - a port, changes listed in its header                            |
 | `key.py`                          | Musical key from the notes: Krumhansl-Schmuckler profiles, `unknown` when nothing fits                          |
