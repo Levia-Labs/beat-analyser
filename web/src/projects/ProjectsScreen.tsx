@@ -81,7 +81,7 @@ export default function ProjectsScreen() {
       : "No projects yet.";
   const count = confirming?.length ?? 0;
   return (
-    <section className="card projects" aria-labelledby="projects-title">
+    <section className="library" aria-labelledby="projects-title">
       <ProjectsBar
         props={filters}
         total={paged.loading ? null : paged.total}

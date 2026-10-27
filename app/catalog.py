@@ -164,6 +164,16 @@ def _item(root: Path, name: str) -> dict[str, Any] | None:
     }
 
 
+def facts(root: Path, name: str) -> dict[str, Any]:
+    """The list's duration, created and size of one project; null when unknown, 0 bytes if gone."""
+    item = _item(root, name) or {}
+    return {
+        "duration": item.get("duration"),
+        "created": item.get("created"),
+        "size": item.get("size", 0),
+    }
+
+
 def _matches(item: dict[str, Any], query: Query) -> bool:
     if query.q and query.q not in item["name"].lower():
         return False

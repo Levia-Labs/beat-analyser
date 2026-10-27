@@ -1,9 +1,11 @@
 /* The Built / Not built status chip and the filter count badge. */
 .chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  min-width: 3.6rem;
   max-width: 100%;
   padding: 0.25rem 0.7rem 0.25rem 0.85rem;
   border: 1px solid var(--line);
@@ -12,8 +14,39 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.chip.off {
+/* The 3px tone bar on the left edge: saber-tooth's status marker. */
+.chip::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 3px;
+  border-radius: 6px 0 0 6px;
+  background: var(--tone);
+  box-shadow: 0 0 10px 1px var(--tone);
+}
+.chip-ok {
+  --tone: var(--green);
+  background: rgba(61, 214, 140, 0.08);
+}
+.chip-error {
+  --tone: var(--red);
+  background: rgba(224, 48, 58, 0.12);
+}
+.chip-ok .ic {
+  color: var(--green);
+}
+.chip-error .ic {
+  color: var(--red);
+}
+.key-chip {
+  --tone: var(--muted);
   color: var(--muted);
+}
+.key-chip::before {
+  box-shadow: none;
+  opacity: 0.6;
 }
 .filter-badge {
   position: absolute;

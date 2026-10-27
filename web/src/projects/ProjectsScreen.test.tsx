@@ -89,13 +89,15 @@ describe("Projects table", () => {
   it("lists rows with the total, links, ZIP and a not-built status", async () => {
     show();
     expect(await screen.findByRole("link", { name: "a" })).toHaveAttribute("href", "/p/a");
-    expect(screen.getByRole("status", { name: "2 projects" })).toHaveTextContent("2");
+    expect(screen.getByRole("status", { name: "2 projects" })).toHaveTextContent("2 projects");
     expect(screen.getByRole("link", { name: "Download ZIP of a" })).toHaveAttribute(
       "href",
       "/download/a",
     );
     expect(screen.queryByRole("link", { name: "Download ZIP of b" })).toBeNull();
-    expect(within(screen.getByRole("table")).getByText("Not built")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("table")).getByRole("img", { name: "Not built" }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("3:05").length).toBeGreaterThan(0);
     expect(lastParams().get("sort")).toBe("created");
   });

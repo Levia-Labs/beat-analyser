@@ -1,41 +1,135 @@
 /* App shell, cards and the single-column screens (sign in, status, Add form). */
-.top {
+/* The masthead has no rule under it: saber-tooth's header is borderless. */
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+/* The list fills the viewport below the masthead, so its table scrolls inside. */
+#root:has(.library) {
+  height: 100dvh;
+}
+.masthead {
   position: relative;
-  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--line);
+  padding: 0.7rem 1rem 0.4rem;
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.7rem;
   color: var(--ink);
   text-decoration: none;
-  font-weight: 600;
-  letter-spacing: 0.02em;
 }
 .logo {
+  display: block;
   width: 40px;
   height: 40px;
   border-radius: 10px;
+}
+.wordmark {
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-stretch: var(--condensed);
+  font-variation-settings: "wdth" 75;
+}
+.red {
+  color: var(--red);
+}
+.blue {
+  color: var(--blue);
 }
 .sign-out {
   position: absolute;
   right: 16px;
 }
 .page {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   max-width: 720px;
   margin: 0 auto;
   padding: 16px;
   display: grid;
+  align-content: start;
   gap: var(--gap);
 }
 /* Wider than the 720px page: a table needs the room. */
-.page:has(.projects) {
+.page:has(> .map-page) {
   max-width: 1100px;
+}
+.page:has(.library) {
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+/* The project page sits inside main.page, which already sets the width and padding. */
+.map-page {
+  max-width: none;
+  padding: 0;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.4rem;
+  color: var(--muted);
+  text-decoration: none;
+  margin: 0.5rem 0;
+}
+.back:hover {
+  color: var(--ink);
+}
+.maphead {
+  margin: 0.5rem 0 0;
+}
+.mapmeta {
+  min-width: 0;
+}
+.mapmeta h1 {
+  overflow-wrap: anywhere;
+}
+.sub {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.metarow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.tempo {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.map-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.map-toolbar .spacer {
+  flex: 1;
+}
+.map-page h2 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.15rem;
+}
+.group-title {
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 500;
+}
+.rename-panel {
+  display: grid;
 }
 
 .card {
@@ -52,16 +146,23 @@
   color: var(--muted);
   font-weight: 600;
 }
+/* saber-tooth's Alert, danger variant. */
 .banner {
-  border: 1px solid var(--red);
-  color: var(--ink);
-  background: color-mix(in srgb, var(--red) 14%, var(--panel));
-  border-radius: var(--radius);
-  padding: 8px 10px;
+  --alert-c: var(--red);
   display: flex;
-  gap: 10px;
+  gap: 0.75rem;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--alert-c) 55%, var(--line));
+  background: color-mix(in srgb, var(--alert-c) 14%, var(--panel));
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.banner.info {
+  --alert-c: var(--blue);
 }
 .status-page,
 .sign-in {
@@ -165,6 +266,10 @@
 @media (max-width: 719px) {
   .page {
     padding: 0;
+  }
+  .page:has(.library),
+  .page:has(> .map-page) {
+    padding: 0 12px 12px;
   }
   .status-page {
     margin: 12px;

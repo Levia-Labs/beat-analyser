@@ -54,7 +54,8 @@ describe("Viewer", () => {
     });
     show("song");
     expect(await screen.findByRole("heading", { name: "song" })).toBeInTheDocument();
-    expect(screen.getByText(/A minor · 120 BPM/)).toBeInTheDocument();
+    expect(screen.getByText("A minor")).toBeInTheDocument();
+    expect(screen.getByText("120 BPM")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "ZIP" })).toHaveAttribute("href", "/download/song");
     expect(screen.getByRole("button", { name: "kick, 1 events" })).toBeInTheDocument();
   });

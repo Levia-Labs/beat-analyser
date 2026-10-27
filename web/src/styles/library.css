@@ -1,31 +1,34 @@
 /* The project list: its header bar, the table surface and its sticky header with the column
    filters. saber-tooth's library.css, on a real <table>. */
-.projects {
-  gap: 8px;
-  padding: 10px;
+.library {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
-.listbar {
+.lib-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem 1rem;
   flex-wrap: wrap;
+  padding: 0.25rem 0 0.75rem;
 }
-.listbar-title {
+.lib-title {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
 }
-.listbar-title h2 {
+.lib-title h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.5rem;
 }
 .count {
   color: var(--muted);
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
 }
-.listbar-actions {
+.lib-tools {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -40,16 +43,38 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+}
+.library > .banner {
+  margin-bottom: 0.75rem;
 }
 
-.table-region {
-  max-height: calc(100vh - 260px);
+/* The only bordered element on the page. */
+.lib-scroll {
+  flex: 1;
   min-height: 160px;
   overflow: auto;
   scrollbar-gutter: stable;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+/* Under 1100px Add keeps only its icon, a 44px target, as saber-tooth's toolbar does. */
+@media (max-width: 1099px) {
+  .lib-tools .btn:has(> .label-hide-narrow) {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  .label-hide-narrow {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
 .ptable {
   width: 100%;
@@ -137,20 +162,15 @@
 }
 
 @media (max-width: 719px) {
-  .projects {
-    padding: 8px 12px;
-  }
   .filters-button {
     display: inline-flex;
-  }
-  .listbar {
-    padding: 0 4px;
   }
   .bulk .btn.primary {
     width: auto;
   }
-  .table-region {
-    max-height: calc(100vh - 300px);
+  /* Phone cards sit on the stage, as before: the one border drops away. Scoped to the
+     library: the project page's timeline panel reuses .lib-scroll and keeps its border. */
+  .library .lib-scroll {
     border: 0;
   }
 }

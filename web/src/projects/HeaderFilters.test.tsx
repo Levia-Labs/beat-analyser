@@ -73,7 +73,7 @@ describe("header filter popovers", () => {
     expect(box).toHaveFocus();
     await userEvent.type(box, "ab");
     await vi.waitFor(() => expect(url()).toHaveTextContent("q=ab"));
-    expect(lastParams().get("q")).toBe("ab");
+    await vi.waitFor(() => expect(lastParams().get("q")).toBe("ab"));
     expect(trigger("Filter Name, 1 active")).toBeInTheDocument();
   });
 
@@ -100,10 +100,10 @@ describe("header filter popovers", () => {
     await userEvent.click(within(panel).getByRole("checkbox", { name: "A minor" }));
     await userEvent.click(within(panel).getByRole("checkbox", { name: "Minor" }));
     await userEvent.click(within(panel).getByRole("checkbox", { name: "C major" }));
-    expect(lastParams().get("key")).toBe("minor,C major,A minor");
+    await vi.waitFor(() => expect(lastParams().get("key")).toBe("minor,C major,A minor"));
     expect(new URLSearchParams(url().textContent ?? "").get("key")).toBe("minor,C major,A minor");
     await userEvent.click(within(panel).getByRole("checkbox", { name: "Minor" }));
-    expect(lastParams().get("key")).toBe("C major,A minor");
+    await vi.waitFor(() => expect(lastParams().get("key")).toBe("C major,A minor"));
     expect(trigger("Filter Key, 2 active")).toBeInTheDocument();
   });
 
@@ -112,11 +112,11 @@ describe("header filter popovers", () => {
     await userEvent.click(trigger("Filter Status"));
     const panel = await screen.findByRole("dialog", { name: "Status filter" });
     await userEvent.click(within(panel).getByRole("checkbox", { name: "Built" }));
-    expect(lastParams().get("status")).toBe("built");
+    await vi.waitFor(() => expect(lastParams().get("status")).toBe("built"));
     await userEvent.click(within(panel).getByRole("checkbox", { name: "Not built" }));
-    expect(lastParams().has("status")).toBe(false);
+    await vi.waitFor(() => expect(lastParams().has("status")).toBe(false));
     await userEvent.click(within(panel).getByRole("checkbox", { name: "Not built" }));
-    expect(lastParams().get("status")).toBe("pending");
+    await vi.waitFor(() => expect(lastParams().get("status")).toBe("pending"));
   });
 
   it("BPM and Duration ranges write their parameters, replacing history entries", async () => {
@@ -124,12 +124,12 @@ describe("header filter popovers", () => {
     await userEvent.click(trigger("Filter BPM"));
     await userEvent.type(await screen.findByRole("textbox", { name: "BPM min" }), "90");
     await userEvent.type(screen.getByRole("textbox", { name: "BPM max" }), "140");
-    expect(lastParams().get("bpm_min")).toBe("90");
-    expect(lastParams().get("bpm_max")).toBe("140");
+    await vi.waitFor(() => expect(lastParams().get("bpm_min")).toBe("90"));
+    await vi.waitFor(() => expect(lastParams().get("bpm_max")).toBe("140"));
     await userEvent.keyboard("{Escape}");
     await userEvent.click(trigger("Filter Duration"));
     await userEvent.type(await screen.findByRole("textbox", { name: "Duration min (s)" }), "60");
-    expect(lastParams().get("dur_min")).toBe("60");
+    await vi.waitFor(() => expect(lastParams().get("dur_min")).toBe("60"));
     expect(trigger("Filter BPM, 1 active")).toBeInTheDocument();
     expect(trigger("Filter Duration, 1 active")).toBeInTheDocument();
   });
@@ -146,7 +146,7 @@ describe("header filter popovers", () => {
     await userEvent.clear(max);
     await userEvent.type(max, "150");
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(lastParams().get("bpm_max")).toBe("150");
+    await vi.waitFor(() => expect(lastParams().get("bpm_max")).toBe("150"));
   });
 
   it("a range refuses text that is not a number", async () => {
@@ -200,7 +200,7 @@ describe("phone filter sheet", () => {
     }
     expect(within(sheet).getByRole("button", { name: "Clear all" })).toBeDisabled();
     await userEvent.click(within(sheet).getByRole("checkbox", { name: "Built" }));
-    expect(lastParams().get("status")).toBe("built");
+    await vi.waitFor(() => expect(lastParams().get("status")).toBe("built"));
     expect(within(sheet).getByRole("button", { name: "Clear all" })).toBeEnabled();
     await userEvent.click(within(sheet).getByRole("button", { name: "Show 7 projects" }));
     expect(screen.queryByRole("dialog", { name: "Filters" })).toBeNull();
@@ -212,9 +212,9 @@ describe("phone filter sheet", () => {
     await userEvent.click(screen.getByRole("button", { name: /^Filters/ }));
     const sheet = await screen.findByRole("dialog", { name: "Filters" });
     await userEvent.selectOptions(within(sheet).getByRole("combobox", { name: "Sort" }), "bpm");
-    expect(lastParams().get("sort")).toBe("bpm");
+    await vi.waitFor(() => expect(lastParams().get("sort")).toBe("bpm"));
     await userEvent.click(within(sheet).getByRole("button", { name: /Descending, reverse/ }));
-    expect(lastParams().get("order")).toBe("asc");
+    await vi.waitFor(() => expect(lastParams().get("order")).toBe("asc"));
     await userEvent.click(within(sheet).getByRole("button", { name: "Clear all" }));
     expect(url()).toHaveTextContent(/^\?sort=bpm&order=asc$/);
   });

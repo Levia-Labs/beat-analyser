@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import type { ProjectItem } from "../api";
 import { Icon } from "../components/icons";
 import RenameForm from "../components/RenameForm";
+import { StatusChip } from "../components/StatusChip";
 
 export const COLUMNS = 9;
 
@@ -36,6 +37,8 @@ export default function ProjectRow({
   const [renaming, setRenaming] = useState(false);
   const [busy, setBusy] = useState(false);
   const { name } = item;
+  // The page's "Projects" link returns to the list as the person left it, filters included.
+  const { search } = useLocation();
 
   async function save(to: string) {
     setBusy(true);
@@ -64,7 +67,7 @@ export default function ProjectRow({
         />
       </td>
       <th scope="row" className="cell-name">
-        <Link className="name-link" to={`/p/${encodeURIComponent(name)}`}>
+        <Link className="name-link" to={`/p/${encodeURIComponent(name)}`} state={{ list: search }}>
           {name}
         </Link>
       </th>
@@ -74,7 +77,7 @@ export default function ProjectRow({
       <td className="cell-created num">{formatCreated(item.created)}</td>
       <td className="cell-size num">{formatSize(item.size)}</td>
       <td className="cell-status">
-        <span className={item.done ? "chip" : "chip off"}>{item.done ? "Built" : "Not built"}</span>
+        <StatusChip done={item.done} />
       </td>
       <td className="cell-actions">
         <div className="actions-row">

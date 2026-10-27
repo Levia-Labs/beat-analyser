@@ -26,7 +26,7 @@ describe("App shell", () => {
     at("/");
     const brand = screen.getByRole("link", { name: "Beat Analyser" });
     expect(brand).toHaveAttribute("href", "/");
-    expect(brand.closest("header")).toHaveClass("top");
+    expect(brand.closest("header")).toHaveClass("masthead");
     expect(brand).toHaveClass("brand");
   });
 

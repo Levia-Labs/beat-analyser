@@ -27,6 +27,10 @@ export type Row = [number, number];
 export type Events = {
   name: string;
   meta: Meta;
+  // Optional: an older server's response lacks them.
+  duration?: number | null;
+  created?: string | null;
+  size?: number;
   labels: Record<string, string>;
   tracks: Record<string, Row[]>;
 };
