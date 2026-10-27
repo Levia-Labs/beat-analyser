@@ -50,7 +50,9 @@ def _post(url: str, body: bytes, content_type: str) -> None:
             pass
     except urllib.error.HTTPError as exc:
         raise BackendError(_message(exc.code, exc.read())) from None
-    except (urllib.error.URLError, TimeoutError) as exc:
+    except OSError as exc:
+        # URLError, TimeoutError and ConnectionError (RemoteDisconnected when the web
+        # app restarts or gunicorn kills the worker mid-analysis) are all OSError.
         raise BackendError(f"web app unreachable: {exc}") from None
 
 

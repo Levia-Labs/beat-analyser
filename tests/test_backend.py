@@ -1,6 +1,7 @@
 """The MCP service's client for the web app's analysis endpoints. urlopen is replaced, so
 no request leaves the process."""
 
+import http.client
 import io
 import json
 import urllib.error
@@ -86,6 +87,15 @@ def test_an_unreachable_backend_is_a_backend_error(monkeypatch):
     refuse_with(monkeypatch, urllib.error.URLError("Connection refused"))
     with pytest.raises(backend.BackendError, match="unreachable"):
         backend.download_yt("http://backend:8000", "dQw4w9WgXcQ")
+
+
+def test_a_dropped_connection_is_a_backend_error(monkeypatch):
+    refuse_with(
+        monkeypatch,
+        http.client.RemoteDisconnected("Remote end closed connection without response"),
+    )
+    with pytest.raises(backend.BackendError, match="unreachable"):
+        backend.upload("http://backend:8000", "song.mp3", b"x")
 
 
 def test_a_timeout_is_a_backend_error(monkeypatch):
