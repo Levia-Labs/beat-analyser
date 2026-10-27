@@ -29,7 +29,7 @@ def test_upload_still_answers_the_zip_by_default(client):
 def test_download_yt_answers_the_name_when_json_is_asked(client, monkeypatch):
     import youtube
 
-    def fake_download(vid, folder, max_seconds, max_bytes):
+    def fake_download(vid, folder, max_seconds, max_bytes, on_progress=None):
         source = folder / "source.wav"
         source.write_bytes(wav_bytes())
         return source

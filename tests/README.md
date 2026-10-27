@@ -24,6 +24,7 @@ runs without beatcore or the note model. Run all with `task test:run`, a subset 
 | `test_mcp_server.py`    | The MCP server: tools served in-process, bearer token, start-up refusal |
 | `test_mcp_tools.py`     | The MCP tools: argument refusals, job start, status, event windows      |
 | `test_notes.py`         | basic-pitch port; the model test is skipped without onnxruntime/ffmpeg  |
+| `test_progress.py`      | Progress registry, stage callbacks, the poll route                      |
 | `test_properties.py`    | Properties of the trust-boundary functions and the CSV writer           |
 | `test_repo_files.py`    | Guards on tracked text-file encodings                                   |
 | `test_storage.py`       | Storage and name validation                                             |

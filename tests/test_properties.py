@@ -17,6 +17,7 @@ from hypothesis import strategies as st
 import analysis
 import mcp_tools
 import notes
+import progress
 import storage
 import youtube
 
@@ -172,3 +173,10 @@ def test_check_audio_refuses_more_than_the_limit(data, wrapped):
 @given(st.binary(min_size=1, max_size=300))
 def test_check_audio_accepts_wrapped_base64(data):
     assert mcp_tools.check_audio("a.wav", base64.encodebytes(data).decode(), 300)[2] == data
+
+
+@given(st.text(max_size=40))
+@example("0123456789abcdef0123456789abcdef")
+def test_progress_ids_are_32_lowercase_hex(value):
+    accepted = progress.is_valid_id(value)
+    assert accepted == (len(value) == 32 and all(c in "0123456789abcdef" for c in value))

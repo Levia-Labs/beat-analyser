@@ -7,6 +7,7 @@ name; gunicorn loads the Flask object `app` from `app.py` in this directory.
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `app.py`                          | Flask routes, request validation, same-origin check on POST, security headers                                   |
 | `pipeline.py`                     | One project from audio to ZIP, with a lock per project name; `repair_all`                                       |
+| `progress.py`                     | Analysis stages the SPA polls; in memory, one worker                                                            |
 | `analysis.py`                     | Calls beatcore (rhythm) and `notes` (pitch), writes the track CSVs, ffmpeg decode                               |
 | `jobs.py`                         | MCP analysis jobs: one per project name, two at a time, at most eight pending                                   |
 | `backend.py`                      | Client for the web app's `/upload` and `/download_yt`, used by the MCP jobs                                     |

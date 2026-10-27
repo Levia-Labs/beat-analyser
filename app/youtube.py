@@ -7,6 +7,7 @@ whichever host the string really named.
 """
 
 import re
+from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
@@ -35,12 +36,24 @@ def canonical_url(vid: str) -> str:
     return f"https://www.youtube.com/watch?v={vid}"
 
 
-def download_audio(vid: str, folder: Path, max_seconds: int, max_bytes: int) -> Path:
+def download_audio(
+    vid: str,
+    folder: Path,
+    max_seconds: int,
+    max_bytes: int,
+    on_progress: Callable[[float], None] | None = None,
+) -> Path:
     """Download the best audio stream into folder. Returns the downloaded file.
 
     Raises ValueError for a video that is too long or too large.
     """
     from yt_dlp import YoutubeDL
+
+    def hook(status: dict) -> None:
+        # yt-dlp reports bytes; the total is sometimes only an estimate, sometimes absent.
+        total = status.get("total_bytes") or status.get("total_bytes_estimate")
+        if on_progress and status.get("status") == "downloading" and total:
+            on_progress(status.get("downloaded_bytes", 0) / total)
 
     # A literal in the call, not a variable: yt-dlp types `params` as a TypedDict, and only a
     # literal is checked against it key by key.
@@ -55,6 +68,7 @@ def download_audio(vid: str, folder: Path, max_seconds: int, max_bytes: int) -> 
             # yt-dlp documents False as "no cache"; typeshed's stub allows only str | None.
             "cachedir": False,  # pyright: ignore[reportArgumentType]
             "max_filesize": max_bytes,
+            "progress_hooks": [hook],
         }
     ) as ydl:
         info = ydl.extract_info(canonical_url(vid), download=False)

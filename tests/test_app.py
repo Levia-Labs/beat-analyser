@@ -97,7 +97,7 @@ def test_download_yt_converts_the_download_and_removes_it(client, upload_root, m
 
     seen = {}
 
-    def download_audio(vid, folder, max_seconds, max_bytes):
+    def download_audio(vid, folder, max_seconds, max_bytes, on_progress=None):
         seen["args"] = (vid, max_seconds, max_bytes)
         source = folder / "download.m4a"
         source.write_bytes(b"m4a bytes")

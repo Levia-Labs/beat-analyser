@@ -17,6 +17,7 @@ from werkzeug.exceptions import HTTPException
 import analysis
 import events
 import pipeline
+import progress
 import storage
 import youtube
 
@@ -62,14 +63,17 @@ def wants_json() -> bool:
     return request.accept_mimetypes.best == "application/json"
 
 
-def build_or_error(name: str, place_audio):
+def build_or_error(name: str, place_audio, tracker: progress.Tracker):
     try:
-        path = pipeline.build(upload_root(), name, place_audio)
+        path = pipeline.build(upload_root(), name, place_audio, tracker.stage)
     except ValueError as exc:
+        tracker.finish(str(exc))
         return error(str(exc), 400)
     except Exception as exc:
         log.exception("processing %s failed", name)
+        tracker.finish(f"Processing failed: {exc}")
         return error(f"Processing failed: {exc}", 500)
+    tracker.finish()
     return jsonify(name=name) if wants_json() else send_zip(path)
 
 
@@ -121,7 +125,10 @@ def upload():
     except ValueError as exc:
         return error(str(exc), 400)
 
+    tracker = progress.Tracker(request.headers.get("X-Progress-Id"), progress.UPLOAD_STAGES)
+
     def place_audio(wav: Path) -> None:
+        tracker.stage("decode")
         if extension == ".wav":
             file.save(wav)
             return
@@ -132,7 +139,7 @@ def upload():
         finally:
             source.unlink(missing_ok=True)
 
-    return build_or_error(name, place_audio)
+    return build_or_error(name, place_audio, tracker)
 
 
 @app.post("/download_yt")
@@ -143,16 +150,30 @@ def download_yt():
     except ValueError as exc:
         return error(str(exc), 400)
 
+    tracker = progress.Tracker(request.headers.get("X-Progress-Id"), progress.YOUTUBE_STAGES)
+
     def place_audio(wav: Path) -> None:
+        tracker.stage("download")
         source = youtube.download_audio(
-            vid, wav.parent, app.config["YT_MAX_SECONDS"], app.config["MAX_CONTENT_LENGTH"]
+            vid,
+            wav.parent,
+            app.config["YT_MAX_SECONDS"],
+            app.config["MAX_CONTENT_LENGTH"],
+            on_progress=tracker.fraction,
         )
+        tracker.stage("decode")
         try:
             analysis.to_wav(source, wav)
         finally:
             source.unlink(missing_ok=True)
 
-    return build_or_error(vid, place_audio)
+    return build_or_error(vid, place_audio, tracker)
+
+
+@app.get("/progress/<progress_id>")
+def analysis_progress(progress_id: str):
+    state = progress.snapshot(progress_id)
+    return jsonify(state) if state else error("No such progress", 404)
 
 
 @app.get("/folders")

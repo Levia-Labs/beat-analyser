@@ -23,7 +23,16 @@ def _lock(name: str) -> threading.Lock:
         return _locks.setdefault(name, threading.Lock())
 
 
-def build(root: Path, name: str, place_audio: Callable[[Path], None]) -> Path:
+def _ignore(stage: str) -> None:
+    return None
+
+
+def build(
+    root: Path,
+    name: str,
+    place_audio: Callable[[Path], None],
+    progress: Callable[[str], None] = _ignore,
+) -> Path:
     """The project's ZIP, built if missing.
 
     place_audio(wav_path) writes the project's audio.wav; it is only called when the folder
@@ -41,9 +50,10 @@ def build(root: Path, name: str, place_audio: Callable[[Path], None]) -> Path:
             place_audio(wav)
 
         storage.clear_tracks(folder)
-        result = analysis.analyse(wav, folder)
+        result = analysis.analyse(wav, folder, progress)
         storage.save_meta(folder, name, key=result["key"], bpm=result["bpm"])
         log.info("built %s at %.2f BPM", name, result["bpm"])
+        progress("package")
         return storage.package(root, name)
 
 
