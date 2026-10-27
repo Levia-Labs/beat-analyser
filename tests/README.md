@@ -16,6 +16,7 @@ runs without beatcore or the note model. Run all with `task test:run`, a subset 
 | `test_coverage_gate.py` | The coverage ratchet                                                   |
 | `test_key.py`           | Key detection from pitch classes                                       |
 | `test_jobs.py`          | the MCP job registry: dedupe per name, pending cap, error capture      |
+| `test_mcp_tools.py`     | The MCP tools: argument refusals, job start, status, event windows     |
 | `test_notes.py`         | basic-pitch port; the model test is skipped without onnxruntime/ffmpeg |
 | `test_properties.py`    | Properties of the trust-boundary functions and the CSV writer          |
 | `test_repo_files.py`    | Guards on tracked text-file encodings                                  |
