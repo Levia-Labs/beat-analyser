@@ -26,7 +26,7 @@ python = ["dep:pyo3"]
 hound = "3.5"
 realfft = "3.5"
 # abi3: one wheel for CPython 3.12 and every later version, 3.14 included.
-pyo3 = { version = "0.29", features = ["extension-module", "abi3-py312"], optional = true }
+pyo3 = { version = "0.30", features = ["extension-module", "abi3-py312"], optional = true }
 
 [profile.release]
 lto = true
