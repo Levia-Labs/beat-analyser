@@ -4,8 +4,10 @@ import { ApiError, deleteProject, getEvents, renameProject } from "../api";
 import Banner from "../components/Banner";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { Icon } from "../components/icons";
+import { BackLink, ProjectHead } from "../components/ProjectHead";
 import RenameForm from "../components/RenameForm";
 import Timeline from "../components/Timeline";
+import { useDocumentTitle } from "../useDocumentTitle";
 import { message, useLoad } from "../useLoad";
 
 export function ViewerRoute() {
@@ -17,6 +19,8 @@ export default function Viewer({ name }: { name: string }) {
   const load = useCallback(() => getEvents(name), [name]);
   const events = useLoad(load);
   const navigate = useNavigate();
+  // Only a loaded project names the tab; the not-found and error states keep the plain title.
+  useDocumentTitle(events.data ? `${name} · Beat Analyser` : "Beat Analyser");
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -58,16 +62,21 @@ export default function Viewer({ name }: { name: string }) {
 
   if (events.error instanceof ApiError && events.error.status === 404) {
     return (
-      <section className="card">
-        <p>No analysed project called {name}</p>
-        <p className="muted">It may still be analysing.</p>
-        <div className="head">
-          <button type="button" className="btn" onClick={events.reload}>
-            <Icon name="refresh" /> Reload
-          </button>
-          <Link className="btn" to="/">
-            <Icon name="list" /> Home
-          </Link>
+      <section className="page map-page">
+        <BackLink />
+        <div className="banner info">
+          <div>
+            <p>No analysed project called {name}</p>
+            <p className="muted">It may still be analysing.</p>
+          </div>
+          <div className="map-toolbar">
+            <button type="button" className="btn" onClick={events.reload}>
+              <Icon name="refresh" /> Reload
+            </button>
+            <Link className="btn" to="/">
+              <Icon name="list" /> Home
+            </Link>
+          </div>
         </div>
       </section>
     );
@@ -88,16 +97,12 @@ export default function Viewer({ name }: { name: string }) {
 
   const { meta } = events.data;
   return (
-    <>
-      <section className="card head">
-        <Link to="/" className="btn plain icon" aria-label="Back to projects">
-          <Icon name="arrow-left" />
-        </Link>
-        <h1>{name}</h1>
-        <span className="muted num">
-          {meta?.key ?? "?"} · {meta?.bpm ? `${meta.bpm} BPM` : "? BPM"}
-        </span>
-        <a className="btn" href={`/download/${encodeURIComponent(name)}`} download>
+    <section className="page map-page">
+      <BackLink />
+      <ProjectHead name={name} meta={meta} />
+      <div className="map-toolbar">
+        <span className="spacer" />
+        <a className="btn primary" href={`/download/${encodeURIComponent(name)}`} download>
           <Icon name="download" /> ZIP
         </a>
         <button
@@ -118,12 +123,12 @@ export default function Viewer({ name }: { name: string }) {
         >
           <Icon name="trash" /> Delete
         </button>
-      </section>
+      </div>
       {problem && <Banner message={problem} />}
       {mode === "rename" && (
-        <section className="card">
+        <div className="rename-panel">
           <RenameForm name={name} busy={busy} onSave={rename} onCancel={close} />
-        </section>
+        </div>
       )}
       {mode === "delete" && (
         <ConfirmDialog
@@ -135,7 +140,8 @@ export default function Viewer({ name }: { name: string }) {
           onCancel={close}
         />
       )}
+      <h2 className="group-title">Timeline</h2>
       <Timeline events={events.data} />
-    </>
+    </section>
   );
 }

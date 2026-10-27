@@ -51,9 +51,7 @@ describe("icons on buttons", () => {
     await screen.findByRole("heading", { name: "song" });
     expectIcons(container);
     expect(screen.getByRole("link", { name: "ZIP" }).querySelector("svg")).not.toBeNull();
-    expect(
-      screen.getByRole("link", { name: "Back to projects" }).querySelector("svg"),
-    ).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Projects" }).querySelector("svg")).not.toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Rename" }));
     expectIcons(container);
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));

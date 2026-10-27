@@ -54,7 +54,7 @@ export default function ProjectsTable({
 
   const allPicked = items.length > 0 && items.every((item) => selected.has(item.name));
   return (
-    <div className="table-region" ref={region}>
+    <div className="lib-scroll" ref={region}>
       <table className="ptable">
         <ProjectsHead
           props={filters}

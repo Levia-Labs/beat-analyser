@@ -37,10 +37,12 @@ export default function App() {
 
   return (
     <>
-      <header className="top">
-        <Link to="/" className="brand">
+      <header className="masthead">
+        <Link to="/" className="brand" aria-label="Beat Analyser">
           <Logo />
-          <span>Beat Analyser</span>
+          <span className="wordmark">
+            <span className="red">Beat</span> <span className="blue">Analyser</span>
+          </span>
         </Link>
         {auth && (
           <button type="button" className="btn sign-out" onClick={signOut}>

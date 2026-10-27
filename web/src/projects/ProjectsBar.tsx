@@ -19,20 +19,20 @@ export default function ProjectsBar({
 }) {
   const active = totalFilters(props.query);
   return (
-    <div className="listbar">
-      <div className="listbar-title">
-        <h2 id="projects-title">Projects</h2>
+    <div className="lib-bar">
+      <div className="lib-title">
+        <h1 id="projects-title">Projects</h1>
         {total !== null && (
           <span
             className="count num"
             role="status"
             aria-label={`${total} ${total === 1 ? "project" : "projects"}`}
           >
-            {total}
+            {total} {total === 1 ? "project" : "projects"}
           </span>
         )}
       </div>
-      <div className="listbar-actions">
+      <div className="lib-tools">
         {active > 0 && (
           <button type="button" className="btn" onClick={onClear}>
             <Icon name="filter-x" /> Clear filters ({active})

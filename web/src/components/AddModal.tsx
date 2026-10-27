@@ -30,7 +30,7 @@ export default function AddModal() {
     <Dialog.Root open={open} onOpenChange={(next) => (next || !busy) && setOpen(next)}>
       <Dialog.Trigger className="btn primary">
         <Icon name="generate" />
-        <span className="label-hide-mobile">Add</span>
+        <span className="label-hide-mobile label-hide-narrow">Add</span>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="overlay" />

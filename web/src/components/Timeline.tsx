@@ -168,27 +168,8 @@ export default function Timeline({ events }: { events: Events }) {
 
   const stats = picked ? laneStats(events.tracks[picked] ?? []) : null;
   return (
-    <section className="card timeline">
-      <div className="zoom">
-        <button
-          type="button"
-          className="btn icon"
-          aria-label="Zoom out"
-          onClick={() => zoomAt(0.8, width / 2)}
-        >
-          <Icon name="zoom-out" />
-        </button>
-        <button
-          type="button"
-          className="btn icon"
-          aria-label="Zoom in"
-          onClick={() => zoomAt(1.25, width / 2)}
-        >
-          <Icon name="zoom-in" />
-        </button>
-        <span className="muted num">{formatTime(duration)}</span>
-      </div>
-      <div className="lanes">
+    <div className="timeline">
+      <div className="lanes lib-scroll">
         <div className="labels">
           {lanes.map((track) => {
             const count = events.tracks[track]?.length ?? 0;
@@ -222,6 +203,25 @@ export default function Timeline({ events }: { events: Events }) {
           </div>
         </div>
       </div>
+      <div className="zoom">
+        <button
+          type="button"
+          className="btn icon"
+          aria-label="Zoom out"
+          onClick={() => zoomAt(0.8, width / 2)}
+        >
+          <Icon name="zoom-out" />
+        </button>
+        <button
+          type="button"
+          className="btn icon"
+          aria-label="Zoom in"
+          onClick={() => zoomAt(1.25, width / 2)}
+        >
+          <Icon name="zoom-in" />
+        </button>
+        <span className="muted num">{formatTime(duration)}</span>
+      </div>
       {picked && stats && (
         <p className="muted num">
           {picked}: {stats.count} events
@@ -230,6 +230,6 @@ export default function Timeline({ events }: { events: Events }) {
             : ""}
         </p>
       )}
-    </section>
+    </div>
   );
 }

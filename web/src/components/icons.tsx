@@ -32,6 +32,19 @@ const ICONS = {
       <path d="M8 16V5l8-1.5V10M19 15v6M16 18h6" />
     </>
   ),
+  // saber-tooth's ok icon, and its cross in the same circle for a project that is not built.
+  ok: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M7.8 12.4l3 3 5.4-6" />
+    </>
+  ),
+  "close-circle": (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 9l6 6M15 9l-6 6" />
+    </>
+  ),
   "arrow-left": <path d="M19 12H5M11 6l-6 6 6 6" />,
   refresh: (
     <>

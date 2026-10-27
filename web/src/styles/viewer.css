@@ -1,25 +1,19 @@
-.head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.head h1 {
-  margin: 0;
-  font-size: 18px;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.timeline {
+  display: grid;
+  gap: 0.75rem;
 }
 .zoom {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+/* A .lib-scroll panel that sizes to its lanes instead of filling a column. */
 .lanes {
   display: flex;
+  flex: none;
+  min-height: 0;
+  overflow: hidden;
+  padding-left: 8px;
 }
 .labels {
   display: grid;
