@@ -11,6 +11,7 @@ runs without beatcore or the note model. Run all with `task test:run`, a subset 
 | `conftest.py`           | Shared fixtures, Hypothesis profiles and the madmom stub                |
 | `test_agent_tooling.py` | Agent-session tools: gate and outline                                   |
 | `test_analysis.py`      | CSV track writing, label routing, end-to-end analysis                   |
+| `test_api.py`           | JSON answers for the SPA: name instead of ZIP, config, projects, events |
 | `test_app.py`           | Flask routes: CSP, upload, refusals, folders, download, repair          |
 | `test_backend.py`       | The MCP web app client: multipart body, error messages, unreachable     |
 | `test_coverage_gate.py` | The coverage ratchet                                                    |

@@ -15,6 +15,7 @@ from flask import Flask, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
 
 import analysis
+import events
 import pipeline
 import storage
 import youtube
@@ -56,14 +57,20 @@ def send_zip(path: Path):
     return send_file(path, as_attachment=True, download_name=path.name)
 
 
+def wants_json() -> bool:
+    """The SPA asks for JSON; curl, the MCP jobs and tasks/dev/e2e.py keep getting the ZIP."""
+    return request.accept_mimetypes.best == "application/json"
+
+
 def build_or_error(name: str, place_audio):
     try:
-        return send_zip(pipeline.build(upload_root(), name, place_audio))
+        path = pipeline.build(upload_root(), name, place_audio)
     except ValueError as exc:
         return error(str(exc), 400)
     except Exception as exc:
         log.exception("processing %s failed", name)
         return error(f"Processing failed: {exc}", 500)
+    return jsonify(name=name) if wants_json() else send_zip(path)
 
 
 @app.before_request
@@ -151,6 +158,28 @@ def download_yt():
 @app.get("/folders")
 def list_folders():
     return jsonify(storage.list_projects(upload_root()))
+
+
+@app.get("/config")
+def client_config():
+    return jsonify(
+        extensions=sorted(storage.ALLOWED_EXTENSIONS),
+        max_upload_mb=app.config["MAX_CONTENT_LENGTH"] // MB,
+    )
+
+
+@app.get("/projects")
+def list_projects():
+    return jsonify(events.project_list(upload_root()))
+
+
+@app.get("/projects/<name>/events")
+def project_events(name: str):
+    root = upload_root()
+    # Only the ZIP means done: pipeline.build writes the CSVs before it packages.
+    if not storage.is_valid_name(name) or not storage.zip_path(root, name).is_file():
+        return error("Project not found", 404)
+    return jsonify(events.project_events(root, name))
 
 
 @app.get("/download/<name>")
