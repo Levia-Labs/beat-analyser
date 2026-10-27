@@ -9,12 +9,17 @@
 #root:has(.library) {
   height: 100dvh;
 }
+/* Three columns, brand in the middle: the brand stays centered on the page and the right-hand
+   links share its row, so both sit on the same vertical centre. An absolutely positioned group
+   centred on the padded box sat lower than the brand. */
 .masthead {
-  position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
   padding: 0.7rem 1rem 0.4rem;
+}
+.masthead .brand {
+  grid-column: 2;
 }
 .brand {
   display: flex;
@@ -35,6 +40,11 @@
   letter-spacing: 0.01em;
   font-stretch: var(--condensed);
   font-variation-settings: "wdth" 75;
+  /* The body's 1.45 line height plus the DIN stack's deep descender space put the letters
+     above the logo's centre. A tight line box trimmed to cap height and baseline centres the
+     visible letters; browsers without text-box fall back to the tight line box. */
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
 }
 .red {
   color: var(--red);
@@ -44,10 +54,8 @@
 }
 /* Out of the flex flow, so the logo stays centred whatever sits at the right end. */
 .masthead-end {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 0.5rem;
