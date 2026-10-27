@@ -105,3 +105,32 @@ def test_analyse_end_to_end(tmp_path):
         assert (tmp_path / f"{track}.csv").is_file()
     assert (tmp_path / analysis.LABELS_NAME).is_file()
     assert ",69\n" in (tmp_path / "chords.csv").read_text(encoding="utf-8")
+
+
+def _stub_stages(monkeypatch):
+    monkeypatch.setattr(
+        analysis,
+        "rhythm",
+        lambda _path: {
+            "bpm": 120.123,
+            "confidence": 0.5,
+            "beats": [0.5],
+            "onsets": [(0.1, "kick")],
+        },
+    )
+    monkeypatch.setattr(analysis.notes, "transcribe", lambda _path: [(0.0, 1.0, 60, 0.9)])
+    monkeypatch.setattr(analysis.key, "estimate", lambda _found: ("C major", 0.9))
+
+
+def test_analyse_reports_stages_in_order(tmp_path, monkeypatch):
+    _stub_stages(monkeypatch)
+    stages: list[str] = []
+    result = analysis.analyse(tmp_path / "a.wav", tmp_path, stages.append)
+    assert stages == ["rhythm", "notes", "key"]
+    assert result == {"bpm": 120.12, "confidence": 0.5, "key": "C major"}
+
+
+def test_analyse_default_progress_ignores_stages(tmp_path, monkeypatch):
+    _stub_stages(monkeypatch)
+    assert analysis.analyse(tmp_path / "a.wav", tmp_path)["key"] == "C major"
+    assert analysis._ignore("rhythm") is None  # pyright: ignore[reportPrivateUsage]

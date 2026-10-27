@@ -72,5 +72,7 @@ describe("timeline maths", () => {
     ).toEqual({ count: 2, first: 0.5, last: 61.25 });
     expect(laneStats([])).toEqual({ count: 0, first: null, last: null });
     expect(formatTime(61.25)).toBe("1:01.3");
+    expect(formatTime(59.96)).toBe("1:00.0");
+    expect(formatTime(0)).toBe("0:00.0");
   });
 });

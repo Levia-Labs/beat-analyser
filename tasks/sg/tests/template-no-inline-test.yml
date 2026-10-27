@@ -1,8 +1,8 @@
 id: template-no-inline
 valid:
-  - '<script src="/static/app.js"></script>'
-  - '<div class="page"></div>'
-  - '<link href="/static/app.css" rel="stylesheet" />'
+  - '<script type="module" src="/src/main.tsx"></script>'
+  - '<div id="root"></div>'
+  - '<link href="/favicon.svg" rel="icon" />'
   - '<button type="submit" class="btn">Go</button>'
 invalid:
   - "<script>alert(1)</script>"

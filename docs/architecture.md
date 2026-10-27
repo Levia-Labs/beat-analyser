@@ -26,8 +26,6 @@ storage.package ──► <root>/<name>_tracks.zip   written aside, then swapped
 | `app.py`          | HTTP, Flask config, headers      | madmom, file layout details            |
 | `progress.py`     | in-memory stage registry         | HTTP, files                            |
 | `web/` (React)    | the page, the viewer, the API    | Python, file layout                    |
-| `progress.py`     | in-memory stage registry         | HTTP, files                            |
-| `web/` (React)    | the page, the viewer, the API    | Python, file layout                    |
 | `cli.py`          | argparse, printing               | HTTP                                   |
 | `pipeline.py`     | the build order, locking         | where audio comes from                 |
 | `analysis.py`     | which engine writes which track  | folders other than the one it is given |

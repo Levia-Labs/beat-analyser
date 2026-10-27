@@ -41,8 +41,6 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
       Store a content hash in `meta.json` and reanalyse on mismatch.
 - [ ] `/repair` and long analyses run inside the request. A job queue with a status endpoint
       would free the UI and survive a browser closing.
-- [ ] No progress reporting during analysis.
-- [ ] No way to delete one project from the UI.
 
 ## Security
 

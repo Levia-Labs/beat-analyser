@@ -78,9 +78,9 @@ The container runs as uid 1000. On a Linux host, `uploads/` must be writable by 
 `PORT=8080 task docker:up`, then <http://localhost:8080>. The web UI is on 8002 by default,
 the MCP endpoint on 8001.
 
-### The page says "The web app is not built"
+### `/` returns 503 "The web app is not built"
 
-A checkout without `web/dist` answers 503 at `/` while the API keeps working. Run
+A checkout without `web/dist` answers 503 at `/` with a JSON error, not a page, while the API keeps working. Run
 `task web:install` once, then `task web:build`. The container image builds it itself.
 
 ### The web UI cannot be reached from another machine

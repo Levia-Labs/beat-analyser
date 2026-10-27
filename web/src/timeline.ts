@@ -63,6 +63,8 @@ export function laneStats(rows: Row[]) {
 }
 
 export function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  return `${minutes}:${(seconds - minutes * 60).toFixed(1).padStart(4, "0")}`;
+  // Round to tenths first: splitting first turned 59.96 into "0:60.0".
+  const tenths = Math.round(seconds * 10);
+  const minutes = Math.floor(tenths / 600);
+  return `${minutes}:${((tenths - minutes * 600) / 10).toFixed(1).padStart(4, "0")}`;
 }
