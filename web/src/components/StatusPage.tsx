@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertIcon } from "./icons";
+import { Icon } from "./icons";
 
 // The shared look of the error page and the Not found page.
 export default function StatusPage({
@@ -13,7 +13,7 @@ export default function StatusPage({
 }) {
   return (
     <section className="card status-page" role="alert">
-      <AlertIcon size={28} />
+      <Icon name="alert" className="ic-lg" />
       <h1>{title}</h1>
       <p className="muted">{detail}</p>
       <div className="actions">{children}</div>

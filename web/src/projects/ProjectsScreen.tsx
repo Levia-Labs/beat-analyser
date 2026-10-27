@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { ApiError, deleteProject, renameProject } from "../api";
 import Banner from "../components/Banner";
 import ConfirmDialog from "../components/ConfirmDialog";
-import { RefreshIcon, TrashIcon } from "../components/icons";
+import { Icon } from "../components/icons";
 import { message } from "../useLoad";
 import { hasFilters } from "./query";
 import ProjectsTable from "./ProjectsTable";
@@ -95,8 +95,8 @@ export default function ProjectsScreen() {
         <Banner
           message={paged.error}
           action={
-            <button type="button" className="chip" onClick={paged.retry}>
-              <RefreshIcon /> Retry
+            <button type="button" className="btn" onClick={paged.retry}>
+              <Icon name="refresh" /> Retry
             </button>
           }
         />
@@ -104,8 +104,12 @@ export default function ProjectsScreen() {
       {problem && <Banner message={problem} />}
       {selected.size > 0 && (
         <div className="bulk">
-          <button type="button" className="primary" onClick={() => setConfirming([...selected])}>
-            <TrashIcon /> Delete selected ({selected.size})
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => setConfirming([...selected])}
+          >
+            <Icon name="trash" /> Delete selected ({selected.size})
           </button>
         </div>
       )}

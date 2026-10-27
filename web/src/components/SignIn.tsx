@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import Banner from "./Banner";
-import { LockIcon } from "./icons";
+import { Icon } from "./icons";
 
 export default function SignIn({
   submit,
@@ -29,7 +29,7 @@ export default function SignIn({
 
   return (
     <form className="card sign-in" onSubmit={send}>
-      <LockIcon size={28} />
+      <Icon name="lock" className="ic-lg" />
       <h1>Sign in</h1>
       <p className="muted">This server asks for an access token.</p>
       {error && <Banner message={error} />}
@@ -42,8 +42,8 @@ export default function SignIn({
         disabled={busy}
         onChange={(event) => setToken(event.target.value)}
       />
-      <button type="submit" className="primary" disabled={busy || !token}>
-        <LockIcon /> Sign in
+      <button type="submit" className="btn primary" disabled={busy || !token}>
+        <Icon name="lock" /> Sign in
       </button>
     </form>
   );

@@ -1,24 +1,24 @@
 import { Component, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { ListIcon, RefreshIcon } from "./icons";
+import { Icon } from "./icons";
 import StatusPage from "./StatusPage";
 
 function ErrorPage({ error, clear }: { error: Error; clear: () => void }) {
   const navigate = useNavigate();
   return (
     <StatusPage title="Something went wrong" detail={error.message || "Unexpected error"}>
-      <button type="button" className="chip" onClick={() => window.location.reload()}>
-        <RefreshIcon /> Reload
+      <button type="button" className="btn" onClick={() => window.location.reload()}>
+        <Icon name="refresh" /> Reload
       </button>
       <button
         type="button"
-        className="chip"
+        className="btn"
         onClick={() => {
           clear();
           navigate("/");
         }}
       >
-        <ListIcon /> Projects
+        <Icon name="list" /> Projects
       </button>
     </StatusPage>
   );

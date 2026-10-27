@@ -1,12 +1,19 @@
+/* Reset, page background, type, icons, buttons and inputs: saber-tooth's base.css. */
 * {
   box-sizing: border-box;
 }
 html,
 body {
   margin: 0;
-  background: var(--stage);
+}
+body {
+  background:
+    radial-gradient(ellipse at 18% -12%, rgba(224, 48, 58, 0.16) 0, transparent 46%),
+    radial-gradient(ellipse at 82% -12%, rgba(46, 155, 230, 0.16) 0, transparent 46%), var(--stage);
+  background-attachment: fixed;
   color: var(--ink);
-  font: 15px/1.45 var(--font);
+  font-size: 15px;
+  line-height: 1.45;
 }
 a {
   color: var(--blue);
@@ -14,6 +21,17 @@ a {
 :focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
+}
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+h3 {
+  margin: 1rem 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 .num {
   font-variant-numeric: tabular-nums;
@@ -25,45 +43,140 @@ a {
   position: absolute;
   width: 1px;
   height: 1px;
+  margin: -1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
 
-.card {
+.ic {
+  width: 1.25em;
+  height: 1.25em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ic-filled {
+  fill: currentColor;
+}
+.ic-lg {
+  width: 28px;
+  height: 28px;
+}
+
+.btn {
+  position: relative;
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  text-decoration: none;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn.primary {
+  border-color: var(--blue);
+  box-shadow: inset 0 -2px 0 var(--blue);
+}
+.btn.plain {
+  background: transparent;
+}
+.btn.icon {
+  padding: 0;
+  width: 40px;
+  height: 40px;
+}
+
+.field,
+input[type="text"],
+input[type="url"],
+input[type="search"],
+input[type="password"],
+input[type="number"],
+select {
+  font: inherit;
+  color: var(--ink);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 14px;
-  display: grid;
-  gap: 10px;
+  padding: 0.5rem 0.7rem;
+  height: 40px;
+  min-width: 0;
 }
-.card h2 {
-  margin: 0;
-  font-size: 15px;
+.field {
+  width: 100%;
+}
+.field[aria-invalid="true"] {
+  border-color: var(--red);
+}
+/* A search input with its magnifier inside, as saber-tooth's facet search. */
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.search .ic {
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--muted);
-  font-weight: 600;
+  pointer-events: none;
 }
-.banner {
-  border: 1px solid var(--red);
-  color: var(--ink);
-  background: color-mix(in srgb, var(--red) 14%, var(--panel));
-  border-radius: var(--radius);
-  padding: 8px 10px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
+.search input {
+  padding-left: 2.2rem;
 }
 
 @media (max-width: 719px) {
-  .card {
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
+  .label-hide-mobile {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .btn:has(> .label-hide-mobile) {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .btn {
+    min-height: 44px;
+  }
+  .btn.icon {
+    width: 44px;
+    height: 44px;
+  }
+  .field,
+  select {
+    height: 44px;
   }
 }
-
+@media (prefers-reduced-motion: no-preference) {
+  .btn {
+    transition: border-color 0.15s;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;

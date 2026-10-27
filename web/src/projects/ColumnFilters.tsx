@@ -37,6 +37,7 @@ export function ColumnFilter({
       return (
         <ChecklistBody
           group="Key"
+          searchLabel="Search keys"
           options={KEY_CHOICES}
           selected={keyList(query.key)}
           onChange={(next) => update({ key: withKeys(next) })}

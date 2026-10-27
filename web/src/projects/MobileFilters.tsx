@@ -1,12 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import {
-  CheckIcon,
-  FilterIcon,
-  FilterXIcon,
-  SortAscIcon,
-  SortDescIcon,
-  XIcon,
-} from "../components/icons";
+import { Icon } from "../components/icons";
 import { ColumnFilter, FILTER_COLUMNS, type FilterProps } from "./ColumnFilters";
 import { activeCounts, SORT_KEYS, SORT_LABELS, totalFilters, type SortKey } from "./query";
 
@@ -26,16 +19,16 @@ export default function MobileFilters({
   const { query } = props;
   const counts = activeCounts(query);
   const active = totalFilters(query);
-  const OrderIcon = query.order === "asc" ? SortAscIcon : SortDescIcon;
+  const order = query.order === "asc" ? "sort-asc" : "sort-desc";
   const show =
     total === null ? "Show projects" : `Show ${total} ${total === 1 ? "project" : "projects"}`;
   return (
     <Dialog.Root>
       <Dialog.Trigger
-        className="chip filters-button"
+        className="btn filters-button"
         aria-label={active > 0 ? `Filters, ${active} active` : "Filters"}
       >
-        <FilterIcon filled={active > 0} /> Filters
+        <Icon name="filter" /> Filters
         {active > 0 && (
           <span className="filter-badge" aria-hidden="true">
             {active}
@@ -47,8 +40,8 @@ export default function MobileFilters({
         <Dialog.Content className="sheet" aria-describedby={undefined}>
           <div className="modal-head">
             <Dialog.Title className="modal-title">Filters</Dialog.Title>
-            <Dialog.Close className="chip icon-only" aria-label="Close filters">
-              <XIcon />
+            <Dialog.Close className="btn plain icon" aria-label="Close filters">
+              <Icon name="x" />
             </Dialog.Close>
           </div>
           <div className="sheet-body">
@@ -82,21 +75,28 @@ export default function MobileFilters({
                 </select>
                 <button
                   type="button"
-                  className="chip icon-only"
+                  className="btn icon"
                   aria-label={query.order === "asc" ? "Ascending, reverse" : "Descending, reverse"}
                   onClick={() => onSort(query.sort)}
                 >
-                  <OrderIcon />
+                  <Icon name={order} />
                 </button>
               </div>
             </section>
           </div>
           <div className="sheet-foot">
-            <button type="button" className="chip" disabled={active === 0} onClick={onClear}>
-              <FilterXIcon /> Clear all
+            <button
+              type="button"
+              className="btn icon"
+              aria-label="Clear all"
+              title="Clear all"
+              disabled={active === 0}
+              onClick={onClear}
+            >
+              <Icon name="filter-x" />
             </button>
-            <Dialog.Close className="primary">
-              <CheckIcon /> {show}
+            <Dialog.Close className="btn primary">
+              <Icon name="check" /> {show}
             </Dialog.Close>
           </div>
         </Dialog.Content>

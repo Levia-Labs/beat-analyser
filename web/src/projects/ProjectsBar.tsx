@@ -1,5 +1,5 @@
 import AddModal from "../components/AddModal";
-import { FilterXIcon } from "../components/icons";
+import { Icon } from "../components/icons";
 import type { FilterProps } from "./ColumnFilters";
 import MobileFilters from "./MobileFilters";
 import { totalFilters, type SortKey } from "./query";
@@ -34,8 +34,8 @@ export default function ProjectsBar({
       </div>
       <div className="listbar-actions">
         {active > 0 && (
-          <button type="button" className="chip" onClick={onClear}>
-            <FilterXIcon /> Clear filters ({active})
+          <button type="button" className="btn" onClick={onClear}>
+            <Icon name="filter-x" /> Clear filters ({active})
           </button>
         )}
         <MobileFilters props={props} total={total} onSort={onSort} onClear={onClear} />

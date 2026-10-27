@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type DragEvent, type FormEvent } from "react";
 import type { Config } from "../api";
 import Banner from "./Banner";
-import { AnalyseIcon, UploadIcon } from "./icons";
+import { Icon } from "./icons";
 import StageList from "./StageList";
 import { sizeLabel, useAnalysis, type Phase } from "./useAnalysis";
 
@@ -51,12 +51,12 @@ function UrlPart({
         }}
       />
       <button
-        className="primary"
+        className="btn primary"
         type="submit"
         aria-label="Analyse YouTube URL"
         disabled={busy || !url.trim()}
       >
-        <AnalyseIcon /> Analyse
+        <Icon name="play" /> Analyse
       </button>
     </form>
   );
@@ -118,14 +118,19 @@ function FilePart({
           </span>
         ) : (
           <span>
-            <UploadIcon /> Drop audio here or <u>choose a file</u>
+            <Icon name="upload" /> Drop audio here or <u>choose a file</u>
             <br />
             <span className="muted">{accept.replaceAll(",", " ")}</span>
           </span>
         )}
       </label>
-      <button className="primary" type="submit" aria-label="Analyse file" disabled={busy || !file}>
-        <AnalyseIcon /> Analyse
+      <button
+        className="btn primary"
+        type="submit"
+        aria-label="Analyse file"
+        disabled={busy || !file}
+      >
+        <Icon name="play" /> Analyse
       </button>
     </form>
   );

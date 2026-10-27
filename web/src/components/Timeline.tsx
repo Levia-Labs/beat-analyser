@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Events } from "../api";
-import { ZoomInIcon, ZoomOutIcon } from "./icons";
+import { Icon } from "./icons";
 import {
   clampZoom,
   durationOf,
@@ -170,11 +170,21 @@ export default function Timeline({ events }: { events: Events }) {
   return (
     <section className="card timeline">
       <div className="zoom">
-        <button type="button" aria-label="Zoom out" onClick={() => zoomAt(0.8, width / 2)}>
-          <ZoomOutIcon />
+        <button
+          type="button"
+          className="btn icon"
+          aria-label="Zoom out"
+          onClick={() => zoomAt(0.8, width / 2)}
+        >
+          <Icon name="zoom-out" />
         </button>
-        <button type="button" aria-label="Zoom in" onClick={() => zoomAt(1.25, width / 2)}>
-          <ZoomInIcon />
+        <button
+          type="button"
+          className="btn icon"
+          aria-label="Zoom in"
+          onClick={() => zoomAt(1.25, width / 2)}
+        >
+          <Icon name="zoom-in" />
         </button>
         <span className="muted num">{formatTime(duration)}</span>
       </div>

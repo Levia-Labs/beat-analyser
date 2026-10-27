@@ -3,14 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { ApiError, deleteProject, getEvents, renameProject } from "../api";
 import Banner from "../components/Banner";
 import ConfirmDialog from "../components/ConfirmDialog";
-import {
-  ArrowLeftIcon,
-  DownloadIcon,
-  ListIcon,
-  PencilIcon,
-  RefreshIcon,
-  TrashIcon,
-} from "../components/icons";
+import { Icon } from "../components/icons";
 import RenameForm from "../components/RenameForm";
 import Timeline from "../components/Timeline";
 import { message, useLoad } from "../useLoad";
@@ -69,11 +62,11 @@ export default function Viewer({ name }: { name: string }) {
         <p>No analysed project called {name}</p>
         <p className="muted">It may still be analysing.</p>
         <div className="head">
-          <button type="button" className="chip" onClick={events.reload}>
-            <RefreshIcon /> Reload
+          <button type="button" className="btn" onClick={events.reload}>
+            <Icon name="refresh" /> Reload
           </button>
-          <Link className="chip" to="/">
-            <ListIcon /> Home
+          <Link className="btn" to="/">
+            <Icon name="list" /> Home
           </Link>
         </div>
       </section>
@@ -84,8 +77,8 @@ export default function Viewer({ name }: { name: string }) {
       <Banner
         message={message(events.error) ?? "Something went wrong"}
         action={
-          <button type="button" className="chip" onClick={events.reload}>
-            <RefreshIcon /> Retry
+          <button type="button" className="btn" onClick={events.reload}>
+            <Icon name="refresh" /> Retry
           </button>
         }
       />
@@ -97,33 +90,33 @@ export default function Viewer({ name }: { name: string }) {
   return (
     <>
       <section className="card head">
-        <Link to="/" className="back" aria-label="Back to projects">
-          <ArrowLeftIcon size={20} />
+        <Link to="/" className="btn plain icon" aria-label="Back to projects">
+          <Icon name="arrow-left" />
         </Link>
         <h1>{name}</h1>
         <span className="muted num">
           {meta?.key ?? "?"} · {meta?.bpm ? `${meta.bpm} BPM` : "? BPM"}
         </span>
-        <a className="chip" href={`/download/${encodeURIComponent(name)}`} download>
-          <DownloadIcon /> ZIP
+        <a className="btn" href={`/download/${encodeURIComponent(name)}`} download>
+          <Icon name="download" /> ZIP
         </a>
         <button
           ref={renameButton}
           type="button"
-          className="chip"
+          className="btn"
           onClick={() => open("rename")}
           disabled={busy}
         >
-          <PencilIcon /> Rename
+          <Icon name="pencil" /> Rename
         </button>
         <button
           ref={deleteButton}
           type="button"
-          className="chip"
+          className="btn"
           onClick={() => open("delete")}
           disabled={busy}
         >
-          <TrashIcon /> Delete
+          <Icon name="trash" /> Delete
         </button>
       </section>
       {problem && <Banner message={problem} />}

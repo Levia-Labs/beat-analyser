@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { TrashIcon, XIcon } from "./icons";
+import { Icon } from "./icons";
 
 // A plain element, not <dialog>: showModal is missing in jsdom, and this is one button pair.
 export default function ConfirmDialog({
@@ -35,11 +35,11 @@ export default function ConfirmDialog({
       </p>
       <p className="muted">{body}</p>
       <div className="actions">
-        <button ref={cancel} type="button" className="chip" onClick={onCancel} disabled={busy}>
-          <XIcon /> Cancel
+        <button ref={cancel} type="button" className="btn" onClick={onCancel} disabled={busy}>
+          <Icon name="x" /> Cancel
         </button>
-        <button type="button" className="primary" onClick={onConfirm} disabled={busy}>
-          <TrashIcon /> {confirm}
+        <button type="button" className="btn primary" onClick={onConfirm} disabled={busy}>
+          <Icon name="trash" /> {confirm}
         </button>
       </div>
     </div>
