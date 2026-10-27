@@ -76,6 +76,17 @@ def analyse_audio(filename: str, data_base64: str) -> dict[str, Any]:
     """Start analysing an audio file (wav, mp3, flac, ogg, m4a) sent as base64. Returns at
     once with the project name (the file's sanitised stem); poll project_status(name)."""
     try:
+        # Before decoding: a refused call must not allocate up to MAX_BYTES, and every pending
+        # job holds its bytes. A bad name is left for check_audio to report.
+        try:
+            room_name = storage.project_name(filename)
+        except ValueError:
+            room_name = None
+        if room_name is not None:
+            try:
+                jobs.check_room(room_name)
+            except JobsFull as exc:
+                raise ToolError(str(exc)) from None
         name, extension, data = check_audio(filename, data_base64, MAX_BYTES)
     except ValueError as exc:
         raise ToolError(str(exc)) from None

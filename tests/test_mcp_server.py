@@ -50,6 +50,38 @@ def test_no_token_on_a_public_bind_refuses_to_start():
         mcp_server.create_app("", "0.0.0.0", 8001)  # noqa: S104 - the refusal under test
 
 
+@pytest.fixture
+def recorded(monkeypatch):
+    seen = []
+
+    def streamable_http_app(**kwargs):
+        seen.append(kwargs)
+        return inner
+
+    monkeypatch.setattr(mcp_server.server, "streamable_http_app", streamable_http_app)
+    return seen
+
+
+def test_create_app_without_a_token_checks_the_host(recorded):
+    mcp_server.create_app("", "127.0.0.1", 8001)
+    (kwargs,) = recorded
+    assert kwargs["max_request_body_size"] == mcp_server.body_limit(mcp_tools.MAX_BYTES)
+    assert kwargs["stateless_http"] is True
+    assert kwargs["json_response"] is True
+    security = kwargs["transport_security"]
+    assert security.allowed_hosts == ["127.0.0.1:8001", "localhost:8001"]
+
+
+def test_create_app_with_a_token_skips_the_host_check(recorded):
+    app = mcp_server.create_app("tok", "0.0.0.0", 8001)  # noqa: S104 - the case under test
+    (kwargs,) = recorded
+    assert isinstance(app, mcp_server.BearerToken)
+    assert kwargs["max_request_body_size"] == mcp_server.body_limit(mcp_tools.MAX_BYTES)
+    assert kwargs["stateless_http"] is True
+    assert kwargs["json_response"] is True
+    assert kwargs["transport_security"].enable_dns_rebinding_protection is False
+
+
 @pytest.mark.parametrize("max_bytes", [4, 1000, 20 * 1024 * 1024])
 def test_body_limit_admits_the_largest_allowed_upload(max_bytes):
     body = json.dumps(

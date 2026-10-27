@@ -43,15 +43,29 @@ class Jobs:
         self._jobs: dict[str, Job] = {}
         self._guard = threading.Lock()
 
+    def _refuse_if_full(self, name: str) -> Job | None:
+        """Return the pending job for name; raise JobsFull when none is and no room is left.
+        The caller holds the guard."""
+        current = self._jobs.get(name)
+        if current is not None and current.status in PENDING:
+            return current
+        pending = sum(job.status in PENDING for job in self._jobs.values())
+        if pending >= self._max_pending:
+            raise JobsFull(f"{pending} analyses pending; try again when one finishes")
+        return None
+
+    def check_room(self, name: str) -> None:
+        """Raise JobsFull when start(name) would be refused, so a caller can refuse before
+        it decodes a payload."""
+        with self._guard:
+            self._refuse_if_full(name)
+
     def start(self, name: str, work: Callable[[], None]) -> Job:
         """Queue work for name, or return the job already queued or running for it."""
         with self._guard:
-            current = self._jobs.get(name)
-            if current is not None and current.status in PENDING:
+            current = self._refuse_if_full(name)
+            if current is not None:
                 return current
-            pending = sum(job.status in PENDING for job in self._jobs.values())
-            if pending >= self._max_pending:
-                raise JobsFull(f"{pending} analyses pending; try again when one finishes")
             job = Job(name)
             self._jobs[name] = job
         self._submit(lambda: self._run(job, work))

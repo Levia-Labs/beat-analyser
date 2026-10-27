@@ -98,6 +98,13 @@ def test_a_full_registry_is_a_tool_error(root, monkeypatch, calls):
         mcp_tools.analyse_audio("b.wav", b64(b"x"))
 
 
+def test_a_full_registry_refuses_before_decoding(root, monkeypatch, calls):
+    monkeypatch.setattr(mcp_tools, "jobs", Jobs(submit=lambda work: None, max_pending=1))
+    mcp_tools.analyse_audio("a.wav", b64(b"x"))
+    with pytest.raises(ToolError, match="pending"):
+        mcp_tools.analyse_audio("b.wav", "!!not base64!!")
+
+
 def test_a_refused_upload_is_a_failed_job(root, monkeypatch):
     def refuse(*args):
         raise backend.BackendError("400: Unsupported file type")

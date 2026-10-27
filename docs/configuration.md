@@ -11,7 +11,7 @@ shell or a `.env` file next to `docker-compose.yml`.
 | `YT_MAX_MINUTES` | `20`                                    | app                      | Longest YouTube video accepted                                                      |
 | `UPLOAD_ROOT`    | `uploads` (`/app/uploads` in the image) | app                      | Where projects live                                                                 |
 | `HOST`           | `127.0.0.1`                             | `app.py` dev server      | Listen address for `task run`                                                       |
-| `MCP_PORT`       | `8001`                                  | compose, `mcp_server.py` | Port of the MCP endpoint. The Host check expects it                                 |
+| `MCP_PORT`       | `8001`                                  | compose, `mcp_server.py` | Port of the MCP endpoint. Without `MCP_TOKEN` the Host check expects it             |
 | `MCP_TOKEN`      | empty                                   | `mcp_server.py`          | Bearer token for the MCP endpoint. Required when `BIND` is not loopback             |
 | `BACKEND_URL`    | `http://backend:8000` (compose)         | `mcp_tools.py`           | Where MCP jobs send audio                                                           |
 

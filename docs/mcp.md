@@ -39,7 +39,8 @@ The `mcp` service runs the same image as the web app, with `uploads/` mounted re
 job posts the audio to the web app's own endpoint, so every analysis takes the same path as
 an upload in the browser ([ADR 0012](adr/0012-mcp-as-a-sibling-proxy.md)). Two jobs run at a
 time; more than eight pending are refused. Jobs live in memory: after a restart, a finished
-project still reads as `done` from disk, and one that was in flight reads as `unknown`.
+project still reads as `done` from disk, and one that was in flight reads as `unknown`. A job that failed stays `failed` in `project_status` even if the project
+is later built another way, for example in the web UI; starting the analysis again clears it.
 
 ## Security
 

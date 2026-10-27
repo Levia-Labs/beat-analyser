@@ -78,6 +78,25 @@ def test_pending_jobs_are_capped():
         jobs.start("c", lambda: None)
 
 
+def test_check_room_raises_when_full():
+    jobs = Jobs(submit=lambda work: None, max_pending=1)
+    jobs.start("a", lambda: None)
+    with pytest.raises(JobsFull, match="1 analyses pending"):
+        jobs.check_room("b")
+
+
+def test_check_room_passes_for_a_name_already_pending():
+    jobs = Jobs(submit=lambda work: None, max_pending=1)
+    jobs.start("a", lambda: None)
+    jobs.check_room("a")
+
+
+def test_check_room_passes_when_there_is_room():
+    jobs = Jobs(submit=lambda work: None, max_pending=2)
+    jobs.start("a", lambda: None)
+    jobs.check_room("b")
+
+
 def test_finished_jobs_do_not_count_against_the_cap():
     jobs = Jobs(submit=inline, max_pending=1)
     jobs.start("a", lambda: None)
