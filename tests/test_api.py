@@ -67,6 +67,13 @@ def test_events_of_a_built_project(client):
     body = client.get("/projects/song/events").get_json()
     assert body["name"] == "song"
     assert body["tracks"]["kick"] == [[0.5, 128]]
+    # The same facts the list shows, so a page opened directly has its subtitle.
+    (listed,) = client.get("/projects").get_json()["items"]
+    for field in ("duration", "created", "size"):
+        assert field in body
+        assert body[field] == listed[field]
+    assert body["size"] > 0
+    assert body["created"].endswith("Z")
 
 
 def test_events_of_a_project_without_zip_is_404(client, upload_root):

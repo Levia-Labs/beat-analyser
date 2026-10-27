@@ -106,6 +106,22 @@ const project = {
 };
 
 describe("project page", () => {
+  it("shows duration, created and size from the events response", async () => {
+    vi.mocked(getEvents).mockResolvedValue({
+      ...project,
+      duration: 185,
+      created: "2026-10-27T09:30:00Z",
+      size: 5 * 1024 * 1024,
+    });
+    render(
+      <MemoryRouter>
+        <Viewer name="song" />
+      </MemoryRouter>,
+    );
+    await screen.findByRole("heading", { name: "song" });
+    expect(document.querySelector("p.sub")).toHaveTextContent("3:05 · 2026-10-27 · 5.0 MB");
+  });
+
   it("orders back link, heading, meta row, toolbar and Timeline", async () => {
     vi.mocked(getEvents).mockResolvedValue(project);
     render(

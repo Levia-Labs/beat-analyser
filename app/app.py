@@ -206,7 +206,7 @@ def project_events(name: str):
     # Only the ZIP means done: pipeline.build writes the CSVs before it packages.
     if not storage.is_valid_name(name) or not storage.zip_path(root, name).is_file():
         return error("Project not found", 404)
-    return jsonify(events.project_events(root, name))
+    return jsonify({**events.project_events(root, name), **catalog.facts(root, name)})
 
 
 def project_exists(root: Path, name: str) -> bool:

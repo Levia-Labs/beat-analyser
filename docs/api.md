@@ -115,11 +115,16 @@ order. A bad value answers `400` with `{"error": "..."}`.
 ## `GET /projects/<name>/events`
 
 Every track's rows for the viewer: `[seconds, label ID]` pairs, and the table that decodes the
-IDs. `meta` is `null` when the project has no `meta.json`.
+IDs. `meta` is `null` when the project has no `meta.json`. `duration` (seconds), `created`
+(UTC stamp) and `size` (bytes) are the same values `GET /projects` lists; the first two are
+`null` when unknown.
 
 ```json
 {
   "name": "song",
+  "duration": 185.2,
+  "created": "2026-10-27T09:30:00Z",
+  "size": 5242880,
   "meta": { "name": "song", "key": "C", "bpm": 120 },
   "labels": { "0": "kick", "1": "snare" },
   "tracks": {

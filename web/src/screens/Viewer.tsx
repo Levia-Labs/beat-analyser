@@ -95,11 +95,10 @@ export default function Viewer({ name }: { name: string }) {
   }
   if (!events.data) return <p className="muted">Loading…</p>;
 
-  const { meta } = events.data;
   return (
     <section className="page map-page">
       <BackLink />
-      <ProjectHead name={name} meta={meta} />
+      <ProjectHead events={events.data} />
       <div className="map-toolbar">
         <span className="spacer" />
         <a className="btn primary" href={`/download/${encodeURIComponent(name)}`} download>

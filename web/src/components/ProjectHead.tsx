@@ -1,23 +1,17 @@
 import { Link, useLocation } from "react-router";
-import type { Meta } from "../api";
+import type { Events } from "../api";
 import { formatDuration, formatSize } from "../projects/ProjectRow";
 import { Icon } from "./icons";
 import { StatusChip } from "./StatusChip";
 
-type FromList = {
-  list?: string;
-  duration?: number | null;
-  created?: string | null;
-  size?: number;
-};
-
-// What the list passed along in the link's state; absent when the page was opened directly.
-function fromList(state: unknown): FromList {
-  return state && typeof state === "object" ? (state as FromList) : {};
+// The list's query, passed in the link's state; absent when the page was opened directly.
+function listQuery(state: unknown): string {
+  const list = state && typeof state === "object" ? (state as { list?: unknown }).list : "";
+  return typeof list === "string" ? list : "";
 }
 
 export function BackLink() {
-  const { list = "" } = fromList(useLocation().state);
+  const list = listQuery(useLocation().state);
   return (
     <Link className="back" to={`/${list}`}>
       <Icon name="arrow-left" />
@@ -27,8 +21,8 @@ export function BackLink() {
 }
 
 // Name, the facts known without another request, then status, key and tempo chips.
-export function ProjectHead({ name, meta }: { name: string; meta: Meta }) {
-  const { duration, created, size } = fromList(useLocation().state);
+export function ProjectHead({ events }: { events: Events }) {
+  const { name, meta, duration, created, size } = events;
   const sub = [
     typeof duration === "number" ? formatDuration(duration) : null,
     created ? created.slice(0, 10) : null,

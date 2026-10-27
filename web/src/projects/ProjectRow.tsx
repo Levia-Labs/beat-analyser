@@ -37,8 +37,7 @@ export default function ProjectRow({
   const [renaming, setRenaming] = useState(false);
   const [busy, setBusy] = useState(false);
   const { name } = item;
-  // The page's "Projects" link returns to the list as the person left it, filters included; the
-  // facts the events response lacks (duration, created, size) travel along for its subtitle.
+  // The page's "Projects" link returns to the list as the person left it, filters included.
   const { search } = useLocation();
 
   async function save(to: string) {
@@ -68,11 +67,7 @@ export default function ProjectRow({
         />
       </td>
       <th scope="row" className="cell-name">
-        <Link
-          className="name-link"
-          to={`/p/${encodeURIComponent(name)}`}
-          state={{ list: search, duration: item.duration, created: item.created, size: item.size }}
-        >
+        <Link className="name-link" to={`/p/${encodeURIComponent(name)}`} state={{ list: search }}>
           {name}
         </Link>
       </th>
