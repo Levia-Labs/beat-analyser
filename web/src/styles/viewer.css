@@ -61,6 +61,32 @@
   left: 0;
   display: block;
 }
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.actions .field {
+  flex: 1;
+  min-width: 160px;
+  width: auto;
+}
+.dialog {
+  position: fixed;
+  inset: auto 12px 12px;
+  max-width: 420px;
+  margin: 0 auto;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+  z-index: 10;
+}
+.dialog p {
+  margin: 0 0 8px;
+}
 @media (max-width: 719px) {
   .labels {
     grid-auto-rows: 24px;

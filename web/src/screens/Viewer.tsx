@@ -1,7 +1,9 @@
-import { useCallback } from "react";
-import { Link, useParams } from "react-router";
-import { ApiError, getEvents } from "../api";
+import { useCallback, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { ApiError, deleteProject, getEvents, renameProject } from "../api";
 import Banner from "../components/Banner";
+import ConfirmDialog from "../components/ConfirmDialog";
+import RenameForm from "../components/RenameForm";
 import Timeline from "../components/Timeline";
 import { message, useLoad } from "../useLoad";
 
@@ -13,6 +15,31 @@ export function ViewerRoute() {
 export default function Viewer({ name }: { name: string }) {
   const load = useCallback(() => getEvents(name), [name]);
   const events = useLoad(load);
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  async function act(action: () => Promise<void>) {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await action();
+    } catch (error) {
+      setProblem(message(error));
+      setBusy(false);
+    }
+  }
+  const remove = () =>
+    act(async () => {
+      await deleteProject(name);
+      navigate("/");
+    });
+  const rename = (to: string) =>
+    act(async () => {
+      const { name: renamed } = await renameProject(name, to);
+      navigate(`/p/${encodeURIComponent(renamed)}`, { replace: true });
+    });
 
   if (events.error instanceof ApiError && events.error.status === 404) {
     return (
@@ -58,7 +85,29 @@ export default function Viewer({ name }: { name: string }) {
         <a className="chip" href={`/download/${encodeURIComponent(name)}`} download>
           ZIP
         </a>
+        <button type="button" className="chip" onClick={() => setMode("rename")} disabled={busy}>
+          Rename
+        </button>
+        <button type="button" className="chip" onClick={() => setMode("delete")} disabled={busy}>
+          Delete
+        </button>
       </section>
+      {problem && <Banner message={problem} />}
+      {mode === "rename" && (
+        <section className="card">
+          <RenameForm name={name} busy={busy} onSave={rename} onCancel={() => setMode("view")} />
+        </section>
+      )}
+      {mode === "delete" && (
+        <ConfirmDialog
+          title={`Delete ${name}?`}
+          body="Audio, CSVs and ZIP are removed."
+          confirm={`Delete ${name}`}
+          busy={busy}
+          onConfirm={remove}
+          onCancel={() => setMode("view")}
+        />
+      )}
       <Timeline events={events.data} />
     </>
   );

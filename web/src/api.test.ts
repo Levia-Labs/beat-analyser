@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, getConfig, getEvents } from "./api";
+import { ApiError, deleteProject, getConfig, getEvents, renameProject } from "./api";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -70,5 +70,27 @@ describe("api", () => {
     vi.stubGlobal("fetch", fetchMock);
     await getEvents("a b");
     expect(fetchMock).toHaveBeenCalledWith("/projects/a%20b/events", expect.anything());
+  });
+
+  it("deletes with DELETE and accepts an empty 204", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(deleteProject("a b")).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/projects/a%20b",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
+  it("renames with a JSON body and returns the new name", async () => {
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ name: "tune" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(renameProject("song", "tune")).resolves.toEqual({ name: "tune" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/projects/song/rename",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ to: "tune" }) }),
+    );
   });
 });

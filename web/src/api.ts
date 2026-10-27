@@ -45,13 +45,16 @@ function parseJson(text: string): unknown {
   }
 }
 
-async function get<T>(url: string): Promise<T> {
+async function request<T>(url: string, init: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (typeof init.body === "string") headers["Content-Type"] = "application/json";
   let response: Response;
   try {
-    response = await fetch(url, { headers: { Accept: "application/json" } });
+    response = await fetch(url, { ...init, headers });
   } catch {
     throw new ApiError("Server unreachable", 0);
   }
+  if (response.status === 204) return undefined as T;
   let text: string;
   try {
     text = await response.text();
@@ -66,6 +69,15 @@ async function get<T>(url: string): Promise<T> {
   return body as T;
 }
 
+const get = <T>(url: string) => request<T>(url);
+
+export const deleteProject = (name: string) =>
+  request<void>(`/projects/${encodeURIComponent(name)}`, { method: "DELETE" });
+export const renameProject = (name: string, to: string) =>
+  request<{ name: string }>(`/projects/${encodeURIComponent(name)}/rename`, {
+    method: "POST",
+    body: JSON.stringify({ to }),
+  });
 export const getConfig = () => get<Config>("/config");
 export const getProgress = (id: string) => get<Progress>(`/progress/${id}`);
 export const getProjects = () => get<Project[]>("/projects");
