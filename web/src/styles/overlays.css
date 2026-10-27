@@ -1,0 +1,194 @@
+/* Popovers, modals, the phone sheet, the delete confirmation and what they hold. */
+
+/* Radix's scroll lock injects a <style> element, which the CSP (style-src 'self') refuses.
+   It also sets data-scroll-locked on <body> through the DOM, which the CSP allows, so the
+   lock lives here instead. */
+body[data-scroll-locked] {
+  overflow: hidden;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(5, 3, 14, 0.6);
+}
+.popover,
+.modal,
+.sheet,
+.dialog {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.popover {
+  z-index: 40;
+  width: min(300px, calc(100vw - 16px));
+  max-height: min(70vh, 460px);
+  overflow: auto;
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.modal,
+.dialog {
+  width: min(26rem, calc(100vw - 2rem));
+}
+.modal {
+  position: fixed;
+  z-index: 41;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+/* A plain element, not <dialog>: the confirmation sits at the foot of the screen. */
+.dialog {
+  position: fixed;
+  z-index: 41;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  padding: 14px;
+}
+.dialog p {
+  margin: 0 0 8px;
+}
+.popover-head,
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.popover-title,
+.modal-title {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.popover-x {
+  flex: none;
+  margin-left: auto;
+}
+
+.filter-body {
+  display: grid;
+  gap: 0.5rem;
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.filter-row.end {
+  justify-content: flex-end;
+}
+.filter-row .field {
+  flex: 1;
+  min-width: 0;
+}
+.filter-row .clear-filter {
+  flex: none;
+}
+.err {
+  margin: 0;
+  color: var(--red);
+  font-size: 13px;
+}
+.checks {
+  display: grid;
+  gap: 2px;
+  max-height: 260px;
+  overflow: auto;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 28px;
+  min-width: 0;
+}
+.check label {
+  flex: 1;
+  color: var(--ink);
+  font-size: 0.95rem;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.checkbox {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  padding: 0;
+  color: #07121b;
+  background: var(--stage);
+  border: 1px solid var(--muted);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.checkbox[data-state="checked"] {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.checkbox .ic {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
+}
+.checkbox-mark {
+  display: grid;
+}
+.checkbox-mark[data-state="unchecked"] {
+  visibility: hidden;
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 41;
+  border-radius: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  padding: 12px;
+}
+.sheet-body {
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+.acc {
+  display: grid;
+  gap: 6px;
+}
+.acc h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.sheet-foot {
+  display: flex;
+  gap: 8px;
+}
+.sheet-foot .btn.primary {
+  flex: 1;
+}
+
+@media (max-width: 719px) {
+  .check {
+    min-height: 44px;
+  }
+}

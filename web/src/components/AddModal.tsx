@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { getConfig } from "../api";
 import { useLoad } from "../useLoad";
 import AnalyseCard from "./AnalyseCard";
-import { PlusIcon, XIcon } from "./icons";
+import { Icon } from "./icons";
 
 // Loaded only while the modal is open: Radix unmounts the content when it closes.
 function Body({
@@ -28,8 +28,9 @@ export default function AddModal() {
 
   return (
     <Dialog.Root open={open} onOpenChange={(next) => (next || !busy) && setOpen(next)}>
-      <Dialog.Trigger className="primary add-button">
-        <PlusIcon /> Add
+      <Dialog.Trigger className="btn primary">
+        <Icon name="generate" />
+        <span className="label-hide-mobile">Add</span>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="overlay" />
@@ -42,8 +43,8 @@ export default function AddModal() {
         >
           <div className="modal-head">
             <Dialog.Title className="modal-title">Add project</Dialog.Title>
-            <Dialog.Close className="chip icon-only" aria-label="Close" disabled={busy}>
-              <XIcon />
+            <Dialog.Close className="btn plain icon" aria-label="Close" disabled={busy}>
+              <Icon name="x" />
             </Dialog.Close>
           </div>
           <Body

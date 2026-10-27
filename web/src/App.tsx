@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Route, Routes } from "react-router";
 import { getConfig, login, logout, onUnauthorized } from "./api";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { LogoutIcon } from "./components/icons";
+import { Icon } from "./components/icons";
 import Logo from "./components/Logo";
 import SignIn from "./components/SignIn";
 import Home from "./screens/Home";
@@ -43,8 +43,8 @@ export default function App() {
           <span>Beat Analyser</span>
         </Link>
         {auth && (
-          <button type="button" className="chip sign-out" onClick={signOut}>
-            <LogoutIcon /> Sign out
+          <button type="button" className="btn sign-out" onClick={signOut}>
+            <Icon name="logout" /> Sign out
           </button>
         )}
       </header>

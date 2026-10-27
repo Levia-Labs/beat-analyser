@@ -1,0 +1,161 @@
+/* Project rows: 72px table rows on desktop, two-line cards on a phone. */
+.prow {
+  position: relative;
+  height: var(--row-h);
+  border-bottom: 1px solid var(--line);
+}
+.prow:hover,
+.prow.picked {
+  background: var(--panel-2);
+}
+.cell-name {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.name-link {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+.name-link:hover {
+  text-decoration: underline;
+}
+/* The link covers its whole row, so a row click opens the viewer without a click handler. */
+.name-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.cell-key,
+.cell-bpm,
+.cell-duration,
+.cell-created,
+.cell-size {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.cell-pick,
+.cell-actions {
+  position: relative;
+  z-index: 1;
+}
+/* The flex row lives in a wrapper: display:flex on the td itself would drop it out of the table. */
+.actions-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.ptable input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--blue);
+  vertical-align: middle;
+}
+.prow.renaming {
+  height: auto;
+}
+.ptable .renaming td {
+  padding: 6px 12px;
+}
+.sentinel {
+  height: 1px;
+}
+.ptable .loading-row td,
+.ptable .empty-row td {
+  padding: 1rem 12px;
+}
+
+@media (max-width: 719px) {
+  .ptable,
+  .ptable tbody {
+    display: block;
+  }
+  .ptable thead {
+    display: none;
+  }
+  .prow {
+    display: grid;
+    grid-template-columns: 44px auto auto 1fr auto;
+    grid-template-areas:
+      "pick name name name actions"
+      "pick key bpm duration status";
+    align-items: center;
+    column-gap: 8px;
+    height: auto;
+    padding: 6px 0;
+  }
+  .ptable tbody .prow > * {
+    border: 0;
+    padding: 0;
+  }
+  .prow .cell-pick {
+    grid-area: pick;
+    display: grid;
+    place-items: center;
+    min-height: 44px;
+  }
+  .ptable input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+  .prow .cell-name {
+    grid-area: name;
+    max-width: none;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  /* min-width:0 lets the flex child shrink below its text, so a long name ends in an ellipsis. */
+  .prow .name-link {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .prow .cell-key,
+  .prow .cell-bpm,
+  .prow .cell-duration {
+    font-size: 13px;
+    margin-right: 10px;
+  }
+  .prow .cell-key {
+    grid-area: key;
+  }
+  .prow .cell-bpm {
+    grid-area: bpm;
+  }
+  .prow .cell-duration {
+    grid-area: duration;
+  }
+  .prow .cell-created,
+  .prow .cell-size {
+    display: none;
+  }
+  .prow .cell-status {
+    grid-area: status;
+    justify-self: end;
+  }
+  .prow .cell-actions {
+    grid-area: actions;
+  }
+  .prow.renaming,
+  .renaming td {
+    display: block;
+  }
+  .loading-row,
+  .empty-row,
+  .loading-row td,
+  .empty-row td {
+    display: block;
+  }
+  .loading-row,
+  .empty-row {
+    padding: 10px 0;
+  }
+  .ptable .loading-row td,
+  .ptable .empty-row td {
+    padding: 0;
+  }
+}

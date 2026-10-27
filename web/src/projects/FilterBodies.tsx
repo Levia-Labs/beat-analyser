@@ -1,7 +1,35 @@
 import * as Checkbox from "@radix-ui/react-checkbox";
 import { useId, useState } from "react";
-import { CheckIcon } from "../components/icons";
+import { Icon } from "../components/icons";
 import { ClearFilterButton } from "./FilterPopover";
+
+// A search input with its magnifier, as saber-tooth's facet search draws it.
+function SearchField({
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  label: string;
+  placeholder?: string;
+  value: string;
+  onChange: (text: string) => void;
+}) {
+  return (
+    <div className="search">
+      <Icon name="search" />
+      <input
+        type="search"
+        className="field"
+        aria-label={label}
+        placeholder={placeholder}
+        autoComplete="off"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </div>
+  );
+}
 
 // The Name field's text lives above the popover (see useDraftText), so closing the panel inside
 // the debounce window does not lose it.
@@ -11,14 +39,11 @@ export function TextFilterBody({ draft, active }: { draft: Draft; active: boolea
   return (
     <div className="filter-body">
       <div className="filter-row">
-        <input
-          type="search"
-          className="field"
-          aria-label="Search by name"
+        <SearchField
+          label="Search by name"
           placeholder="Search by name"
-          autoComplete="off"
           value={draft.value}
-          onChange={(event) => draft.set(event.target.value)}
+          onChange={draft.set}
         />
         <ClearFilterButton column="Name" disabled={!active} onClear={draft.clear} />
       </div>
@@ -122,7 +147,7 @@ function Box({
     <div className="check">
       <Checkbox.Root id={id} className="checkbox" checked={checked} onCheckedChange={onToggle}>
         <Checkbox.Indicator forceMount className="checkbox-mark">
-          <CheckIcon size={14} />
+          <Icon name="check" />
         </Checkbox.Indicator>
       </Checkbox.Root>
       <label htmlFor={id}>{label}</label>
@@ -130,37 +155,57 @@ function Box({
   );
 }
 
+// Case and spaces do not matter: "a m" finds "A minor".
+const squash = (text: string) => text.toLowerCase().replace(/\s+/g, "");
+
+// With searchLabel the list gets a search above it. The text is local state: it is not in the
+// URL, and it goes when the popover unmounts. Checked options stay listed whatever the search.
 export function ChecklistBody({
   group,
   options,
   selected,
   onChange,
   onClear,
+  searchLabel,
 }: {
   group: string;
   options: Option[];
   selected: string[];
   onChange: (next: string[]) => void;
   onClear: () => void;
+  searchLabel?: string;
 }) {
   const base = useId();
+  const [search, setSearch] = useState("");
+  const needle = squash(search);
+  const shown = options.filter(
+    (option) => selected.includes(option.value) || squash(option.label).includes(needle),
+  );
   const toggle = (value: string) =>
     onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
+  const clear = (
+    <ClearFilterButton column={group} disabled={selected.length === 0} onClear={onClear} />
+  );
   return (
     <div className="filter-body">
+      {searchLabel ? (
+        <div className="filter-row">
+          <SearchField label={searchLabel} value={search} onChange={setSearch} />
+          {clear}
+        </div>
+      ) : (
+        <div className="filter-row end">{clear}</div>
+      )}
       <div role="group" aria-label={group} className="checks">
-        {options.map((option, index) => (
+        {shown.map((option) => (
           <Box
             key={option.value}
-            id={`${base}-${index}`}
+            id={`${base}-${options.indexOf(option)}`}
             checked={selected.includes(option.value)}
             onToggle={() => toggle(option.value)}
             label={option.label}
           />
         ))}
-      </div>
-      <div className="filter-row end">
-        <ClearFilterButton column={group} disabled={selected.length === 0} onClear={onClear} />
       </div>
     </div>
   );

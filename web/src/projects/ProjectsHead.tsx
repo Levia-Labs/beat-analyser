@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { SortAscIcon, SortDescIcon } from "../components/icons";
+import { Icon } from "../components/icons";
 import { ColumnFilter, type FilterProps } from "./ColumnFilters";
 import FilterPopover from "./FilterPopover";
 import { activeCounts, SORT_LABELS, type FilterColumn, type SortKey } from "./query";
@@ -31,7 +31,7 @@ function HeaderCell({
   const { label, sort, filter } = cell;
   const active = sort !== undefined && query.sort === sort;
   const ascending = query.order === "asc";
-  const Direction = ascending ? SortAscIcon : SortDescIcon;
+  const direction = ascending ? "sort-asc" : "sort-desc";
   let order: "ascending" | "descending" | "none" = "none";
   if (active) order = ascending ? "ascending" : "descending";
   let body: ReactNode = <span className="th-label">{label}</span>;
@@ -43,7 +43,7 @@ function HeaderCell({
         aria-label={`Sort by ${label}`}
         onClick={() => onSort(sort)}
       >
-        {label} <Direction size={14} />
+        {label} <Icon name={direction} />
       </button>
     );
   }

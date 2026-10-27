@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import type { ProjectItem } from "../api";
-import { DownloadIcon, PencilIcon, TrashIcon } from "../components/icons";
+import { Icon } from "../components/icons";
 import RenameForm from "../components/RenameForm";
 
 export const COLUMNS = 9;
@@ -80,29 +80,29 @@ export default function ProjectRow({
         <div className="actions-row">
           {item.done && (
             <a
-              className="chip icon-only"
+              className="btn icon"
               href={`/download/${encodeURIComponent(name)}`}
               download
               aria-label={`Download ZIP of ${name}`}
             >
-              <DownloadIcon />
+              <Icon name="download" />
             </a>
           )}
           <button
             type="button"
-            className="chip icon-only"
+            className="btn icon"
             aria-label={`Rename ${name}`}
             onClick={() => setRenaming(true)}
           >
-            <PencilIcon />
+            <Icon name="pencil" />
           </button>
           <button
             type="button"
-            className="chip icon-only"
+            className="btn icon"
             aria-label={`Delete ${name}`}
             onClick={() => onDelete(name)}
           >
-            <TrashIcon />
+            <Icon name="trash" />
           </button>
         </div>
       </td>

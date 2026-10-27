@@ -4,11 +4,11 @@ import { BrowserRouter } from "react-router";
 import App from "./App";
 import "./styles/tokens.css";
 import "./styles/base.css";
-import "./styles/layout.css";
-import "./styles/controls.css";
-import "./styles/list.css";
-import "./styles/projects.css";
-import "./styles/filters.css";
+import "./styles/page.css";
+import "./styles/chips.css";
+import "./styles/overlays.css";
+import "./styles/library.css";
+import "./styles/rows.css";
 import "./styles/viewer.css";
 
 const root = document.getElementById("root");

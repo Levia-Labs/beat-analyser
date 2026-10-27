@@ -1,6 +1,6 @@
 import * as Popover from "@radix-ui/react-popover";
 import type { ReactNode } from "react";
-import { FilterIcon, FilterXIcon, XIcon } from "../components/icons";
+import { Icon } from "../components/icons";
 
 // Icon-only clear button placed beside a filter's fields; one per column.
 export function ClearFilterButton({
@@ -15,13 +15,13 @@ export function ClearFilterButton({
   return (
     <button
       type="button"
-      className="chip icon-only clear-filter"
+      className="btn icon clear-filter"
       aria-label={`Clear ${column} filter`}
       title="Clear this filter"
       disabled={disabled}
       onClick={onClear}
     >
-      <FilterXIcon />
+      <Icon name="filter-x" />
     </button>
   );
 }
@@ -43,7 +43,7 @@ export default function FilterPopover({
         className={active ? "filter-btn active" : "filter-btn"}
         aria-label={active ? `Filter ${label}, ${count} active` : `Filter ${label}`}
       >
-        <FilterIcon filled={active} size={14} />
+        <Icon name="filter" />
         {active && (
           <span className="filter-badge" aria-hidden="true">
             {count}
@@ -69,8 +69,8 @@ export default function FilterPopover({
         >
           <header className="popover-head">
             <h3 className="popover-title">{label}</h3>
-            <Popover.Close className="chip icon-only popover-x" aria-label="Close filter">
-              <XIcon />
+            <Popover.Close className="btn plain icon popover-x" aria-label="Close filter">
+              <Icon name="x" />
             </Popover.Close>
           </header>
           {children}
