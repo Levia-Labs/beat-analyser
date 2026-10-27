@@ -1,4 +1,12 @@
 /* The list header bar, the column-header filters, the Add modal and the phone filter sheet. */
+
+/* Radix's scroll lock injects a <style> element, which the CSP (style-src 'self') refuses.
+   It also sets data-scroll-locked on <body> through the DOM, which the CSP allows, so the
+   lock lives here instead. */
+body[data-scroll-locked] {
+  overflow: hidden;
+}
+
 .listbar {
   display: flex;
   align-items: center;

@@ -38,7 +38,7 @@ export default function FilterPopover({
 }) {
   const active = count > 0;
   return (
-    <Popover.Root modal>
+    <Popover.Root>
       <Popover.Trigger
         className={active ? "filter-btn active" : "filter-btn"}
         aria-label={active ? `Filter ${label}, ${count} active` : `Filter ${label}`}
