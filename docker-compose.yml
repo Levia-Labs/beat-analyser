@@ -12,6 +12,7 @@ services:
     environment:
       BIND: "${BIND:-127.0.0.1}"
       WEB_TOKEN: "${WEB_TOKEN:-}"
+      WEB_COOKIE_SECURE: "${WEB_COOKIE_SECURE:-}"
       MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-200}"
       YT_MAX_MINUTES: "${YT_MAX_MINUTES:-20}"
     volumes:
