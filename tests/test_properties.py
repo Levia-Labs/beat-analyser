@@ -12,6 +12,7 @@ import string
 from urllib.parse import urlsplit
 
 import pytest
+import webauth
 from hypothesis import example, given
 from hypothesis import strategies as st
 
@@ -206,3 +207,16 @@ def test_catalog_parse_returns_a_bounded_query_or_refuses(args):
     assert query.key == "" or query.key in catalog.KEYS or query.key in catalog.MODES
     for bound in (query.bpm_min, query.bpm_max):
         assert bound is None or math.isfinite(bound)
+
+
+@given(st.text(), st.text())
+def test_token_comparison_is_equality_and_never_raises(a, b):
+    assert webauth.same(a, b) == (a == b)
+
+
+@given(st.text(min_size=1), st.text(min_size=1))
+def test_session_value_is_64_hex_and_one_per_token(a, b):
+    value = webauth.session_value(a)
+    assert len(value) == 64
+    assert set(value) <= set(string.hexdigits.lower())
+    assert (value == webauth.session_value(b)) == (a == b)

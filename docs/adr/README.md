@@ -19,6 +19,7 @@ of these and see an obvious improvement; the record is what stops the fix from b
 | [0012](0012-mcp-as-a-sibling-proxy.md)    | MCP as a sibling service that proxies to the web app              | Accepted                         |
 | [0013](0013-react-spa-served-by-flask.md) | React SPA built in a Node stage and served by Flask               | Accepted                         |
 | [0014](0014-content-hash-projects.md)     | A name collision compares the audio hash, and analyses are capped | Accepted                         |
+| [0015](0015-optional-web-token.md)        | An optional web token, held by the browser as a session cookie    | Accepted                         |
 
 ## Writing one
 

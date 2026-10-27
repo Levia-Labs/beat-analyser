@@ -3,6 +3,8 @@
 - **Status:** Accepted
 - **Date:** 2026-10-15
 
+Amended by [ADR 0015](0015-optional-web-token.md): with `WEB_TOKEN` set the API needs a token.
+
 ## Context
 
 The service ran the Flask development server with the Werkzeug debugger on, bound to

@@ -71,6 +71,19 @@ def test_download_yt_posts_the_canonical_url(sent):
     assert json.loads(req.data) == {"url": youtube.canonical_url("dQw4w9WgXcQ")}
 
 
+def test_the_web_token_goes_out_as_a_bearer_header(sent, monkeypatch):
+    monkeypatch.setenv("WEB_TOKEN", "tok")
+    backend.upload("http://backend:8000", "song.mp3", b"x")
+    backend.download_yt("http://backend:8000", "dQw4w9WgXcQ")
+    assert [req.get_header("Authorization") for req, _ in sent] == ["Bearer tok", "Bearer tok"]
+
+
+def test_no_token_means_no_authorization_header(sent, monkeypatch):
+    monkeypatch.delenv("WEB_TOKEN", raising=False)
+    backend.upload("http://backend:8000", "song.mp3", b"x")
+    assert sent[0][0].get_header("Authorization") is None
+
+
 def test_a_refusal_carries_the_web_app_message(monkeypatch):
     refuse_with(monkeypatch, http_error(400, b'{"error": "Unsupported file type"}'))
     with pytest.raises(backend.BackendError, match=r"^400: Unsupported file type$"):

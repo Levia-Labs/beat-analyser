@@ -7,11 +7,11 @@ tool with one POST after initialize.
 """
 
 import hmac
-import ipaddress
 import os
 
 from mcp.server import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
+from netutil import is_loopback
 
 import mcp_tools
 
@@ -40,15 +40,6 @@ def body_limit(max_bytes: int) -> int:
     would refuse any real song: analyse_audio carries the audio as base64 inside JSON, which
     is 4/3 of the size, plus line breaks, plus 1 MB for the JSON-RPC envelope."""
     return max_bytes * 3 // 2 + 1024 * 1024
-
-
-def is_loopback(host: str) -> bool:
-    if host == "localhost":
-        return True
-    try:
-        return ipaddress.ip_address(host).is_loopback
-    except ValueError:
-        return False
 
 
 class BearerToken:

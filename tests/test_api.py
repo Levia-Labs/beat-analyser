@@ -48,6 +48,7 @@ def test_config(client):
     assert client.get("/config").get_json() == {
         "extensions": [".flac", ".m4a", ".mp3", ".ogg", ".wav"],
         "max_upload_mb": app_module.app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024),
+        "auth": False,
     }
 
 

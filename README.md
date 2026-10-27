@@ -90,6 +90,10 @@ Details and error codes: [docs/api.md](docs/api.md). Agents can connect over MCP
 [docs/mcp.md](docs/mcp.md). Read [docs/security.md](docs/security.md)
 before exposing the service beyond loopback.
 
+Set `WEB_TOKEN` to require a token: every route but the web UI shell and `/config` then
+answers 401 until the browser signs in (or a client sends `Authorization: Bearer <token>`).
+The app refuses to start on a non-loopback `BIND` without it.
+
 ## Documentation
 
 | Read                                               | For                                 |

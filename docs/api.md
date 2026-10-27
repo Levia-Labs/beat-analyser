@@ -51,7 +51,26 @@ named after the video ID. `Accept: application/json` and `X-Progress-Id` work as
 What the upload form needs to know:
 
 ```json
-{ "extensions": [".flac", ".m4a", ".mp3", ".ogg", ".wav"], "max_upload_mb": 200 }
+{ "extensions": [".flac", ".m4a", ".mp3", ".ogg", ".wav"], "max_upload_mb": 200, "auth": false }
+```
+
+`auth` is true when `WEB_TOKEN` is set. `/config` is open either way.
+
+## Sign-in (only with `WEB_TOKEN`)
+
+With `WEB_TOKEN` set, every route needs `Authorization: Bearer <token>` or the `ba_session`
+cookie, except `/`, `/add`, `/p/<name>`, `/assets/*`, `GET /config`, `POST /login` and
+`POST /logout`. Anything else without one answers 401 `{"error": "Sign in required"}`.
+Without `WEB_TOKEN` there is no 401 and the two routes below answer 401 to every login.
+
+`POST /login`, JSON `{"token": "..."}`: 204 and a `ba_session` session cookie (`HttpOnly`,
+`SameSite=Strict`, path `/`, `Secure` over https, no expiry), or 401 `{"error": "Wrong token"}`
+after a one-second delay.
+
+`POST /logout`: 204, the cookie cleared.
+
+```bash
+curl -H "Authorization: Bearer $WEB_TOKEN" http://localhost:8002/projects
 ```
 
 ## `GET /projects`

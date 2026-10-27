@@ -14,6 +14,9 @@ name; gunicorn loads the Flask object `app` from `app.py` in this directory.
 | `mcp_server.py`    | The MCP service: tool registration, Streamable HTTP at /mcp, token and Host checks                              |
 | `events.py`        | Reads track CSVs, labels.json and meta.json; shared by the web app and the MCP tools                            |
 | `catalog.py`       | The Projects table's query: parse, filter, sort and page `/projects`                                            |
+| `webauth.py`       | The optional `WEB_TOKEN`: Bearer or session-cookie gate, `/login`, `/logout`, start-up refusal                  |
+| `spa.py`           | The built web app: index for its routes, hashed assets, CSP and security headers                                |
+| `netutil.py`       | `is_loopback`, shared by the web app and the MCP service                                                        |
 | `mcp_tools.py`     | The MCP tools and their argument checks; reads projects, never writes them                                      |
 | `notes.py`         | basic-pitch note transcription on onnxruntime - a port, changes listed in its header                            |
 | `key.py`           | Musical key from the notes: Krumhansl-Schmuckler profiles, `unknown` when nothing fits                          |

@@ -12,7 +12,9 @@ import threading
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from flask import Flask, jsonify, request, send_file, send_from_directory
+import spa
+import webauth
+from flask import Flask, jsonify, request, send_file
 from werkzeug.exceptions import HTTPException
 
 import analysis
@@ -25,15 +27,6 @@ import youtube
 
 MB = 1024 * 1024
 
-# Everything is same-origin: the SPA in web/ is built into hashed files Flask serves itself.
-# No inline script or style, so none is allowed. React sets styles through the DOM, which a
-# CSP governs only for style="" attributes in parsed HTML.
-CSP = (
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-    "connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; "
-    "form-action 'self'"
-)
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("beat-analyser")
 
@@ -45,7 +38,9 @@ app.config.update(
     UPLOAD_ROOT=Path(os.environ.get("UPLOAD_ROOT", "uploads")).resolve(),
     MAX_CONTENT_LENGTH=int(os.environ.get("MAX_UPLOAD_MB", "200")) * MB,
     YT_MAX_SECONDS=int(os.environ.get("YT_MAX_MINUTES", "20")) * 60,
+    WEB_TOKEN=os.environ.get("WEB_TOKEN", ""),
 )
+webauth.check_bind(app.config["WEB_TOKEN"], os.environ.get("BIND", "127.0.0.1"))
 
 # Analyses are CPU-bound and hold a decoded track in memory; a burst of uploads would starve
 # the host. Taken without waiting, so an excess request answers 429 instead of queueing.
@@ -103,47 +98,16 @@ def same_origin_posts_only():
     return None
 
 
-@app.after_request
-def security_headers(response):
-    response.headers.setdefault("Content-Security-Policy", CSP)
-    response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "DENY")
-    response.headers.setdefault("Referrer-Policy", "no-referrer")
-    return response
+# After the origin check: a cross-site write is refused before the token is looked at.
+webauth.install(app)
+
+
+spa.install(app)
 
 
 @app.errorhandler(HTTPException)
 def http_error(exc: HTTPException):
     return error(exc.description or exc.name, exc.code or 500)
-
-
-def spa_index():
-    index = Path(app.config["WEB_DIST"]) / "index.html"
-    if not index.is_file():
-        return error("The web app is not built: run task web:build", 503)
-    response = send_file(index, mimetype="text/html", max_age=0)
-    # Asset names carry a hash; the index is what must never be stale.
-    response.headers["Cache-Control"] = "no-cache"
-    return response
-
-
-@app.get("/")
-def index():
-    return spa_index()
-
-
-@app.get("/p/<name>")
-def viewer(name: str):
-    # The SPA asks /projects/<name>/events, which validates the name.
-    return spa_index()
-
-
-@app.get("/assets/<path:filename>")
-def assets(filename: str):
-    # send_from_directory refuses paths that leave the folder (404).
-    response = send_from_directory(Path(app.config["WEB_DIST"]) / "assets", filename)
-    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-    return response
 
 
 @app.post("/upload")
@@ -222,6 +186,7 @@ def client_config():
     return jsonify(
         extensions=sorted(storage.ALLOWED_EXTENSIONS),
         max_upload_mb=app.config["MAX_CONTENT_LENGTH"] // MB,
+        auth=bool(app.config["WEB_TOKEN"]),
     )
 
 

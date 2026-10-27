@@ -28,6 +28,7 @@ runs without beatcore or the note model. Run all with `task test:run`, a subset 
 | `test_manage.py`        | Deleting and renaming projects: files, ZIP prefix, locks, cross-origin      |
 | `test_mcp_e2e.py`       | The MCP end-to-end script: tool reply reading, polling to completion        |
 | `test_mcp_server.py`    | The MCP server: tools served in-process, bearer token, start-up refusal     |
+| `test_webauth.py`       | The web token: 401 gate, Bearer and cookie, login, logout, start-up refusal |
 | `test_mcp_tools.py`     | The MCP tools: argument refusals, job start, status, event windows          |
 | `test_notes.py`         | basic-pitch port; the model test is skipped without onnxruntime/ffmpeg      |
 | `test_progress.py`      | Progress registry, stage callbacks, the poll route                          |
