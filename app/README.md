@@ -11,6 +11,7 @@ name; gunicorn loads the Flask object `app` from `app.py` in this directory.
 | `jobs.py`                         | MCP analysis jobs: one per project name, two at a time, at most eight pending                                   |
 | `backend.py`                      | Client for the web app's `/upload` and `/download_yt`, used by the MCP jobs                                     |
 | `mcp_server.py`                   | The MCP service: tool registration, Streamable HTTP at /mcp, token and Host checks                              |
+| `events.py`                       | Reads track CSVs, labels.json and meta.json; shared by the web app and the MCP tools                            |
 | `mcp_tools.py`                    | The MCP tools and their argument checks; reads projects, never writes them                                      |
 | `notes.py`                        | basic-pitch note transcription on onnxruntime - a port, changes listed in its header                            |
 | `key.py`                          | Musical key from the notes: Krumhansl-Schmuckler profiles, `unknown` when nothing fits                          |
