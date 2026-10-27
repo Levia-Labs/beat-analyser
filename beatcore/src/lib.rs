@@ -67,8 +67,11 @@ mod python {
     /// Analyse a WAV file. Returns {"bpm", "confidence", "beats", "onsets"}.
     #[pyfunction]
     fn analyse<'py>(py: Python<'py>, path: &str) -> PyResult<Bound<'py, PyDict>> {
-        let analysis =
-            crate::analyse_file(std::path::Path::new(path)).map_err(PyValueError::new_err)?;
+        // Detached so other Python threads (request handlers, progress polls) run meanwhile.
+        let path = std::path::PathBuf::from(path);
+        let analysis = py
+            .detach(move || crate::analyse_file(&path))
+            .map_err(PyValueError::new_err)?;
         to_dict(py, &analysis)
     }
 
@@ -79,7 +82,8 @@ mod python {
         samples: Vec<f32>,
         sample_rate: u32,
     ) -> PyResult<Bound<'py, PyDict>> {
-        to_dict(py, &crate::analyse_samples(&samples, sample_rate))
+        let analysis = py.detach(move || crate::analyse_samples(&samples, sample_rate));
+        to_dict(py, &analysis)
     }
 
     #[pymodule]
