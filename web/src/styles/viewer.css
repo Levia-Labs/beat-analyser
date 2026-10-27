@@ -1,0 +1,78 @@
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.head h1 {
+  margin: 0;
+  font-size: 18px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zoom button {
+  width: 36px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  cursor: pointer;
+}
+.lanes {
+  display: flex;
+}
+.labels {
+  display: grid;
+  padding-top: 20px;
+  grid-auto-rows: 28px;
+  flex: none;
+  width: 64px;
+}
+.lane {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  min-height: 0;
+  padding: 0 6px 0 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+.lane.on {
+  color: var(--ink);
+}
+.lane .short {
+  display: none;
+}
+.scroller {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.spacer canvas {
+  position: sticky;
+  left: 0;
+  display: block;
+}
+@media (max-width: 719px) {
+  .labels {
+    grid-auto-rows: 24px;
+    width: 32px;
+  }
+  .lane .long {
+    display: none;
+  }
+  .lane .short {
+    display: inline;
+  }
+  .zoom button {
+    width: 44px;
+  }
+}

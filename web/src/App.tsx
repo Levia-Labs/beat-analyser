@@ -1,6 +1,7 @@
 import { Link, Route, Routes } from "react-router";
 import Logo from "./components/Logo";
 import Home from "./screens/Home";
+import { ViewerRoute } from "./screens/Viewer";
 
 export default function App() {
   return (
@@ -14,7 +15,7 @@ export default function App() {
       <main className="page">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/p/:name" element={<section className="card">Viewer</section>} />
+          <Route path="/p/:name" element={<ViewerRoute />} />
           <Route
             path="*"
             element={
