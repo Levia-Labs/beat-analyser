@@ -1,5 +1,6 @@
 import { useEffect, useId, useState, type DragEvent, type FormEvent } from "react";
 import { ApiError, getProgress, postAnalysis, type Config, type Progress } from "../api";
+import { progressId as newProgressId } from "../progressId";
 import Banner from "./Banner";
 import StageList from "./StageList";
 
@@ -81,6 +82,7 @@ export default function AnalyseCard({
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
+    const id = newProgressId();
     let body: FormData | string;
     let endpoint: "/upload" | "/download_yt";
     if (tab === "file") {
@@ -102,7 +104,6 @@ export default function AnalyseCard({
       endpoint = "/download_yt";
       setPhase({ kind: "analysing", since: Date.now() });
     }
-    const id = crypto.randomUUID().replaceAll("-", "");
     setProgressId(id);
     setServer(null);
     try {

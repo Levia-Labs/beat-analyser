@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, postAnalysis } from "../api";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError, getProgress, postAnalysis, type Progress } from "../api";
 import AnalyseCard from "./AnalyseCard";
 
 // ES module exports cannot be spied on in place; mock the module, keep the real ApiError.
@@ -10,11 +10,19 @@ vi.mock("../api", async (importOriginal) => {
   return { ...actual, postAnalysis: vi.fn(), getProgress: vi.fn(() => new Promise(() => {})) };
 });
 const post = vi.mocked(postAnalysis);
+const poll = vi.mocked(getProgress);
 
 const config = { extensions: [".mp3", ".wav"], max_upload_mb: 1 };
 
 beforeEach(() => {
   post.mockReset();
+  poll.mockReset();
+  poll.mockImplementation(() => new Promise(() => {}));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 // Pasting is one event; typing 28 keys one by one took long enough under load to hit timeouts.
@@ -103,5 +111,48 @@ describe("AnalyseCard", () => {
       expect.any(Function),
       expect.stringMatching(/^[0-9a-f]{32}$/),
     );
+  });
+
+  it("still submits where crypto.randomUUID is missing (plain http)", async () => {
+    vi.stubGlobal("crypto", { getRandomValues: crypto.getRandomValues.bind(crypto) });
+    post.mockResolvedValue({ name: "x" });
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    await userEvent.click(screen.getByRole("tab", { name: "YouTube" }));
+    await paste("https://youtu.be/dQw4w9WgXcQ");
+    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await waitFor(() => expect(post).toHaveBeenCalled());
+    expect(post.mock.calls[0]![3]).toMatch(/^[0-9a-f]{32}$/);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Analyse" })).toBeEnabled());
+  });
+
+  it("polls the server once a second while the POST is open, then stops", async () => {
+    vi.useFakeTimers();
+    let finish: (value: { name: string }) => void = () => {};
+    post.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    const running: Progress = {
+      stages: ["download", "decode", "rhythm"],
+      stage: "decode",
+      done: 1,
+      total: 3,
+      fraction: null,
+      finished: false,
+      error: null,
+      elapsed: 1,
+    };
+    poll.mockResolvedValue(running);
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    fireEvent.click(screen.getByRole("tab", { name: "YouTube" }));
+    fireEvent.change(screen.getByLabelText("YouTube URL"), {
+      target: { value: "https://youtu.be/dQw4w9WgXcQ" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    expect(poll).toHaveBeenCalledTimes(1);
+    expect(poll).toHaveBeenCalledWith(post.mock.calls[0]![3]);
+    expect(screen.getByText("Decode").closest("li")).toHaveAttribute("aria-current", "step");
+    await act(async () => finish({ name: "x" }));
+    const calls = poll.mock.calls.length;
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(poll).toHaveBeenCalledTimes(calls);
   });
 });
