@@ -17,15 +17,21 @@ an `Authorization` header.
 `/p/<name>`, `/assets/*`), `GET /config` and the login routes. A request passes with
 `Authorization: Bearer <token>` or the `ba_session` cookie. `POST /login` checks the token
 in constant time and sets the cookie: `HttpOnly`, `SameSite=Strict`, path `/`, `Secure` over
-https, no expiry; its value is an HMAC of a fixed label keyed by the token. A wrong token
-waits one second before the 401. The app exits at import when `WEB_TOKEN` is unset and
-`BIND` is not loopback. The MCP service sends the same token to the backend. Without
+https (always, with `WEB_COOKIE_SECURE=1`), no expiry; its value is an HMAC of a fixed label
+keyed by the token. Every failed credential (wrong Bearer, wrong cookie, wrong login token)
+counts against the client's `remote_addr`; after 5 in 60 seconds that address gets 429
+without the token being compared, until the window passes. The limiter is in memory, bounded
+to 1024 addresses, and answers at once instead of sleeping. The token must be at least 16
+characters. Unsafe methods also refuse any `Sec-Fetch-Site` but `same-origin` and `none`.
+The app exits at import when `WEB_TOKEN` is unset and `BIND` is not loopback, or too short. The MCP service sends the same token to the backend. Without
 `WEB_TOKEN` nothing changes: this amends ADR 0008 only for when the token is set.
 
 ## Consequences
 
-**Cost.** Two more routes (`/login`, `/logout`) and a cookie. The cookie cannot be revoked
-without changing the token, there is one shared secret and no accounts, and over plain http
+**Cost.** Two more routes (`/login`, `/logout`) and a cookie. The cookie is a static HMAC
+with no expiry: rotating `WEB_TOKEN` is the only way to revoke sessions, and logout clears
+only the browser's copy, so a copied cookie stays valid. Behind a reverse proxy the limiter
+sees the proxy's address, so all clients share one bucket. There is one shared secret and no accounts, and over plain http
 the token still crosses the network in the clear. The compose health check moved from
 `/folders` to `/config`, which stays open. The dev tasks that call the API without a
 header (`task dev:e2e`, `task smoke`) need the token when it is set.

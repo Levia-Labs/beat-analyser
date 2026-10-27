@@ -64,8 +64,9 @@ cookie, except `/`, `/add`, `/p/<name>`, `/assets/*`, `GET /config`, `POST /logi
 Without `WEB_TOKEN` there is no 401 and the two routes below answer 401 to every login.
 
 `POST /login`, JSON `{"token": "..."}`: 204 and a `ba_session` session cookie (`HttpOnly`,
-`SameSite=Strict`, path `/`, `Secure` over https, no expiry), or 401 `{"error": "Wrong token"}`
-after a one-second delay.
+`SameSite=Strict`, path `/`, `Secure` over https, no expiry), or 401 `{"error": "Wrong token"}`.
+Five failed credentials (any route) from one client address within 60 seconds lock it out:
+429 `{"error": "Too many failed sign-ins; wait a minute"}` until the window passes.
 
 `POST /logout`: 204, the cookie cleared.
 

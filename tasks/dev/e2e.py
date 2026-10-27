@@ -3,7 +3,9 @@
 security refusals. Standard library only, so it runs against the container from any host.
 
 Usage:
-  python3 tasks/dev/e2e.py FILE [--url http://127.0.0.1:5000]
+  python3 tasks/dev/e2e.py FILE [--url http://127.0.0.1:5000] [--token T]
+
+--token, default the WEB_TOKEN environment variable, is sent as Authorization: Bearer.
 
 Uploads FILE (name it `fixture-*`), expects 200 and a ZIP holding audio.wav, meta.json and
 the six track CSVs, then expects 403 for a cross-origin POST and 400 for a non-YouTube URL,
@@ -13,6 +15,7 @@ and that / serves the built SPA with its first script asset.
 import argparse
 import io
 import json
+import os
 import re
 import sys
 import time
@@ -43,9 +46,15 @@ def multipart(path: Path) -> tuple[bytes, str]:
     return head + path.read_bytes() + f"\r\n--{boundary}--\r\n".encode(), boundary
 
 
-def fetch(url: str) -> tuple[int, bytes]:
+def auth_headers(token: str | None) -> dict:
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+
+def fetch(url: str, headers: dict | None = None) -> tuple[int, bytes]:
     try:
-        with urllib.request.urlopen(url, timeout=30) as response:
+        with urllib.request.urlopen(
+            urllib.request.Request(url, headers=headers or {}), timeout=30
+        ) as response:
             return response.status, response.read()
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read()
@@ -64,12 +73,18 @@ def check_spa(base: str, get=fetch) -> list[str]:
     return [] if status == 200 else [f"{asset} answered {status}"]
 
 
-def main() -> int:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("file", type=Path)
     parser.add_argument("--url", default="http://127.0.0.1:5000")
-    args = parser.parse_args()
+    parser.add_argument("--token", default=os.environ.get("WEB_TOKEN"))
+    return parser.parse_args(argv)
+
+
+def main() -> int:
+    args = parse_args()
     base = args.url.rstrip("/")
+    auth = auth_headers(args.token)
     failures = []
 
     body, boundary = multipart(args.file)
@@ -77,7 +92,7 @@ def main() -> int:
     status, data = request(
         f"{base}/upload",
         body,
-        {"Content-Type": f"multipart/form-data; boundary={boundary}", "Origin": base},
+        {"Content-Type": f"multipart/form-data; boundary={boundary}", "Origin": base, **auth},
     )
     elapsed = time.monotonic() - started
     if status != 200:
@@ -92,20 +107,22 @@ def main() -> int:
         failures.append(f"ZIP lacks {sorted(missing)}")
     print(f"  upload    200  {len(data)} bytes  {elapsed:.1f}s  {len(names)} files")
 
-    status, _ = request(f"{base}/repair", b"", {"Origin": "https://evil.example"})
+    status, _ = request(f"{base}/repair", b"", {"Origin": "https://evil.example", **auth})
     print(f"  csrf      {status}")
     if status != 403:
         failures.append(f"cross-origin POST answered {status}, expected 403")
 
     payload = json.dumps({"url": "https://evil.example/?v=dQw4w9WgXcQ"}).encode()
     status, _ = request(
-        f"{base}/download_yt", payload, {"Content-Type": "application/json", "Origin": base}
+        f"{base}/download_yt",
+        payload,
+        {"Content-Type": "application/json", "Origin": base, **auth},
     )
     print(f"  yt-host   {status}")
     if status != 400:
         failures.append(f"foreign YouTube URL answered {status}, expected 400")
 
-    spa = check_spa(base)
+    spa = check_spa(base, lambda url: fetch(url, auth))
     print(f"  spa       {'ok' if not spa else 'FAIL'}")
     failures += spa
 

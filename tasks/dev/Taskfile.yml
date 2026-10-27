@@ -21,14 +21,14 @@ tasks:
       - '"{{.SYS_PY}}" tasks/dev/fixture.py "{{.DEV_FIXTURES}}/{{.NAME}}.wav" --seconds {{.SECONDS | default 4}} --bpm {{.BPM | default 120}} --mp3'
 
   e2e:
-    desc: "Upload a fixture to a running server and check ZIP, CSRF and URL refusals. Usage: task dev:e2e [URL=http://127.0.0.1:5000]"
+    desc: "Upload a fixture to a running server and check ZIP, CSRF and URL refusals. Usage: task dev:e2e [URL=http://127.0.0.1:5000] [TOKEN=]"
     cmds:
       # A cached ZIP from the last run would be served without analysis, and the check
       # would pass on stale output. Fixture projects only; nothing else is touched.
       - task: :uploads:fixtures:clean
       - task: fixture
         vars: { NAME: fixture-e2e }
-      - '"{{.SYS_PY}}" tasks/dev/e2e.py "{{.DEV_FIXTURES}}/fixture-e2e.mp3" --url "{{.URL | default "http://127.0.0.1:5000"}}"'
+      - '"{{.SYS_PY}}" tasks/dev/e2e.py "{{.DEV_FIXTURES}}/fixture-e2e.mp3" --url "{{.URL | default "http://127.0.0.1:5000"}}"{{if .TOKEN}} --token "{{.TOKEN}}"{{end}}'
 
   mcp:e2e:
     desc: "Analyse a fixture through a running MCP service and check status, events and a refusal. Usage: task dev:mcp:e2e [URL=http://127.0.0.1:8001/mcp] [TOKEN=]"

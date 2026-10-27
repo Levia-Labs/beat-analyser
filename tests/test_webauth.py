@@ -14,7 +14,7 @@ import webauth
 
 import app as app_module
 
-TOKEN = "s3cret-token"  # noqa: S105
+TOKEN = "s3cret-token-0123456"  # noqa: S105
 APP_DIR = Path(app_module.__file__).resolve().parent
 PROTECTED = [
     ("get", "/projects"),
@@ -30,10 +30,23 @@ PROTECTED = [
 ]
 
 
+class Clock:
+    def __init__(self):
+        self.now = 1000.0
+
+    def __call__(self):
+        return self.now
+
+
 @pytest.fixture
-def secured(client, web_dist, monkeypatch):
+def clock():
+    return Clock()
+
+
+@pytest.fixture
+def secured(client, web_dist, monkeypatch, clock):
     monkeypatch.setitem(app_module.app.config, "WEB_TOKEN", TOKEN)
-    monkeypatch.setattr(webauth, "WRONG_TOKEN_DELAY", 0)
+    monkeypatch.setitem(app_module.app.extensions, "webauth_limiter", webauth.FailureLimiter(clock))
     return client
 
 
@@ -101,17 +114,67 @@ def test_wrong_login_is_refused_and_sets_no_cookie(secured, body):
     assert secured.get("/projects").status_code == 401
 
 
-def test_wrong_login_waits(secured, monkeypatch):
-    waits = []
-    monkeypatch.setattr(webauth, "WRONG_TOKEN_DELAY", 1)
-    monkeypatch.setattr(webauth.time, "sleep", waits.append)
-    secured.post("/login", json={"token": "wrong"})
-    secured.post("/login", json={"token": TOKEN})
-    assert waits == [1]
+BEARER = {"Authorization": f"Bearer {TOKEN}"}
 
 
-def test_default_delay_is_one_second():
-    assert webauth.WRONG_TOKEN_DELAY == 1
+def test_a_short_token_is_refused_at_start():
+    with pytest.raises(SystemExit, match="at least 16"):
+        webauth.check_bind("short-token", "127.0.0.1")
+    webauth.check_bind("x" * 16, "127.0.0.1")
+    webauth.check_bind("", "127.0.0.1")
+
+
+def test_importing_the_app_with_a_short_token_exits():
+    env = {**os.environ, "BIND": "127.0.0.1", "WEB_TOKEN": "short"}
+    result = subprocess.run(
+        [sys.executable, "-c", "import app"],
+        cwd=APP_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "at least 16" in result.stderr
+
+
+@pytest.mark.parametrize("site", ["same-site", "cross-site", "bogus"])
+def test_unsafe_methods_refuse_any_site_but_same_origin(secured, site):
+    headers = {**BEARER, "Sec-Fetch-Site": site}
+    assert secured.delete("/projects/x", headers=headers).status_code == 403
+    assert secured.post("/login", json={"token": TOKEN}, headers=headers).status_code == 403
+
+
+@pytest.mark.parametrize("site", ["same-origin", "none"])
+def test_same_origin_and_user_initiated_writes_pass(secured, site):
+    response = secured.post("/login", json={"token": TOKEN}, headers={"Sec-Fetch-Site": site})
+    assert response.status_code == 204
+
+
+def test_reads_ignore_sec_fetch_site(secured):
+    headers = {**BEARER, "Sec-Fetch-Site": "same-site"}
+    assert secured.get("/projects", headers=headers).status_code == 200
+
+
+def test_cookie_secure_flag_can_be_forced(secured, monkeypatch):
+    monkeypatch.setitem(app_module.app.config, "WEB_COOKIE_SECURE", True)
+    response = secured.post("/login", json={"token": TOKEN})
+    assert "Secure" in cookie_value(response)
+
+
+def test_cookie_secure_env_is_read_as_one():
+    env = {**os.environ, "BIND": "127.0.0.1", "WEB_COOKIE_SECURE": "1", "WEB_TOKEN": ""}
+    for value, expected in (("1", "True"), ("0", "False"), ("", "False")):
+        env["WEB_COOKIE_SECURE"] = value
+        result = subprocess.run(
+            [sys.executable, "-c", "import app; print(app.app.config['WEB_COOKIE_SECURE'])"],
+            cwd=APP_DIR,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.stdout.strip() == expected
 
 
 def test_a_forged_cookie_is_refused(secured):

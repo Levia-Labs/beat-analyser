@@ -69,7 +69,7 @@ tasks:
       - '"{{.SYS_PY}}" tasks/docker/hub.py --apply'
 
   e2e:
-    desc: "Build, start on spare ports, run task dev:e2e and dev:mcp:e2e against it, stop. Usage: task docker:e2e [PORT=8099] [MCP_PORT=8098]"
+    desc: "Build, start on spare ports, run task dev:e2e and dev:mcp:e2e against it, stop. Usage: task docker:e2e [PORT=8099] [MCP_PORT=8098] [TOKEN=]"
     vars:
       PORT: '{{.PORT | default "8099"}}'
       MCP_PORT: '{{.MCP_PORT | default "8098"}}'
@@ -82,10 +82,10 @@ tasks:
       # --wait blocks until both healthchecks pass, so no sleep and no retry loop.
       - docker compose -p beat-analyser-e2e up -d --build --wait
       - task: :dev:e2e
-        vars: { URL: "http://127.0.0.1:{{.PORT}}" }
+        vars: { URL: "http://127.0.0.1:{{.PORT}}", TOKEN: "{{.TOKEN}}" }
       - task: :summary
         vars: { NAME: fixture-e2e }
       # After the summary: dev:mcp:e2e clears fixture projects before its own run.
       - task: :dev:mcp:e2e
-        vars: { URL: "http://127.0.0.1:{{.MCP_PORT}}/mcp" }
+        vars: { URL: "http://127.0.0.1:{{.MCP_PORT}}/mcp", TOKEN: "{{.TOKEN}}" }
       - docker images beat-analyser --format "image {{"{{"}}.Size{{"}}"}}"

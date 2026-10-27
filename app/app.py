@@ -39,6 +39,7 @@ app.config.update(
     MAX_CONTENT_LENGTH=int(os.environ.get("MAX_UPLOAD_MB", "200")) * MB,
     YT_MAX_SECONDS=int(os.environ.get("YT_MAX_MINUTES", "20")) * 60,
     WEB_TOKEN=os.environ.get("WEB_TOKEN", ""),
+    WEB_COOKIE_SECURE=os.environ.get("WEB_COOKIE_SECURE") == "1",
 )
 webauth.check_bind(app.config["WEB_TOKEN"], os.environ.get("BIND", "127.0.0.1"))
 
@@ -90,7 +91,8 @@ def same_origin_posts_only():
     form, trigger /repair or DELETE a project on a server on localhost."""
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return None
-    if request.headers.get("Sec-Fetch-Site") == "cross-site":
+    # same-site (a sibling subdomain) is refused too: only this origin or a user action.
+    if request.headers.get("Sec-Fetch-Site", "same-origin") not in ("same-origin", "none"):
         return error("Cross-origin request refused", 403)
     origin = request.headers.get("Origin")
     if origin and urlsplit(origin).netloc != request.host:
