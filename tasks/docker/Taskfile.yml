@@ -16,10 +16,10 @@ tasks:
       - docker compose build --no-cache
 
   up:
-    desc: "Start the service and its MCP endpoint in the background. Usage: task docker:up [PORT=80] [MCP_PORT=8001] [BIND=127.0.0.1]"
+    desc: "Start the service and its MCP endpoint in the background. Usage: task docker:up [PORT=8002] [MCP_PORT=8001] [BIND=127.0.0.1]"
     cmds:
       - docker compose up -d --build
-      - echo "http://localhost:${PORT:-80}  (task docker:logs to follow)"
+      - echo "http://localhost:${PORT:-8002}  (task docker:logs to follow)"
       - echo "MCP  http://localhost:${MCP_PORT:-8001}/mcp  (docs/mcp.md)"
 
   down:

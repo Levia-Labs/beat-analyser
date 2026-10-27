@@ -49,10 +49,19 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
 - [ ] Optional token authentication for a shared deployment
       ([ADR 0008](docs/adr/0008-loopback-without-auth.md)).
 - [ ] No rate limiting.
-- [ ] Bootstrap from a CDN; vendoring it into `app/static/` would remove the external load.
 
 ## Tooling
 
 - [ ] CI does not build the image on push (slow). A cached build job would catch Dockerfile
       breakage earlier.
 - [ ] No dependency update automation (Dependabot or Renovate) for the pinned packages.
+
+## 1 tasks/dev/gate.py raises UnicodeEncodeError on a failing gate under a cp1250 console (U+2716)
+
+status: open
+class: bug
+
+## 2 dev:commit fails on a path whose deletion is already staged (git add: pathspec did not match); use git add -A -- <path> or skip add for staged deletions
+
+status: open
+class: bug

@@ -14,7 +14,7 @@ silent: true
 #   task validate                every offline gate - what the hooks and the Stop hook run
 #   task validate:deep           validate plus coverage, deep properties, security audits
 #   task run                     the web UI on http://127.0.0.1:5000 (development server)
-#   task docker:up               the same UI in the container on http://localhost
+#   task docker:up               the same UI in the container on http://localhost:8002
 #
 # `task --list` is the index; every task carries a `desc`. docs/tasks.md explains each one.
 

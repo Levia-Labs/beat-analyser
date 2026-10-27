@@ -6,12 +6,14 @@ Usage:
   python3 tasks/dev/e2e.py FILE [--url http://127.0.0.1:5000]
 
 Uploads FILE (name it `fixture-*`), expects 200 and a ZIP holding audio.wav, meta.json and
-the six track CSVs, then expects 403 for a cross-origin POST and 400 for a non-YouTube URL.
+the six track CSVs, then expects 403 for a cross-origin POST and 400 for a non-YouTube URL,
+and that / serves the built SPA with its first script asset.
 """
 
 import argparse
 import io
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -39,6 +41,27 @@ def multipart(path: Path) -> tuple[bytes, str]:
         f'filename="{path.name}"\r\nContent-Type: application/octet-stream\r\n\r\n'
     ).encode()
     return head + path.read_bytes() + f"\r\n--{boundary}--\r\n".encode(), boundary
+
+
+def fetch(url: str) -> tuple[int, bytes]:
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            return response.status, response.read()
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read()
+
+
+def check_spa(base: str, get=fetch) -> list[str]:
+    """The built SPA: / serves index.html, and the first script it references loads."""
+    status, body = get(f"{base}/")
+    if status != 200 or b'<div id="root">' not in body:
+        return [f"/ answered {status}, expected the SPA"]
+    match = re.search(rb'src="(/assets/[^"]+\.js)"', body)
+    if not match:
+        return ["index.html references no /assets/*.js"]
+    asset = match.group(1).decode()
+    status, _ = get(f"{base}{asset}")
+    return [] if status == 200 else [f"{asset} answered {status}"]
 
 
 def main() -> int:
@@ -81,6 +104,10 @@ def main() -> int:
     print(f"  yt-host   {status}")
     if status != 400:
         failures.append(f"foreign YouTube URL answered {status}, expected 400")
+
+    spa = check_spa(base)
+    print(f"  spa       {'ok' if not spa else 'FAIL'}")
+    failures += spa
 
     for failure in failures:
         print(f"  FAIL  {failure}")
