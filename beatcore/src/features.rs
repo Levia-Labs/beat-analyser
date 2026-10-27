@@ -35,7 +35,8 @@ pub struct Features {
 }
 
 /// Weights of the kick, snare and hi-hat bands in the beat envelope.
-const BEAT_WEIGHTS: [f32; 3] = [1.0, 0.7, 0.35];
+// Hi-hat weight 0.35 locked noisehat@110 half a beat off (F 0.00); 0.2 left it; 0.1 gives F 1.00.
+const BEAT_WEIGHTS: [f32; 3] = [1.0, 0.7, 0.1];
 
 impl Features {
     /// The envelope tempo and beats are tracked on. Each band is normalised by its own mean

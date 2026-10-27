@@ -21,9 +21,11 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
       fixture. Approaches tried and dropped are listed in `beatcore/src/onset.rs`.
 - [ ] Tempo octave errors: every acc1 miss is at 70, 150 or 180 BPM (acc1 0.69, acc2
       1.00): the 120 BPM prior pulls toward the middle. A narrower prior trades one end
-      for the other; tune on real data.
-- [ ] `noisehat@110` beat F-measure 0.00 with the right tempo: the grid locked half a beat
-      off, onto the hats. The beat envelope's hi-hat weight (0.35) is not low enough there.
+      for the other; tune on real data. Widening PRIOR_OCTAVES to 1.5 or 1.25 measured
+      acc1 0.67 (-0.03) both times, so it was dropped (see `beatcore/src/tempo.rs`).
+- [x] `noisehat@110` beat F-measure 0.00: fixed by lowering the beat envelope's hi-hat
+      weight 0.35 to 0.1 (F 1.00; mean beatF 0.87 to 0.91, acc1 0.70 to 0.72). Verify on real
+      data: a hat-driven track may now lose its grid.
 - [ ] Kicks under a sustained pad: F-measure 0.08-0.48. The pad's low partials mask the
       kick's per-bin rise.
 - [ ] One label per onset: a kick and hi-hat struck together count as one. Co-labelling

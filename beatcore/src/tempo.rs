@@ -8,6 +8,8 @@ pub const MAX_BPM: f64 = 240.0;
 /// Log-normal prior: centred on 120 BPM, one octave standard deviation. It is what resolves
 /// the half / double tempo ambiguity every periodic signal has.
 const PRIOR_BPM: f64 = 120.0;
+// Tried PRIOR_OCTAVES 1.5: acc1 -0.03, fixes backbeat@70 but breaks noisehat@110 and syncopated@110;
+// 1.25: acc1 -0.03, breaks noisehat@110 tempo (beatF 0.00 > 0.39), fixes nothing.
 const PRIOR_OCTAVES: f64 = 1.0;
 /// How strongly beat spacing is held to the tempo. librosa's default.
 const TIGHTNESS: f64 = 100.0;
