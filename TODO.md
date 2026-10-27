@@ -56,3 +56,8 @@ class: bug
 
 status: done
 class: bug
+
+## 3 web ProjectsPaging.test.tsx 'overlapping page' failed once in several runs (timing); make it deterministic
+
+status: open
+class: bug
