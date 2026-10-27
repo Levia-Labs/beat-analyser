@@ -1,3 +1,4 @@
+import os
 import zipfile
 
 import pytest
@@ -76,6 +77,20 @@ def test_rename_built_project_moves_folder_and_zip(tmp_path):
     assert storage.zip_path(tmp_path, "new").is_file()
     with zipfile.ZipFile(storage.zip_path(tmp_path, "new")) as z:
         assert "new/kick.csv" in z.namelist()
+
+
+def test_rename_keeps_meta_mtime_so_created_does_not_jump(tmp_path):
+    folder = _project(tmp_path, "old")
+    os.utime(folder / "meta.json", ns=(1_600_000_000 * 10**9, 1_600_000_000 * 10**9))
+    storage.rename_project(tmp_path, "old", "new")
+    assert (tmp_path / "new" / "meta.json").stat().st_mtime_ns == 1_600_000_000 * 10**9
+
+
+def test_package_skips_the_staged_audio(tmp_path):
+    folder = _project(tmp_path, "song", built=False)
+    (folder / storage.STAGED_NAME).write_bytes(b"x")
+    with zipfile.ZipFile(storage.package(tmp_path, "song")) as z:
+        assert sorted(z.namelist()) == ["song/kick.csv", "song/meta.json"]
 
 
 def test_rename_keeps_corrupt_meta_as_is(tmp_path):

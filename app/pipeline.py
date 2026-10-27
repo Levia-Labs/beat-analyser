@@ -17,7 +17,7 @@ import storage
 log = logging.getLogger(__name__)
 
 # Beside audio.wav in the project folder, so the final move is a same-volume rename.
-STAGED_NAME = "audio.new.wav"
+STAGED_NAME = storage.STAGED_NAME
 
 _locks: dict[str, threading.Lock] = {}
 _locks_guard = threading.Lock()
@@ -94,12 +94,19 @@ def build(
     project (ADR 0014). Without a ZIP it only runs when the folder holds no audio.wav, so a
     failed analysis retries without re-downloading.
 
-    slots, when given, caps concurrent analyses: a full set raises TooBusy before anything
-    is changed. A cached result never takes a slot.
+    slots, when given, caps concurrent work: a full set raises TooBusy before anything is
+    placed or changed, so a burst cannot make the heavy save, decode or download first. The
+    slot is held while placing and hashing, and released at once when the hash matches and the
+    cached ZIP is served.
     """
     with _lock(name):
         cached = storage.zip_path(root, name)
         folder = storage.project_dir(root, name)
+        # A crash after placing leaves the staged file; it must not reach the next ZIP.
+        (folder / STAGED_NAME).unlink(missing_ok=True)
+        if slots is not None and not slots.acquire(blocking=False):
+            raise TooBusy(name)
+        held = slots is not None
         created = not folder.is_dir()
         wav = folder / storage.AUDIO_NAME
         staged: Path | None = None
@@ -109,15 +116,17 @@ def build(
                 staged = _place(folder, place_audio)
                 if cached.is_file() and storage.sha256_of(staged) == storage.audio_hash(folder):
                     staged.unlink()
+                    if slots is not None:
+                        slots.release()
+                        held = False
                     return cached
-
-            if slots is not None and not slots.acquire(blocking=False):
-                raise TooBusy(name)
         except BaseException:
             if staged is not None:
                 staged.unlink(missing_ok=True)
             if created:
                 shutil.rmtree(folder, ignore_errors=True)
+            if held and slots is not None:
+                slots.release()
             raise
         try:
             if staged is not None:

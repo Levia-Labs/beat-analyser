@@ -11,6 +11,7 @@ uploaded filename or a URL path segment, so this is the path-traversal boundary.
 import hashlib
 import json
 import logging
+import os
 import re
 import shutil
 import wave
@@ -22,6 +23,8 @@ from werkzeug.utils import secure_filename
 log = logging.getLogger(__name__)
 
 AUDIO_NAME = "audio.wav"
+# The new audio while its hash is compared; never part of a ZIP.
+STAGED_NAME = "audio.new.wav"
 META_NAME = "meta.json"
 ZIP_SUFFIX = "_tracks.zip"
 # Audio types accepted from an upload. Shared by the web app and the MCP tools.
@@ -120,7 +123,7 @@ def package(root: Path, name: str) -> Path:
     partial = target.with_suffix(".zip.part")
     with zipfile.ZipFile(partial, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(folder.iterdir()):
-            if path.is_file():
+            if path.is_file() and path.name != STAGED_NAME:
                 archive.write(path, arcname=f"{name}/{path.name}")
     partial.replace(target)
     return target
@@ -143,7 +146,10 @@ def rename_project(root: Path, old: str, new: str) -> None:
     # half-renamed project, so it is left as it is.
     original = None
     renamed = None
+    stamp = None
     if (source / META_NAME).is_file():
+        # The catalog's "created" is meta.json's mtime; a rename must not look like a new project.
+        stamp = (source / META_NAME).stat().st_mtime_ns
         original = (source / META_NAME).read_text(encoding="utf-8")
         try:
             data = json.loads(original)
@@ -155,11 +161,15 @@ def rename_project(root: Path, old: str, new: str) -> None:
     try:
         if renamed is not None:
             (target / META_NAME).write_text(renamed, encoding="utf-8")
+            if stamp is not None:
+                os.utime(target / META_NAME, ns=(stamp, stamp))
         if built:
             package(root, new)
     except BaseException:
         if original is not None:
             (target / META_NAME).write_text(original, encoding="utf-8")
+            if stamp is not None:
+                os.utime(target / META_NAME, ns=(stamp, stamp))
         target.rename(source)
         raise
     zip_path(root, old).unlink(missing_ok=True)

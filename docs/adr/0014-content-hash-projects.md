@@ -20,7 +20,11 @@ The old audio is replaced only after the new file is complete. A project without
 `audio_sha256` counts as matching only when its `audio.wav` hashes the same.
 
 At most `MAX_ANALYSES` (default 2) analyses run at once in the web app. A request that would
-start another answers 429 and leaves the project as it was. A cached result takes no slot.
+start another answers 429 and leaves the project as it was. The slot is taken before the audio
+is placed (upload save, ffmpeg decode, yt-dlp download), so a burst cannot do the heavy work
+first. A request for a project that already has a ZIP still places and hashes the new audio, so
+it holds a slot for that window and is released at once when the hash matches: a repeat
+request can briefly be refused at the cap.
 
 ## Consequences
 
@@ -29,9 +33,6 @@ served, and a YouTube repeat downloads again to learn the hash.
 
 **Cost.** A different file with the same name replaces the earlier result; the earlier one is
 not kept. Names stay the key.
-
-**Cost.** A request refused with 429 may already have written and removed a temporary file,
-because the hash that decides whether it is cached needs the audio first.
 
 **Benefit.** Collisions give the right result, and the host cannot be saturated by uploads.
 Folder names remain readable.

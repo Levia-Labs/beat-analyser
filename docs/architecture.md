@@ -10,10 +10,10 @@ app.py ── validate input ──► storage.project_name  or  youtube.video_i
    │
    ▼
 pipeline.build(root, name, place_audio)        lock per project name
+   │  all MAX_ANALYSES slots taken? ─► TooBusy  (the app answers 429), before any audio is placed
    │  ZIP exists? ─► place_audio(audio.new.wav), hash it
-   │     same audio_sha256 ──► return the ZIP   (the ZIP is the cache, ADR 0014)
+   │     same audio_sha256 ──► slot released, return the ZIP   (the ZIP is the cache, ADR 0014)
    │  audio.wav missing? ─► place_audio(...)    save upload / ffmpeg decode / yt-dlp download
-   │  all MAX_ANALYSES slots taken? ─► TooBusy  (the app answers 429)
    │  storage.clear_tracks                      different audio: ZIP, CSVs, meta cleared first
    │  analysis.analyse(audio.wav, folder)       beatcore + basic-pitch, seconds per song
    │  storage.save_meta(bpm=detected)

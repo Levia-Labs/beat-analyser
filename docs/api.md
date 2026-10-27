@@ -25,8 +25,9 @@ request is open.
 
 A name that already has a result is compared by the SHA-256 of the audio: the same audio
 returns the cached ZIP, different audio under the same name replaces the project and is
-analysed again ([ADR 0014](adr/0014-content-hash-projects.md)). A cached result is served
-even when `MAX_ANALYSES` is reached.
+analysed again ([ADR 0014](adr/0014-content-hash-projects.md)). Every request holds one of
+the `MAX_ANALYSES` slots while its audio is placed and hashed, before any heavy work, so a
+repeat request for a cached project can briefly be refused with 429 at the cap.
 
 ```bash
 curl -F file=@song.mp3 -o song_tracks.zip http://localhost:8002/upload

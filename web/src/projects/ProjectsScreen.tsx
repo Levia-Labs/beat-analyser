@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { deleteProject, renameProject } from "../api";
+import { ApiError, deleteProject, renameProject } from "../api";
 import Banner from "../components/Banner";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { RefreshIcon, TrashIcon } from "../components/icons";
@@ -47,12 +47,21 @@ export default function ProjectsScreen() {
     setBusy(true);
     setProblem(null);
     const failures: string[] = [];
-    for (const name of confirming) {
+    let stoppedAt = -1;
+    for (const [index, name] of confirming.entries()) {
       try {
         await deleteProject(name);
       } catch (error) {
         failures.push(`${name}: ${message(error)}`);
+        // Each refused DELETE counts in the server's failure limiter; going on would lock the IP out.
+        if (error instanceof ApiError && (error.status === 401 || error.status === 429)) {
+          stoppedAt = index + 1;
+          break;
+        }
       }
+    }
+    if (stoppedAt >= 0 && stoppedAt < confirming.length) {
+      failures.push(`not attempted: ${confirming.slice(stoppedAt).join(", ")}`);
     }
     setBusy(false);
     setConfirming(null);
