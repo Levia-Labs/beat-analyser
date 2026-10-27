@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type DragEvent, type FormEvent } from "reac
 import { ApiError, getProgress, postAnalysis, type Config, type Progress } from "../api";
 import { progressId as newProgressId } from "../progressId";
 import Banner from "./Banner";
+import { AnalyseIcon, LinkIcon, UploadIcon } from "./icons";
 import StageList from "./StageList";
 
 const MB = 1024 * 1024;
@@ -148,6 +149,7 @@ export default function AnalyseCard({
               setPhase({ kind: "idle" });
             }}
           >
+            {name === "file" ? <UploadIcon /> : <LinkIcon />}
             {name === "file" ? "File" : "YouTube"}
           </button>
         ))}
@@ -214,7 +216,7 @@ export default function AnalyseCard({
         type="submit"
         disabled={busy || (tab === "file" ? !file : !url.trim())}
       >
-        Analyse
+        <AnalyseIcon /> Analyse
       </button>
     </form>
   );

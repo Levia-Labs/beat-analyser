@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { CheckIcon, XIcon } from "./icons";
 
 export default function RenameForm({
   name,
@@ -27,10 +28,10 @@ export default function RenameForm({
         onChange={(event) => setValue(event.target.value)}
       />
       <button type="submit" className="primary" disabled={busy || !value.trim()}>
-        Save
+        <CheckIcon /> Save
       </button>
       <button type="button" className="chip" onClick={onCancel} disabled={busy}>
-        Cancel
+        <XIcon /> Cancel
       </button>
     </form>
   );

@@ -3,6 +3,14 @@ import { Link, useNavigate, useParams } from "react-router";
 import { ApiError, deleteProject, getEvents, renameProject } from "../api";
 import Banner from "../components/Banner";
 import ConfirmDialog from "../components/ConfirmDialog";
+import {
+  ArrowLeftIcon,
+  DownloadIcon,
+  ListIcon,
+  PencilIcon,
+  RefreshIcon,
+  TrashIcon,
+} from "../components/icons";
 import RenameForm from "../components/RenameForm";
 import Timeline from "../components/Timeline";
 import { message, useLoad } from "../useLoad";
@@ -62,10 +70,10 @@ export default function Viewer({ name }: { name: string }) {
         <p className="muted">It may still be analysing.</p>
         <div className="head">
           <button type="button" className="chip" onClick={events.reload}>
-            Reload
+            <RefreshIcon /> Reload
           </button>
           <Link className="chip" to="/">
-            Home
+            <ListIcon /> Home
           </Link>
         </div>
       </section>
@@ -77,7 +85,7 @@ export default function Viewer({ name }: { name: string }) {
         message={message(events.error) ?? "Something went wrong"}
         action={
           <button type="button" className="chip" onClick={events.reload}>
-            Retry
+            <RefreshIcon /> Retry
           </button>
         }
       />
@@ -89,15 +97,15 @@ export default function Viewer({ name }: { name: string }) {
   return (
     <>
       <section className="card head">
-        <Link to="/" aria-label="Back to projects">
-          ←
+        <Link to="/" className="back" aria-label="Back to projects">
+          <ArrowLeftIcon size={20} />
         </Link>
         <h1>{name}</h1>
         <span className="muted num">
           {meta?.key ?? "?"} · {meta?.bpm ? `${meta.bpm} BPM` : "? BPM"}
         </span>
         <a className="chip" href={`/download/${encodeURIComponent(name)}`} download>
-          ZIP
+          <DownloadIcon /> ZIP
         </a>
         <button
           ref={renameButton}
@@ -106,7 +114,7 @@ export default function Viewer({ name }: { name: string }) {
           onClick={() => open("rename")}
           disabled={busy}
         >
-          Rename
+          <PencilIcon /> Rename
         </button>
         <button
           ref={deleteButton}
@@ -115,7 +123,7 @@ export default function Viewer({ name }: { name: string }) {
           onClick={() => open("delete")}
           disabled={busy}
         >
-          Delete
+          <TrashIcon /> Delete
         </button>
       </section>
       {problem && <Banner message={problem} />}

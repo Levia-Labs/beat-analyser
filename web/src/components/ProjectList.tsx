@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import type { Project } from "../api";
 import Banner from "./Banner";
+import { DownloadIcon } from "./icons";
 
 export default function ProjectList({
   projects,
@@ -30,7 +31,7 @@ export default function ProjectList({
               </Link>
               {project.done ? (
                 <a className="chip" href={`/download/${encodeURIComponent(project.name)}`} download>
-                  ZIP
+                  <DownloadIcon /> ZIP
                 </a>
               ) : (
                 <span className="chip off">not built</span>
