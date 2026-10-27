@@ -4,7 +4,6 @@ services:
     build:
       context: .
       dockerfile: app/Dockerfile
-    container_name: beat-analyser-backend
     image: beat-analyser:latest
     # Loopback only by default: the API has no authentication. BIND=0.0.0.0 exposes it to
     # the network - see docs/security.md first.
@@ -39,7 +38,6 @@ services:
   # analyses go through the backend's endpoints, whose project lock is per process
   # (docs/adr/0012).
   mcp:
-    container_name: beat-analyser-mcp
     image: beat-analyser:latest
     # Built by the backend service; never pulled.
     pull_policy: never

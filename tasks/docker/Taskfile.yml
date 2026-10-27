@@ -77,9 +77,10 @@ tasks:
       PORT: "{{.PORT}}"
       MCP_PORT: "{{.MCP_PORT}}"
     cmds:
-      - defer: docker compose down
+      # Own compose project: down removes only the e2e containers, never those of docker:up.
+      - defer: docker compose -p beat-analyser-e2e down
       # --wait blocks until both healthchecks pass, so no sleep and no retry loop.
-      - docker compose up -d --build --wait
+      - docker compose -p beat-analyser-e2e up -d --build --wait
       - task: :dev:e2e
         vars: { URL: "http://127.0.0.1:{{.PORT}}" }
       - task: :summary
