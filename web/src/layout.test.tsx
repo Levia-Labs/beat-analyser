@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
@@ -180,7 +180,8 @@ describe("document title", () => {
       </MemoryRouter>,
     );
     await screen.findByRole("heading", { name: "song" });
-    expect(document.title).toBe("song · Beat Analyser");
+    // The title is set in an effect, which can land just after the heading under load.
+    await waitFor(() => expect(document.title).toBe("song · Beat Analyser"));
     view.unmount();
     expect(document.title).toBe("Beat Analyser");
   });

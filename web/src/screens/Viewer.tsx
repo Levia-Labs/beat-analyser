@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { ApiError, deleteProject, getEvents, renameProject } from "../api";
 import Banner from "../components/Banner";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -19,6 +19,9 @@ export default function Viewer({ name }: { name: string }) {
   const load = useCallback(() => getEvents(name), [name]);
   const events = useLoad(load);
   const navigate = useNavigate();
+  // The list query rides in location state; a rename keeps it so Back still lands on the
+  // filtered list.
+  const { state } = useLocation();
   // Only a loaded project names the tab; the not-found and error states keep the plain title.
   useDocumentTitle(events.data ? `${name} · Beat Analyser` : "Beat Analyser");
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
@@ -57,7 +60,7 @@ export default function Viewer({ name }: { name: string }) {
   const rename = (to: string) =>
     act(async () => {
       const { name: renamed } = await renameProject(name, to);
-      navigate(`/p/${encodeURIComponent(renamed)}`, { replace: true });
+      navigate(`/p/${encodeURIComponent(renamed)}`, { replace: true, state });
     });
 
   if (events.error instanceof ApiError && events.error.status === 404) {

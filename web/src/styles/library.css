@@ -168,8 +168,9 @@
   .bulk .btn.primary {
     width: auto;
   }
-  /* Phone cards sit on the stage, as before: the one border drops away. */
-  .lib-scroll {
+  /* Phone cards sit on the stage, as before: the one border drops away. Scoped to the
+     library: the project page's timeline panel reuses .lib-scroll and keeps its border. */
+  .library .lib-scroll {
     border: 0;
   }
 }
