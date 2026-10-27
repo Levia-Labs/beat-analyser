@@ -130,7 +130,12 @@ def build(
             digest = storage.sha256_of(wav)
             result = analysis.analyse(wav, folder, progress)
             storage.save_meta(
-                folder, name, key=result["key"], bpm=result["bpm"], audio_sha256=digest
+                folder,
+                name,
+                key=result["key"],
+                bpm=result["bpm"],
+                audio_sha256=digest,
+                duration=storage.wav_duration(wav),
             )
             log.info("built %s at %.2f BPM", name, result["bpm"])
             progress("package")
@@ -159,6 +164,7 @@ def repair_all(root: Path) -> list[dict]:
                     key=result["key"],
                     bpm=result["bpm"],
                     audio_sha256=storage.sha256_of(wav),
+                    duration=storage.wav_duration(wav),
                 )
                 archive = storage.package(root, name)
             repaired.append({"folder": name, "zip": archive.name})

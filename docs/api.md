@@ -56,11 +56,39 @@ What the upload form needs to know:
 
 ## `GET /projects`
 
-Every project, whether its ZIP is built (`done`) and its `meta.json`:
+One page of the projects, filtered and sorted, for the Projects table:
 
 ```json
-[{ "name": "song", "done": true, "meta": { "name": "song", "key": "C", "bpm": 120 } }]
+{
+  "items": [
+    {
+      "name": "song",
+      "done": true,
+      "key": "A minor",
+      "bpm": 120,
+      "duration": 215.4,
+      "created": "2026-10-27T09:00:00Z",
+      "size": 1048576
+    }
+  ],
+  "total": 42
+}
 ```
+
+| Parameter            | Meaning                                                         |
+| -------------------- | --------------------------------------------------------------- |
+| `q`                  | Case-insensitive substring of the name                          |
+| `key`                | An exact key (`A minor`) or a mode (`major`, `minor`)           |
+| `status`             | `built` (ZIP exists) or `pending`                               |
+| `bpm_min`, `bpm_max` | Inclusive bounds; a project without a BPM never matches a bound |
+| `sort`               | `name`, `key`, `bpm`, `duration`, `created` (default), `size`   |
+| `order`              | `asc` or `desc` (default)                                       |
+| `offset`, `limit`    | Paging; `offset` >= 0, `limit` 1 to 200 (default 50)            |
+
+`total` counts the filtered set, not the page. `duration` is seconds of audio and `null` for
+projects built before it was stored; `created` is the mtime of `meta.json`, `null` without
+one; `size` is the project folder plus its ZIP, in bytes. Unknown values sort last in either
+order. A bad value answers `400` with `{"error": "..."}`.
 
 ## `GET /projects/<name>/events`
 

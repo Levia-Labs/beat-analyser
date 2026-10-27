@@ -13,6 +13,7 @@ import json
 import logging
 import re
 import shutil
+import wave
 import zipfile
 from pathlib import Path
 
@@ -78,14 +79,31 @@ def audio_hash(folder: Path) -> str | None:
     return sha256_of(wav) if wav.is_file() else None
 
 
+def wav_duration(path: Path) -> float | None:
+    """Seconds in a WAV file (frames over rate), None when it cannot be read as one."""
+    try:
+        with wave.open(str(path), "rb") as audio:
+            return audio.getnframes() / audio.getframerate()
+    except OSError, EOFError, wave.Error, ZeroDivisionError:
+        return None
+
+
 def save_meta(
-    folder: Path, name: str, key: str = "unknown", bpm: float = 0.0, audio_sha256: str = ""
+    folder: Path,
+    name: str,
+    key: str = "unknown",
+    bpm: float = 0.0,
+    audio_sha256: str = "",
+    duration: float | None = None,
 ) -> None:
     """Write meta.json. bpm comes from beatcore, key from key.estimate over the notes,
-    audio_sha256 from the audio.wav the analysis ran on (ADR 0014)."""
-    meta = {"name": name, "key": key, "bpm": bpm}
+    audio_sha256 from the audio.wav the analysis ran on (ADR 0014), duration is its length in
+    seconds (the Projects table; absent in projects built before it existed)."""
+    meta: dict = {"name": name, "key": key, "bpm": bpm}
     if audio_sha256:
         meta["audio_sha256"] = audio_sha256
+    if duration is not None:
+        meta["duration"] = round(duration, 2)
     (folder / META_NAME).write_text(json.dumps(meta), encoding="utf-8")
 
 

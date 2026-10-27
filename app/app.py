@@ -16,6 +16,7 @@ from flask import Flask, jsonify, request, send_file, send_from_directory
 from werkzeug.exceptions import HTTPException
 
 import analysis
+import catalog
 import events
 import pipeline
 import progress
@@ -226,7 +227,10 @@ def client_config():
 
 @app.get("/projects")
 def list_projects():
-    return jsonify(events.project_list(upload_root()))
+    try:
+        return jsonify(catalog.page(upload_root(), catalog.parse(request.args)))
+    except catalog.QueryError as exc:
+        return error(str(exc), 400)
 
 
 @app.get("/projects/<name>/events")

@@ -22,6 +22,7 @@ runs without beatcore or the note model. Run all with `task test:run`, a subset 
 | `test_e2e_spa.py`       | The SPA check of the end-to-end script                                      |
 | `test_pyapi.py`         | The Python API inspector: attribute, listing, refusals                      |
 | `test_events.py`        | Shared event reading: lane order, malformed rows, project list, events      |
+| `test_projects_api.py`  | `/projects`: filter, sort, page, refusals; the stored duration              |
 | `test_key.py`           | Key detection from pitch classes                                            |
 | `test_jobs.py`          | the MCP job registry: dedupe per name, pending cap, error capture           |
 | `test_manage.py`        | Deleting and renaming projects: files, ZIP prefix, locks, cross-origin      |

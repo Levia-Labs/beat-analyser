@@ -53,10 +53,12 @@ def test_config(client):
 
 def test_projects_lists_done_and_meta(client):
     upload(client, JSON)
-    (project,) = client.get("/projects").get_json()
+    body = client.get("/projects").get_json()
+    (project,) = body["items"]
+    assert body["total"] == 1
     assert project["name"] == "song"
     assert project["done"] is True
-    assert project["meta"]["key"] == "A minor"
+    assert project["key"] == "A minor"
 
 
 def test_events_of_a_built_project(client):
