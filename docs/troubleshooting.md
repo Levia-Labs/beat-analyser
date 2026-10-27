@@ -73,9 +73,15 @@ changed: an edit under `beatcore/` recompiles only the crate.
 The container runs as uid 1000. On a Linux host, `uploads/` must be writable by uid 1000:
 `sudo chown -R 1000:1000 uploads`. Docker Desktop on Windows and macOS is not affected.
 
-### Port 80 is already in use
+### Port 8002 is already in use
 
-`PORT=8080 task docker:up`, then <http://localhost:8080>.
+`PORT=8080 task docker:up`, then <http://localhost:8080>. The web UI is on 8002 by default,
+the MCP endpoint on 8001.
+
+### `/` returns 503 "The web app is not built"
+
+A checkout without `web/dist` answers 503 at `/` with a JSON error, not a page, while the API keeps working. Run
+`task web:install` once, then `task web:build`. The container image builds it itself.
 
 ### The web UI cannot be reached from another machine
 

@@ -5,3 +5,4 @@ Design specs written with the superpowers brainstorming skill. Each has a matchi
 
 1. [2026-10-17-local-pipeline-design.md](2026-10-17-local-pipeline-design.md): local test and static-analysis pipeline
 2. [2026-10-27-mcp-server-design.md](2026-10-27-mcp-server-design.md): MCP server for agents
+3. [2026-10-27-react-spa-design.md](2026-10-27-react-spa-design.md): React SPA frontend

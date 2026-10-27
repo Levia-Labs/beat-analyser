@@ -1,7 +1,10 @@
-# The image is built from the repository root and needs only app/ and beatcore/.
+# The image is built from the repository root and needs app/, beatcore/ and web/.
 *
 !app/
 !beatcore/
+!web/
 app/**/__pycache__
 app/uploads
 beatcore/target
+web/node_modules
+web/dist

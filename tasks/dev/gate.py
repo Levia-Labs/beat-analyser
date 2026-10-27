@@ -79,7 +79,17 @@ def run(gate: str, limit: int) -> bool:
     return False
 
 
+def configure_output() -> None:
+    """A cp1250 Windows console cannot encode characters such as U+2716 that pytest prints
+    on a failure; replace them instead of crashing the report."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure:
+            reconfigure(errors="replace")
+
+
 def main() -> int:
+    configure_output()
     parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("gates", nargs="+", help="a task name with its vars, one per argument")
     parser.add_argument("--lines", type=int, default=30, help="excerpt lines per failure")

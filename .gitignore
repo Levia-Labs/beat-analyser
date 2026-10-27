@@ -25,6 +25,8 @@ beatcore/target/
 # Tool output. .cache/fixtures/ holds clips written by task dev:fixture.
 .cache/
 graphify-out/
+# Subagent-driven development scratch: plan ledgers, task briefs, review packages.
+.superpowers/
 *.log
 
 # Machine-local Claude Code state. settings.json is shared and tracked; settings.local.json

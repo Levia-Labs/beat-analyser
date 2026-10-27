@@ -5,3 +5,4 @@ Implementation plans written with the superpowers writing-plans skill, one per s
 
 1. [2026-10-17-local-pipeline.md](2026-10-17-local-pipeline.md): local test and static-analysis pipeline
 2. [2026-10-27-mcp-server.md](2026-10-27-mcp-server.md): MCP server for agents
+3. [2026-10-27-react-spa.md](2026-10-27-react-spa.md): React SPA frontend

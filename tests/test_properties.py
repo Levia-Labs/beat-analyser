@@ -5,18 +5,22 @@ in conftest.py: `task test:run` runs 50 examples, `task props:deep` 1000.
 """
 
 import base64
+import math
 import ntpath
 import posixpath
 import string
 from urllib.parse import urlsplit
 
 import pytest
+import webauth
 from hypothesis import example, given
 from hypothesis import strategies as st
 
 import analysis
+import catalog
 import mcp_tools
 import notes
+import progress
 import storage
 import youtube
 
@@ -172,3 +176,47 @@ def test_check_audio_refuses_more_than_the_limit(data, wrapped):
 @given(st.binary(min_size=1, max_size=300))
 def test_check_audio_accepts_wrapped_base64(data):
     assert mcp_tools.check_audio("a.wav", base64.encodebytes(data).decode(), 300)[2] == data
+
+
+@given(st.text(max_size=40))
+@example("0123456789abcdef0123456789abcdef")
+def test_progress_ids_are_32_lowercase_hex(value):
+    accepted = progress.is_valid_id(value)
+    assert accepted == (len(value) == 32 and all(c in "0123456789abcdef" for c in value))
+
+
+QUERY_ARGS = st.dictionaries(
+    st.sampled_from(
+        ["q", "key", "status", "bpm_min", "bpm_max", "sort", "order", "offset", "limit", "x"]
+    ),
+    st.text(max_size=12),
+)
+
+
+@given(QUERY_ARGS)
+def test_catalog_parse_returns_a_bounded_query_or_refuses(args):
+    try:
+        query = catalog.parse(args)
+    except catalog.QueryError:
+        return
+    assert query.sort in catalog.SORTS
+    assert query.order in catalog.ORDERS
+    assert query.offset >= 0
+    assert 1 <= query.limit <= catalog.MAX_LIMIT
+    assert query.status in ("", "built", "pending")
+    assert query.key == "" or query.key in catalog.KEYS or query.key in catalog.MODES
+    for bound in (query.bpm_min, query.bpm_max):
+        assert bound is None or math.isfinite(bound)
+
+
+@given(st.text(), st.text())
+def test_token_comparison_is_equality_and_never_raises(a, b):
+    assert webauth.same(a, b) == (a == b)
+
+
+@given(st.text(min_size=1), st.text(min_size=1))
+def test_session_value_is_64_hex_and_one_per_token(a, b):
+    value = webauth.session_value(a)
+    assert len(value) == 64
+    assert set(value) <= set(string.hexdigits.lower())
+    assert (value == webauth.session_value(b)) == (a == b)

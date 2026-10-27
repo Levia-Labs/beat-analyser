@@ -8,14 +8,23 @@ Every name that reaches the file system passes `is_valid_name` first. The name c
 uploaded filename or a URL path segment, so this is the path-traversal boundary.
 """
 
+import hashlib
 import json
+import logging
+import os
 import re
+import shutil
+import wave
 import zipfile
 from pathlib import Path
 
 from werkzeug.utils import secure_filename
 
+log = logging.getLogger(__name__)
+
 AUDIO_NAME = "audio.wav"
+# The new audio while its hash is compared; never part of a ZIP.
+STAGED_NAME = "audio.new.wav"
 META_NAME = "meta.json"
 ZIP_SUFFIX = "_tracks.zip"
 # Audio types accepted from an upload. Shared by the web app and the MCP tools.
@@ -52,9 +61,52 @@ def zip_path(root: Path, name: str) -> Path:
     return root / f"{name}{ZIP_SUFFIX}"
 
 
-def save_meta(folder: Path, name: str, key: str = "unknown", bpm: float = 0.0) -> None:
-    """Write meta.json. bpm comes from beatcore, key from key.estimate over the notes."""
-    meta = {"name": name, "key": key, "bpm": bpm}
+def sha256_of(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def audio_hash(folder: Path) -> str | None:
+    """The hash of the audio a project was built from: meta.json's `audio_sha256`, or for a
+    project built before it existed the hash of audio.wav itself. None when neither exists."""
+    try:
+        recorded = json.loads((folder / META_NAME).read_text(encoding="utf-8"))["audio_sha256"]
+        if isinstance(recorded, str):
+            return recorded
+    except OSError, ValueError, KeyError, TypeError:
+        pass
+    wav = folder / AUDIO_NAME
+    return sha256_of(wav) if wav.is_file() else None
+
+
+def wav_duration(path: Path) -> float | None:
+    """Seconds in a WAV file (frames over rate), None when it cannot be read as one."""
+    try:
+        with wave.open(str(path), "rb") as audio:
+            return audio.getnframes() / audio.getframerate()
+    except OSError, EOFError, wave.Error, ZeroDivisionError:
+        return None
+
+
+def save_meta(
+    folder: Path,
+    name: str,
+    key: str = "unknown",
+    bpm: float = 0.0,
+    audio_sha256: str = "",
+    duration: float | None = None,
+) -> None:
+    """Write meta.json. bpm comes from beatcore, key from key.estimate over the notes,
+    audio_sha256 from the audio.wav the analysis ran on (ADR 0014), duration is its length in
+    seconds (the Projects table; absent in projects built before it existed)."""
+    meta: dict = {"name": name, "key": key, "bpm": bpm}
+    if audio_sha256:
+        meta["audio_sha256"] = audio_sha256
+    if duration is not None:
+        meta["duration"] = round(duration, 2)
     (folder / META_NAME).write_text(json.dumps(meta), encoding="utf-8")
 
 
@@ -71,10 +123,56 @@ def package(root: Path, name: str) -> Path:
     partial = target.with_suffix(".zip.part")
     with zipfile.ZipFile(partial, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(folder.iterdir()):
-            if path.is_file():
+            if path.is_file() and path.name != STAGED_NAME:
                 archive.write(path, arcname=f"{name}/{path.name}")
     partial.replace(target)
     return target
+
+
+def delete_project(root: Path, name: str) -> None:
+    """Remove a project's folder and ZIP. name is already validated."""
+    folder = project_dir(root, name)
+    if folder.is_dir():
+        shutil.rmtree(folder)
+    zip_path(root, name).unlink(missing_ok=True)
+
+
+def rename_project(root: Path, old: str, new: str) -> None:
+    """Move the folder, fix the name in meta.json, rebuild the ZIP under its new prefix."""
+    built = zip_path(root, old).is_file()
+    source = project_dir(root, old)
+    target = project_dir(root, new)
+    # Prepare the new meta before anything moves: a corrupt meta.json must not strand a
+    # half-renamed project, so it is left as it is.
+    original = None
+    renamed = None
+    stamp = None
+    if (source / META_NAME).is_file():
+        # The catalog's "created" is meta.json's mtime; a rename must not look like a new project.
+        stamp = (source / META_NAME).stat().st_mtime_ns
+        original = (source / META_NAME).read_text(encoding="utf-8")
+        try:
+            data = json.loads(original)
+            data["name"] = new
+            renamed = json.dumps(data)
+        except ValueError, TypeError:
+            log.warning("meta.json of %s is unreadable; renaming without rewriting it", old)
+    source.rename(target)
+    try:
+        if renamed is not None:
+            (target / META_NAME).write_text(renamed, encoding="utf-8")
+            if stamp is not None:
+                os.utime(target / META_NAME, ns=(stamp, stamp))
+        if built:
+            package(root, new)
+    except BaseException:
+        if original is not None:
+            (target / META_NAME).write_text(original, encoding="utf-8")
+            if stamp is not None:
+                os.utime(target / META_NAME, ns=(stamp, stamp))
+        target.rename(source)
+        raise
+    zip_path(root, old).unlink(missing_ok=True)
 
 
 def list_projects(root: Path) -> dict[str, dict]:

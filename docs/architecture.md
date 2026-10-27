@@ -10,9 +10,11 @@ app.py ── validate input ──► storage.project_name  or  youtube.video_i
    │
    ▼
 pipeline.build(root, name, place_audio)        lock per project name
-   │  ZIP exists? ──yes──► return it            (the ZIP is the cache)
+   │  all MAX_ANALYSES slots taken? ─► TooBusy  (the app answers 429), before any audio is placed
+   │  ZIP exists? ─► place_audio(audio.new.wav), hash it
+   │     same audio_sha256 ──► slot released, return the ZIP   (the ZIP is the cache, ADR 0014)
    │  audio.wav missing? ─► place_audio(...)    save upload / ffmpeg decode / yt-dlp download
-   │  storage.clear_tracks
+   │  storage.clear_tracks                      different audio: ZIP, CSVs, meta cleared first
    │  analysis.analyse(audio.wav, folder)       beatcore + basic-pitch, seconds per song
    │  storage.save_meta(bpm=detected)
    ▼
@@ -24,6 +26,8 @@ storage.package ──► <root>/<name>_tracks.zip   written aside, then swapped
 | Module            | Knows about                      | Does not know about                    |
 | ----------------- | -------------------------------- | -------------------------------------- |
 | `app.py`          | HTTP, Flask config, headers      | madmom, file layout details            |
+| `progress.py`     | in-memory stage registry         | HTTP, files                            |
+| `web/` (React)    | the page, the viewer, the API    | Python, file layout                    |
 | `cli.py`          | argparse, printing               | HTTP                                   |
 | `pipeline.py`     | the build order, locking         | where audio comes from                 |
 | `analysis.py`     | which engine writes which track  | folders other than the one it is given |
@@ -76,9 +80,27 @@ name passes before it becomes a path.
 
 The container runs gunicorn with one worker and four threads: one worker so the note model
 loads once, threads so a long analysis does not block the UI. The worker timeout is 30
-minutes. The image is built in three stages: the official `rust` image supplies the
-toolchain, a Python stage builds the beatcore wheel and the virtualenv, and only the
-virtualenv reaches the runtime stage.
+minutes. The image is built in four stages: a Node stage builds `web/`, the official `rust`
+image supplies the toolchain, a Python stage builds the beatcore wheel and the virtualenv, and
+only the virtualenv and `web/dist` reach the runtime stage. Node never runs at runtime.
+
+## The web app
+
+The UI is a React single-page app in `web/` (Vite, TypeScript, plain CSS), chosen in
+[ADR 0013](adr/0013-react-spa-served-by-flask.md). `npm run build` writes `web/dist`; in the
+image that is `/app/web`, and `WEB_DIST` points Flask at it.
+
+| Route                 | Answer                                                                    |
+| --------------------- | ------------------------------------------------------------------------- |
+| `/` and `/p/<name>`   | The built `index.html`, uncached; 503 until `task web:build` has run      |
+| `/assets/<file>`      | Hashed build output, cached for a year; paths outside the folder give 404 |
+| everything in the API | JSON, see [api.md](api.md)                                                |
+
+The home screen posts an upload or a YouTube URL with `Accept: application/json` and an
+`X-Progress-Id` it chose, then polls `GET /progress/<id>` while the POST is open, so the page
+shows the server's stages (`app/progress.py`). The viewer at `/p/<name>` reads
+`GET /projects/<name>/events` and draws one lane per track on a zoomable timeline. The SPA
+never builds a path from a name: the server validates every name it receives.
 
 ## The MCP service
 

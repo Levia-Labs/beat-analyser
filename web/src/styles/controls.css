@@ -1,0 +1,132 @@
+button,
+.chip {
+  font: inherit;
+  color: var(--ink);
+  border-radius: var(--radius);
+  min-height: 36px;
+}
+.primary {
+  background: var(--red);
+  border: 0;
+  padding: 0 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.icon {
+  flex: none;
+}
+.primary,
+.chip,
+.tab,
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.back {
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--ink);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.chip.off {
+  color: var(--muted);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+.tab {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tab.on {
+  background: var(--panel);
+  color: var(--ink);
+}
+.drop {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+}
+.drop.on,
+.drop:hover {
+  border-color: var(--blue);
+}
+.drop input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.field {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  min-height: 40px;
+  padding: 0 10px;
+  width: 100%;
+}
+.bar {
+  width: 100%;
+  height: 6px;
+  accent-color: var(--blue);
+}
+.status {
+  margin: 0;
+  color: var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (max-width: 719px) {
+  .back {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  button,
+  .chip,
+  .field {
+    min-height: 44px;
+  }
+  .primary {
+    width: 100%;
+  }
+}

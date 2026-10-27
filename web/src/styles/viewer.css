@@ -1,0 +1,104 @@
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.head h1 {
+  margin: 0;
+  font-size: 18px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zoom button {
+  width: 36px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  cursor: pointer;
+}
+.lanes {
+  display: flex;
+}
+.labels {
+  display: grid;
+  padding-top: 20px;
+  grid-auto-rows: 28px;
+  flex: none;
+  width: 64px;
+}
+.lane {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  min-height: 0;
+  padding: 0 6px 0 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+.lane.on {
+  color: var(--ink);
+}
+.lane .short {
+  display: none;
+}
+.scroller {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.spacer canvas {
+  position: sticky;
+  left: 0;
+  display: block;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.actions .field {
+  flex: 1;
+  min-width: 160px;
+  width: auto;
+}
+.dialog {
+  position: fixed;
+  inset: auto 12px 12px;
+  max-width: 420px;
+  margin: 0 auto;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+  z-index: 10;
+}
+.dialog p {
+  margin: 0 0 8px;
+}
+@media (max-width: 719px) {
+  .labels {
+    grid-auto-rows: 24px;
+    width: 32px;
+  }
+  .lane .long {
+    display: none;
+  }
+  .lane .short {
+    display: inline;
+  }
+  .zoom button {
+    width: 44px;
+  }
+}

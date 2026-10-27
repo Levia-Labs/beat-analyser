@@ -16,10 +16,10 @@ tasks:
       - docker compose build --no-cache
 
   up:
-    desc: "Start the service and its MCP endpoint in the background. Usage: task docker:up [PORT=80] [MCP_PORT=8001] [BIND=127.0.0.1]"
+    desc: "Start the service and its MCP endpoint in the background. Usage: task docker:up [PORT=8002] [MCP_PORT=8001] [BIND=127.0.0.1]"
     cmds:
       - docker compose up -d --build
-      - echo "http://localhost:${PORT:-80}  (task docker:logs to follow)"
+      - echo "http://localhost:${PORT:-8002}  (task docker:logs to follow)"
       - echo "MCP  http://localhost:${MCP_PORT:-8001}/mcp  (docs/mcp.md)"
 
   down:
@@ -69,7 +69,7 @@ tasks:
       - '"{{.SYS_PY}}" tasks/docker/hub.py --apply'
 
   e2e:
-    desc: "Build, start on spare ports, run task dev:e2e and dev:mcp:e2e against it, stop. Usage: task docker:e2e [PORT=8099] [MCP_PORT=8098]"
+    desc: "Build, start on spare ports, run task dev:e2e and dev:mcp:e2e against it, stop. Usage: task docker:e2e [PORT=8099] [MCP_PORT=8098] [TOKEN=]"
     vars:
       PORT: '{{.PORT | default "8099"}}'
       MCP_PORT: '{{.MCP_PORT | default "8098"}}'
@@ -77,14 +77,15 @@ tasks:
       PORT: "{{.PORT}}"
       MCP_PORT: "{{.MCP_PORT}}"
     cmds:
-      - defer: docker compose down
+      # Own compose project: down removes only the e2e containers, never those of docker:up.
+      - defer: docker compose -p beat-analyser-e2e down
       # --wait blocks until both healthchecks pass, so no sleep and no retry loop.
-      - docker compose up -d --build --wait
+      - docker compose -p beat-analyser-e2e up -d --build --wait
       - task: :dev:e2e
-        vars: { URL: "http://127.0.0.1:{{.PORT}}" }
+        vars: { URL: "http://127.0.0.1:{{.PORT}}", TOKEN: "{{.TOKEN}}" }
       - task: :summary
         vars: { NAME: fixture-e2e }
       # After the summary: dev:mcp:e2e clears fixture projects before its own run.
       - task: :dev:mcp:e2e
-        vars: { URL: "http://127.0.0.1:{{.MCP_PORT}}/mcp" }
+        vars: { URL: "http://127.0.0.1:{{.MCP_PORT}}/mcp", TOKEN: "{{.TOKEN}}" }
       - docker images beat-analyser --format "image {{"{{"}}.Size{{"}}"}}"

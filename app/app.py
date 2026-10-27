@@ -8,38 +8,45 @@ who can reach the port.
 
 import logging
 import os
+import threading
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from flask import Flask, jsonify, render_template, request, send_file
+import spa
+import webauth
+from flask import Flask, jsonify, request, send_file
 from werkzeug.exceptions import HTTPException
 
 import analysis
+import catalog
+import events
 import pipeline
+import progress
 import storage
 import youtube
 
 MB = 1024 * 1024
 
-# Bootstrap comes from jsDelivr with SRI; everything else is same-origin. No inline script or
-# style, so none is allowed.
-CSP = (
-    "default-src 'self'; "
-    "script-src 'self' https://cdn.jsdelivr.net; "
-    "style-src 'self' https://cdn.jsdelivr.net; "
-    "img-src 'self' data:; "
-    "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
-)
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("beat-analyser")
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
 app.config.update(
+    WEB_DIST=Path(
+        os.environ.get("WEB_DIST", Path(__file__).resolve().parent.parent / "web" / "dist")
+    ),
     UPLOAD_ROOT=Path(os.environ.get("UPLOAD_ROOT", "uploads")).resolve(),
     MAX_CONTENT_LENGTH=int(os.environ.get("MAX_UPLOAD_MB", "200")) * MB,
     YT_MAX_SECONDS=int(os.environ.get("YT_MAX_MINUTES", "20")) * 60,
+    WEB_TOKEN=os.environ.get("WEB_TOKEN", ""),
+    WEB_COOKIE_SECURE=os.environ.get("WEB_COOKIE_SECURE") == "1",
 )
+webauth.check_bind(app.config["WEB_TOKEN"], os.environ.get("BIND", "127.0.0.1"))
+
+# Analyses are CPU-bound and hold a decoded track in memory; a burst of uploads would starve
+# the host. Taken without waiting, so an excess request answers 429 instead of queueing.
+ANALYSES = threading.BoundedSemaphore(max(1, int(os.environ.get("MAX_ANALYSES", "2"))))
+BUSY_MESSAGE = "Too many analyses running; try again shortly"
 
 
 def upload_root() -> Path:
@@ -56,23 +63,36 @@ def send_zip(path: Path):
     return send_file(path, as_attachment=True, download_name=path.name)
 
 
-def build_or_error(name: str, place_audio):
+def wants_json() -> bool:
+    """The SPA asks for JSON; curl, the MCP jobs and tasks/dev/e2e.py keep getting the ZIP."""
+    return request.accept_mimetypes.best == "application/json"
+
+
+def build_or_error(name: str, place_audio, tracker: progress.Tracker):
     try:
-        return send_zip(pipeline.build(upload_root(), name, place_audio))
+        path = pipeline.build(upload_root(), name, place_audio, tracker.stage, ANALYSES)
+    except pipeline.TooBusy:
+        tracker.finish(BUSY_MESSAGE)
+        return error(BUSY_MESSAGE, 429)
     except ValueError as exc:
+        tracker.finish(str(exc))
         return error(str(exc), 400)
     except Exception as exc:
         log.exception("processing %s failed", name)
+        tracker.finish(f"Processing failed: {exc}")
         return error(f"Processing failed: {exc}", 500)
+    tracker.finish()
+    return jsonify(name=name) if wants_json() else send_zip(path)
 
 
 @app.before_request
 def same_origin_posts_only():
-    """Refuse cross-site POSTs. A page on any other site could otherwise submit the upload
-    form or trigger /repair against a server on localhost."""
-    if request.method != "POST":
+    """Refuse cross-site writes. A page on any other site could otherwise submit the upload
+    form, trigger /repair or DELETE a project on a server on localhost."""
+    if request.method in ("GET", "HEAD", "OPTIONS"):
         return None
-    if request.headers.get("Sec-Fetch-Site") == "cross-site":
+    # same-site (a sibling subdomain) is refused too: only this origin or a user action.
+    if request.headers.get("Sec-Fetch-Site", "same-origin") not in ("same-origin", "none"):
         return error("Cross-origin request refused", 403)
     origin = request.headers.get("Origin")
     if origin and urlsplit(origin).netloc != request.host:
@@ -80,23 +100,16 @@ def same_origin_posts_only():
     return None
 
 
-@app.after_request
-def security_headers(response):
-    response.headers.setdefault("Content-Security-Policy", CSP)
-    response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "DENY")
-    response.headers.setdefault("Referrer-Policy", "no-referrer")
-    return response
+# After the origin check: a cross-site write is refused before the token is looked at.
+webauth.install(app)
+
+
+spa.install(app)
 
 
 @app.errorhandler(HTTPException)
 def http_error(exc: HTTPException):
     return error(exc.description or exc.name, exc.code or 500)
-
-
-@app.get("/")
-def index():
-    return render_template("index.html", accept=",".join(sorted(storage.ALLOWED_EXTENSIONS)))
 
 
 @app.post("/upload")
@@ -114,7 +127,10 @@ def upload():
     except ValueError as exc:
         return error(str(exc), 400)
 
+    tracker = progress.Tracker(request.headers.get("X-Progress-Id"), progress.UPLOAD_STAGES)
+
     def place_audio(wav: Path) -> None:
+        tracker.stage("decode")
         if extension == ".wav":
             file.save(wav)
             return
@@ -125,7 +141,7 @@ def upload():
         finally:
             source.unlink(missing_ok=True)
 
-    return build_or_error(name, place_audio)
+    return build_or_error(name, place_audio, tracker)
 
 
 @app.post("/download_yt")
@@ -136,21 +152,101 @@ def download_yt():
     except ValueError as exc:
         return error(str(exc), 400)
 
+    tracker = progress.Tracker(request.headers.get("X-Progress-Id"), progress.YOUTUBE_STAGES)
+
     def place_audio(wav: Path) -> None:
+        tracker.stage("download")
         source = youtube.download_audio(
-            vid, wav.parent, app.config["YT_MAX_SECONDS"], app.config["MAX_CONTENT_LENGTH"]
+            vid,
+            wav.parent,
+            app.config["YT_MAX_SECONDS"],
+            app.config["MAX_CONTENT_LENGTH"],
+            on_progress=tracker.fraction,
         )
+        tracker.stage("decode")
         try:
             analysis.to_wav(source, wav)
         finally:
             source.unlink(missing_ok=True)
 
-    return build_or_error(vid, place_audio)
+    return build_or_error(vid, place_audio, tracker)
+
+
+@app.get("/progress/<progress_id>")
+def analysis_progress(progress_id: str):
+    state = progress.snapshot(progress_id)
+    return jsonify(state) if state else error("No such progress", 404)
 
 
 @app.get("/folders")
 def list_folders():
     return jsonify(storage.list_projects(upload_root()))
+
+
+@app.get("/config")
+def client_config():
+    return jsonify(
+        extensions=sorted(storage.ALLOWED_EXTENSIONS),
+        max_upload_mb=app.config["MAX_CONTENT_LENGTH"] // MB,
+        auth=bool(app.config["WEB_TOKEN"]),
+    )
+
+
+@app.get("/projects")
+def list_projects():
+    try:
+        return jsonify(catalog.page(upload_root(), catalog.parse(request.args)))
+    except catalog.QueryError as exc:
+        return error(str(exc), 400)
+
+
+@app.get("/projects/<name>/events")
+def project_events(name: str):
+    root = upload_root()
+    # Only the ZIP means done: pipeline.build writes the CSVs before it packages.
+    if not storage.is_valid_name(name) or not storage.zip_path(root, name).is_file():
+        return error("Project not found", 404)
+    return jsonify(events.project_events(root, name))
+
+
+def project_exists(root: Path, name: str) -> bool:
+    return storage.is_valid_name(name) and (
+        storage.project_dir(root, name).is_dir() or storage.zip_path(root, name).is_file()
+    )
+
+
+@app.delete("/projects/<name>")
+def delete_project(name: str):
+    root = upload_root()
+    if not project_exists(root, name):
+        return error("Project not found", 404)
+    try:
+        pipeline.delete(root, name)
+    except pipeline.Busy:
+        return error("Project is being analysed", 409)
+    return "", 204
+
+
+@app.post("/projects/<name>/rename")
+def rename_project(name: str):
+    root = upload_root()
+    body = request.get_json(silent=True)
+    wanted = body.get("to") if isinstance(body, dict) else None
+    target = wanted.strip() if isinstance(wanted, str) else ""
+    # Renaming moves the folder, so a ZIP-only project has nothing to move.
+    if not project_exists(root, name) or not storage.project_dir(root, name).is_dir():
+        return error("Project not found", 404)
+    if not storage.is_valid_name(target):
+        return error("Use letters, digits, dot, dash or underscore, up to 100 characters", 400)
+    if target == name:
+        return jsonify(name=name)
+    try:
+        pipeline.rename(root, name, target)
+    except pipeline.Busy:
+        return error("Project is being analysed", 409)
+    except FileExistsError:
+        return error(f"A project called {target} exists", 409)
+    return jsonify(name=target)
 
 
 @app.get("/download/<name>")

@@ -21,7 +21,8 @@ Source, issues and full documentation: <https://github.com/Levia-Labs/beat-analy
 2. **Notes** come from Spotify's [basic-pitch](https://github.com/spotify/basic-pitch) model on
    onnxruntime, split by pitch into bass, chords and melody. The key is estimated from them.
 3. **ffmpeg** decodes any input; **yt-dlp** fetches YouTube audio.
-4. **Flask** under gunicorn serves a small web UI and a JSON API on port 8000.
+4. **Flask** under gunicorn serves a React web UI, with a viewer that draws each track on a timeline, and a JSON API on
+   port 8000.
 
 No GPU and no network access are needed for analysis. YouTube downloads need outbound
 internet.

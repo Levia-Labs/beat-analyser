@@ -4,13 +4,15 @@ services:
     build:
       context: .
       dockerfile: app/Dockerfile
-    container_name: beat-analyser-backend
     image: beat-analyser:latest
-    # Loopback only by default: the API has no authentication. BIND=0.0.0.0 exposes it to
-    # the network - see docs/security.md first.
+    # Loopback only by default. BIND=0.0.0.0 exposes it to the network, and the app refuses
+    # to start there without WEB_TOKEN - see docs/security.md first.
     ports:
-      - "${BIND:-127.0.0.1}:${PORT:-80}:8000"
+      - "${BIND:-127.0.0.1}:${PORT:-8002}:8000"
     environment:
+      BIND: "${BIND:-127.0.0.1}"
+      WEB_TOKEN: "${WEB_TOKEN:-}"
+      WEB_COOKIE_SECURE: "${WEB_COOKIE_SECURE:-}"
       MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-200}"
       YT_MAX_MINUTES: "${YT_MAX_MINUTES:-20}"
     volumes:
@@ -22,13 +24,14 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    # /config, not /folders: it stays open when WEB_TOKEN is set.
     healthcheck:
       test:
         [
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/folders', timeout=5)",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/config', timeout=5)",
         ]
       interval: 30s
       timeout: 10s
@@ -39,7 +42,6 @@ services:
   # analyses go through the backend's endpoints, whose project lock is per process
   # (docs/adr/0012).
   mcp:
-    container_name: beat-analyser-mcp
     image: beat-analyser:latest
     # Built by the backend service; never pulled.
     pull_policy: never
@@ -51,6 +53,8 @@ services:
       BIND: "${BIND:-127.0.0.1}"
       MCP_PORT: "${MCP_PORT:-8001}"
       MCP_TOKEN: "${MCP_TOKEN:-}"
+      # Sent as a Bearer header to the backend when set (app/backend.py).
+      WEB_TOKEN: "${WEB_TOKEN:-}"
       MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-200}"
     volumes:
       - ./uploads:/app/uploads:ro

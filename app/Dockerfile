@@ -1,16 +1,28 @@
 # Built from the repository root (docker-compose.yml sets the context), because the image
 # needs both app/ and the beatcore crate.
 #
-# Three stages. The Rust toolchain comes from the official image and is used only to build
-# the beatcore wheel; the runtime stage copies the finished virtualenv, so neither Rust nor
-# a compiler ships in the image.
+# Four stages. The web stage builds the SPA with Node. The Rust toolchain comes from the
+# official image and is used only to build the beatcore wheel; the runtime stage copies the
+# finished virtualenv and the SPA's dist/, so neither Node, Rust nor a compiler ships in the
+# image.
+
+# The SPA in web/, built once; only its dist/ reaches the runtime image, so Node does not.
+FROM node:22.14.0-slim AS web
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY web/ ./
+RUN npm run build
+
 
 FROM rust:1.90-slim AS rust
 
 
 FROM python:3.14.2-slim AS build
 
-# gcc is the linker rustc calls.
+# gcc is the linker rustc calls. The base image tag is pinned; an unpinned apt package takes
+# Debian security updates on rebuild.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -23,6 +35,8 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 
 RUN python -m venv /opt/venv
 COPY app/requirements.txt /tmp/requirements.txt
+# pip is upgraded on purpose; the requirements themselves are pinned in app/requirements.txt.
+# hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /tmp/requirements.txt
 
@@ -33,6 +47,8 @@ RUN pip install --no-cache-dir /tmp/beatcore
 
 FROM python:3.14.2-slim
 
+# The base image tag is pinned; an unpinned apt package takes Debian security updates on rebuild.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
@@ -41,7 +57,8 @@ COPY --from=build /opt/venv /opt/venv
 ENV PATH=/opt/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    UPLOAD_ROOT=/app/uploads
+    UPLOAD_ROOT=/app/uploads \
+    WEB_DIST=/app/web
 
 # Unprivileged, and uid 1000 so the bind-mounted uploads/ is writable on a typical Linux host.
 RUN useradd --create-home --uid 1000 app \
@@ -51,8 +68,7 @@ RUN useradd --create-home --uid 1000 app \
 WORKDIR /app
 COPY app/*.py ./
 COPY app/models ./models
-COPY app/templates ./templates
-COPY app/static ./static
+COPY --from=web /web/dist ./web
 
 USER app
 EXPOSE 8000

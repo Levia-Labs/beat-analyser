@@ -1,0 +1,56 @@
+version: "3"
+
+# The React SPA in web/ (docs/architecture.md). npm runs inside web/; nothing is installed
+# at the repository root.
+
+tasks:
+  install:
+    desc: "Install web/ dependencies from package-lock.json. Usage: task web:install"
+    dir: "{{.ROOT_DIR}}/web"
+    cmds:
+      - npm ci --no-audit --no-fund
+
+  lock:
+    desc: "Resolve web/ dependencies and rewrite package-lock.json after a package.json change. Usage: task web:lock"
+    dir: "{{.ROOT_DIR}}/web"
+    cmds:
+      - npm install --no-audit --no-fund
+
+  dev:
+    desc: "Vite dev server on http://localhost:5173; API proxied to task run on :5000. Usage: task web:dev"
+    dir: "{{.ROOT_DIR}}/web"
+    cmds:
+      - npm run dev
+
+  build:
+    desc: "Type-check and build web/dist, which Flask serves. Usage: task web:build"
+    dir: "{{.ROOT_DIR}}/web"
+    cmds:
+      - npm run build
+
+  test:
+    desc: "vitest over web/src. Usage: task web:test"
+    dir: "{{.ROOT_DIR}}/web"
+    cmds:
+      - npm test
+
+  format:
+    desc: "Rewrite web/ with prettier and the shared config. Usage: task web:format"
+    dir: "{{.ROOT_DIR}}/web"
+    cmds:
+      - npx prettier --config ../.crepidoma/configs/.prettierrc --write .
+
+  check:
+    desc: "Typecheck, eslint, prettier and vitest over web/; skipped with a note without web/node_modules. Usage: task web:check"
+    dir: "{{.ROOT_DIR}}/web"
+    cmds:
+      - |
+        set -e
+        if [ ! -d node_modules ]; then
+          echo "web: node_modules missing, skipped (task web:install)"
+          exit 0
+        fi
+        npm run typecheck
+        npm run lint
+        npm run format
+        npm test

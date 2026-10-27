@@ -8,23 +8,20 @@ writes under UPLOAD_ROOT; the service mounts it read-only.
 
 import base64
 import binascii
-import csv
-import json
 import os
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from mcp.server.mcpserver.exceptions import ToolError
 
 import backend
+import events
 import storage
 import youtube
 from jobs import Jobs, JobsFull
 
 MAX_ROWS = 10000
-# analysis.LABELS_NAME. Not imported: analysis loads onnxruntime and the note model.
-LABELS_NAME = "labels.json"
 
 UPLOAD_ROOT = Path(os.environ.get("UPLOAD_ROOT", "uploads")).resolve()
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
@@ -107,22 +104,17 @@ def project_status(name: str) -> dict[str, Any]:
     if not storage.zip_path(UPLOAD_ROOT, name).is_file():
         return {"name": name, "status": "unknown"}
     folder = storage.project_dir(UPLOAD_ROOT, name)
-    return {"name": name, "status": "done", "meta": _meta(folder), "tracks": _summary(folder)}
+    return {
+        "name": name,
+        "status": "done",
+        "meta": events.meta(folder),
+        "tracks": events.summary(folder),
+    }
 
 
 def list_projects() -> dict[str, Any]:
     """Every project: its name, whether its ZIP is built, and meta.json (key, bpm)."""
-    if not UPLOAD_ROOT.is_dir():
-        return {"projects": []}
-    projects = [
-        {
-            "name": name,
-            "done": storage.zip_path(UPLOAD_ROOT, name).is_file(),
-            "meta": files.get(storage.META_NAME, {}).get("content"),
-        }
-        for name, files in storage.list_projects(UPLOAD_ROOT).items()
-    ]
-    return {"projects": projects}
+    return {"projects": events.project_list(UPLOAD_ROOT)}
 
 
 def get_events(
@@ -132,15 +124,15 @@ def get_events(
     limit rows (up to 10000). truncated says whether more rows matched."""
     _check_name(name)
     folder = storage.project_dir(UPLOAD_ROOT, name)
-    tracks = _tracks(folder)
+    tracks = events.tracks(folder)
     if track not in tracks:
         listed = ", ".join(tracks) or "none"
         raise ToolError(f"No track '{track}' in project '{name}'; tracks: {listed}")
-    labels = _labels(folder)
+    labels = events.labels(folder)
     limit = max(1, min(limit, MAX_ROWS))
     rows: list[list[Any]] = []
     truncated = False
-    for time, label_id in _rows(tracks[track]):
+    for time, label_id in events.rows(tracks[track]):
         if time < start or (end is not None and time >= end):
             continue
         if len(rows) == limit:
@@ -161,44 +153,3 @@ def _start(name: str, work: Callable[[], None]) -> dict[str, Any]:
 def _check_name(name: str) -> None:
     if not storage.is_valid_name(name):
         raise ToolError(f"Invalid project name '{name[:100]}'")
-
-
-def _tracks(folder: Path) -> dict[str, Path]:
-    if not folder.is_dir():
-        return {}
-    return {path.stem: path for path in sorted(folder.glob("*.csv"))}
-
-
-def _rows(path: Path) -> Iterator[tuple[float, int]]:
-    """(time, label ID) per CSV row. A malformed row is skipped: this reads, it does not
-    validate."""
-    with path.open(newline="", encoding="utf-8") as handle:
-        for row in csv.reader(handle):
-            try:
-                yield float(row[0]), int(row[1])
-            except IndexError, ValueError:
-                continue
-
-
-def _summary(folder: Path) -> list[dict[str, Any]]:
-    summary = []
-    for track, path in _tracks(folder).items():
-        times = [time for time, _ in _rows(path)]
-        first, last = (times[0], times[-1]) if times else (None, None)
-        summary.append({"track": track, "events": len(times), "first": first, "last": last})
-    return summary
-
-
-def _labels(folder: Path) -> dict[int, str]:
-    try:
-        raw = json.loads((folder / LABELS_NAME).read_text(encoding="utf-8"))
-        return {int(key): str(value) for key, value in raw.items()}
-    except OSError, ValueError, AttributeError:
-        return {}
-
-
-def _meta(folder: Path) -> dict[str, Any] | None:
-    try:
-        return json.loads((folder / storage.META_NAME).read_text(encoding="utf-8"))
-    except OSError, ValueError:
-        return None

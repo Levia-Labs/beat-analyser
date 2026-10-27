@@ -9,7 +9,7 @@ def upload(client, name="song.wav", data=None, **headers):
     return client.post("/upload", data=body, content_type="multipart/form-data", headers=headers)
 
 
-def test_index_has_csp_and_no_inline_script(client):
+def test_index_has_csp_and_no_inline_script(client, web_dist):
     response = client.get("/")
     assert response.status_code == 200
     assert "script-src 'self'" in response.headers["Content-Security-Policy"]
@@ -97,7 +97,7 @@ def test_download_yt_converts_the_download_and_removes_it(client, upload_root, m
 
     seen = {}
 
-    def download_audio(vid, folder, max_seconds, max_bytes):
+    def download_audio(vid, folder, max_seconds, max_bytes, on_progress=None):
         seen["args"] = (vid, max_seconds, max_bytes)
         source = folder / "download.m4a"
         source.write_bytes(b"m4a bytes")

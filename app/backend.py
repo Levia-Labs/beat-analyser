@@ -6,6 +6,7 @@ status is the answer.
 """
 
 import json
+import os
 import urllib.error
 import urllib.request
 import uuid
@@ -42,9 +43,12 @@ def download_yt(base_url: str, video_id: str) -> None:
 
 def _post(url: str, body: bytes, content_type: str) -> None:
     # S310: the URL is BACKEND_URL, set by the operator in compose, never by an agent.
-    req = urllib.request.Request(  # noqa: S310
-        url, data=body, headers={"Content-Type": content_type}, method="POST"
-    )
+    headers = {"Content-Type": content_type}
+    # The web app answers 401 without it when WEB_TOKEN is set (compose passes the same one).
+    token = os.environ.get("WEB_TOKEN", "")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")  # noqa: S310
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT):  # noqa: S310
             pass

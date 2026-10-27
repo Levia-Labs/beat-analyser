@@ -124,8 +124,8 @@ def test_a_project_built_by_the_web_ui_is_done(root):
     assert status["status"] == "done"
     assert status["meta"]["key"] == "A minor"
     assert status["tracks"] == [
-        {"track": "beats", "events": 4, "first": 0.5, "last": 2.0},
         {"track": "kick", "events": 0, "first": None, "last": None},
+        {"track": "beats", "events": 4, "first": 0.5, "last": 2.0},
     ]
 
 
@@ -202,5 +202,5 @@ def test_get_events_without_labels_returns_the_id(root):
 
 def test_get_events_refuses_an_unknown_track(root):
     make_project(root)
-    with pytest.raises(ToolError, match="tracks: beats, kick"):
+    with pytest.raises(ToolError, match="tracks: kick, beats"):
         mcp_tools.get_events("song", "../meta")

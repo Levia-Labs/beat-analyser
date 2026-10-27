@@ -38,6 +38,20 @@ def test_a_protocol_error_is_an_error():
     assert got == {"error": True, "data": None, "text": "bad"}
 
 
+def test_session_sends_the_bearer_header():
+    assert e2e.Session("http://h/mcp", "tok").headers["Authorization"] == "Bearer tok"
+    assert "Authorization" not in e2e.Session("http://h/mcp", None).headers
+
+
+def test_the_token_defaults_to_the_environment(monkeypatch):
+    monkeypatch.delenv("MCP_TOKEN", raising=False)
+    monkeypatch.setenv("WEB_TOKEN", "from-env")
+    assert e2e.parse_args(["f.mp3"]).token == "from-env"  # noqa: S105
+    monkeypatch.setenv("MCP_TOKEN", "mcp-env")
+    assert e2e.parse_args(["f.mp3"]).token == "mcp-env"  # noqa: S105
+    assert e2e.parse_args(["f.mp3", "--token", "flag"]).token == "flag"  # noqa: S105
+
+
 def test_wait_done_polls_until_done():
     states = iter([{"status": "queued"}, {"status": "running"}, {"status": "done"}])
     sleeps = []

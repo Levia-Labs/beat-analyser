@@ -33,6 +33,10 @@ web UI is `done` as soon as its ZIP exists.
 Request bodies are capped at `MAX_UPLOAD_MB` x 1.5 + 1 MB, so a base64 upload of up to
 `MAX_UPLOAD_MB` fits.
 
+The web app runs at most `MAX_ANALYSES` analyses at once and answers 429 beyond that. A job
+meets the same limit through its POST: the 429 marks the job `failed` with the message `Too
+many analyses running; try again shortly`.
+
 ## How it runs
 
 The `mcp` service runs the same image as the web app, with `uploads/` mounted read-only. A

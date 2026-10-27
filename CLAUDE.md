@@ -95,14 +95,15 @@ denied with the `rtk` prefix too; a new deny rule needs both forms.
 
 ## Layout
 
-| Path        | What it is                                                                           |
-| ----------- | ------------------------------------------------------------------------------------ |
-| `app/`      | The service. Modules listed in [app/README.md](app/README.md)                        |
-| `beatcore/` | Rust: onsets, drum classes, tempo, beats ([beatcore/README.md](beatcore/README.md))  |
-| `tests/`    | pytest. `conftest.py` stubs madmom out                                               |
-| `tasks/`    | Taskfile namespaces and the scripts behind them ([tasks/README.md](tasks/README.md)) |
-| `docs/`     | Architecture, API, configuration, security, troubleshooting, ADRs                    |
-| `uploads/`  | Runtime data, gitignored. Never commit it, never delete it unasked                   |
+| Path        | What it is                                                                               |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| `app/`      | The service. Modules listed in [app/README.md](app/README.md)                            |
+| `beatcore/` | Rust: onsets, drum classes, tempo, beats ([beatcore/README.md](beatcore/README.md))      |
+| `tests/`    | pytest. `conftest.py` stubs madmom out                                                   |
+| `web/`      | The React SPA (Vite, TypeScript), built into `web/dist` ([web/README.md](web/README.md)) |
+| `tasks/`    | Taskfile namespaces and the scripts behind them ([tasks/README.md](tasks/README.md))     |
+| `docs/`     | Architecture, API, configuration, security, troubleshooting, ADRs                        |
+| `uploads/`  | Runtime data, gitignored. Never commit it, never delete it unasked                       |
 
 ## Models
 
@@ -153,6 +154,9 @@ An approval prompt stops the person's work. Every command must match the allowli
 | reading a whole file to find one function           | `task outline F=path`, then Read with offset                 |
 | reading a gate's full output                        | `task gate T="docker:e2e"`                                   |
 | reading the 36-row `eval:synthetic` table           | `task eval:synthetic:diff`                                   |
+| reading site-packages to check a library's API      | `task dev:pyapi -- pkg.module:Class.method`                  |
+| `git add`, `git commit`, re-stage after a hook      | `task dev:commit COAUTHOR="..." -- "msg" path...`            |
+| `bash <plugin path>/scripts/task-brief ...`         | `task dev:sdd:brief PLAN= N=`, `task dev:sdd:review`         |
 
 Do not re-read a file after editing it.
 
@@ -162,7 +166,7 @@ Do not re-read a file after editing it.
    `/app`, and `pytest.ini` puts `app/` on the path.
 2. Every name that reaches the file system goes through `storage.is_valid_name`. Every
    YouTube URL is reduced to a video ID by `youtube.video_id` before yt-dlp sees it.
-3. No inline `<script>` or `style=""` in templates: the CSP forbids them.
+3. No inline `<script>` or `style=""` in `web/index.html` or any HTML: the CSP forbids them.
 4. Comments explain why. Comments recording what a previous version got wrong stay.
 5. Decisions with non-obvious reasons get an ADR in [docs/adr/](docs/adr/README.md).
 6. Shell inside Taskfiles is not bash (plugin directive `taskfile-shell`). Top-level vars of

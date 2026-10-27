@@ -11,6 +11,7 @@ extension is not built.
 import csv
 import json
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 
 import key
@@ -116,15 +117,22 @@ def write_labels(folder: Path) -> None:
     (folder / LABELS_NAME).write_text(json.dumps(labels), encoding="utf-8")
 
 
-def analyse(audio_path: Path, folder: Path) -> dict:
+def _ignore(stage: str) -> None:
+    return None
+
+
+def analyse(audio_path: Path, folder: Path, progress: Callable[[str], None] = _ignore) -> dict:
     """Write every track CSV and labels.json for one audio file. Returns {"bpm", "confidence",
-    "key"}."""
+    "key"}. progress(stage) is called as each stage starts (app/progress.py)."""
     write_labels(folder)
+    progress("rhythm")
     result = rhythm(audio_path)
     write_tracks(folder, percussion_tracks(result))
     write_tracks(folder, {BEAT_TRACK: [(float(t), "beat") for t in result["beats"]]})
+    progress("notes")
     found = notes.transcribe(audio_path)
     write_tracks(folder, pitched_tracks(found))
+    progress("key")
     return {
         "bpm": round(float(result["bpm"]), 2),
         "confidence": float(result["confidence"]),

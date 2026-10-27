@@ -21,9 +21,11 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
       fixture. Approaches tried and dropped are listed in `beatcore/src/onset.rs`.
 - [ ] Tempo octave errors: every acc1 miss is at 70, 150 or 180 BPM (acc1 0.69, acc2
       1.00): the 120 BPM prior pulls toward the middle. A narrower prior trades one end
-      for the other; tune on real data.
-- [ ] `noisehat@110` beat F-measure 0.00 with the right tempo: the grid locked half a beat
-      off, onto the hats. The beat envelope's hi-hat weight (0.35) is not low enough there.
+      for the other; tune on real data. Widening PRIOR_OCTAVES to 1.5 or 1.25 measured
+      acc1 0.67 (-0.03) both times, so it was dropped (see `beatcore/src/tempo.rs`).
+- [x] `noisehat@110` beat F-measure 0.00: fixed by lowering the beat envelope's hi-hat
+      weight 0.35 to 0.1 (F 1.00; mean beatF 0.87 to 0.91, acc1 0.70 to 0.72). Verify on real
+      data: a hat-driven track may now lose its grid.
 - [ ] Kicks under a sustained pad: F-measure 0.08-0.48. The pad's low partials mask the
       kick's per-bin rise.
 - [ ] One label per onset: a kick and hi-hat struck together count as one. Co-labelling
@@ -32,27 +34,30 @@ Known gaps, roughly in priority order. An item here was identified and deliberat
 - [ ] One global tempo; songs with tempo changes get one grid.
 - [x] Key from the notes (`app/key.py`, Krumhansl-Schmuckler).
 - [x] Re-triggered held notes are merged (`notes.merge_repeats`).
-- [ ] beatcore holds the GIL while it runs (seconds per song). Releasing it needs PyO3's
-      `detach`, whose name changed across 0.2x releases - pin first, then add.
 
 ## Behaviour
 
-- [ ] Name collisions return a stale result ([ADR 0005](docs/adr/0005-name-keyed-projects.md)).
-      Store a content hash in `meta.json` and reanalyse on mismatch.
 - [ ] `/repair` and long analyses run inside the request. A job queue with a status endpoint
       would free the UI and survive a browser closing.
-- [ ] No progress reporting during analysis.
-- [ ] No way to delete one project from the UI.
 
 ## Security
 
 - [ ] Optional token authentication for a shared deployment
       ([ADR 0008](docs/adr/0008-loopback-without-auth.md)).
-- [ ] No rate limiting.
-- [ ] Bootstrap from a CDN; vendoring it into `app/static/` would remove the external load.
 
 ## Tooling
 
-- [ ] CI does not build the image on push (slow). A cached build job would catch Dockerfile
-      breakage earlier.
-- [ ] No dependency update automation (Dependabot or Renovate) for the pinned packages.
+## 1 tasks/dev/gate.py raises UnicodeEncodeError on a failing gate under a cp1250 console (U+2716)
+
+status: done
+class: bug
+
+## 2 dev:commit fails on a path whose deletion is already staged (git add: pathspec did not match); use git add -A -- <path> or skip add for staged deletions
+
+status: done
+class: bug
+
+## 3 web ProjectsPaging.test.tsx 'overlapping page' failed once in several runs (timing); make it deterministic
+
+status: open
+class: bug

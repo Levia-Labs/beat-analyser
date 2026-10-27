@@ -1,0 +1,269 @@
+/* Wider than the 720px page: a table needs the room. */
+.page:has(.projects) {
+  max-width: 1100px;
+}
+.projects {
+  gap: 8px;
+  padding: 10px;
+}
+
+.toolbar {
+  display: grid;
+  gap: 8px;
+}
+.toolbar-main,
+.filters,
+.sort-phone,
+.bulk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.search {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.filters .field {
+  width: auto;
+}
+.filters .bpm {
+  width: 96px;
+}
+.count {
+  color: var(--muted);
+  margin-left: auto;
+}
+.filters-toggle,
+.sort-phone {
+  display: none;
+}
+
+.table-region {
+  max-height: calc(100vh - 260px);
+  min-height: 160px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.ptable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.ptable th,
+.ptable td {
+  padding: 4px 10px;
+  text-align: left;
+  font-weight: 400;
+  white-space: nowrap;
+  border-top: 1px solid var(--line);
+}
+.ptable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel-2);
+  border-top: 0;
+  color: var(--muted);
+}
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.sort-button .icon {
+  opacity: 0.3;
+}
+.sort-button.on {
+  color: var(--ink);
+}
+.sort-button.on .icon {
+  opacity: 1;
+}
+.prow {
+  position: relative;
+}
+.prow:hover,
+.prow.picked {
+  background: var(--panel-2);
+}
+.cell-name {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.name-link {
+  color: var(--ink);
+  text-decoration: none;
+}
+/* The link covers its whole row, so a row click opens the viewer without a click handler. */
+.name-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.cell-pick,
+.cell-actions {
+  position: relative;
+  z-index: 1;
+}
+/* The flex row lives in a wrapper: display:flex on the td itself would drop it out of the table. */
+.actions-row {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.icon-only {
+  padding: 0;
+  min-width: 32px;
+  min-height: 32px;
+  justify-content: center;
+}
+.ptable input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--red);
+  vertical-align: middle;
+}
+.renaming td {
+  padding: 6px 10px;
+}
+.sentinel {
+  height: 1px;
+}
+
+@media (max-width: 719px) {
+  .projects {
+    padding: 8px 12px;
+  }
+  .filters-toggle,
+  .sort-phone {
+    display: flex;
+  }
+  .sort-phone .field {
+    flex: 1;
+  }
+  .filters {
+    display: none;
+  }
+  .filters.open {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .filters.open .field,
+  .filters.open .chip {
+    width: 100%;
+  }
+  .bulk .primary {
+    width: auto;
+  }
+  .table-region {
+    max-height: calc(100vh - 300px);
+    border: 0;
+  }
+  .ptable,
+  .ptable tbody {
+    display: block;
+  }
+  .ptable thead {
+    display: none;
+  }
+  .prow {
+    display: grid;
+    grid-template-columns: 44px auto auto 1fr auto;
+    grid-template-areas:
+      "pick name name name actions"
+      "pick key bpm duration status";
+    align-items: center;
+    column-gap: 8px;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+  }
+  .ptable .prow > * {
+    border: 0;
+    padding: 0;
+  }
+  .prow .cell-pick {
+    grid-area: pick;
+    display: grid;
+    place-items: center;
+    min-height: 44px;
+  }
+  .ptable input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+  .prow .cell-name {
+    grid-area: name;
+    max-width: none;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    min-width: 0;
+  }
+  /* min-width:0 lets the flex child shrink below its text, so a long name ends in an ellipsis. */
+  .prow .name-link {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .prow .cell-key,
+  .prow .cell-bpm,
+  .prow .cell-duration {
+    color: var(--muted);
+    font-size: 13px;
+    margin-right: 10px;
+  }
+  .prow .cell-key {
+    grid-area: key;
+  }
+  .prow .cell-bpm {
+    grid-area: bpm;
+  }
+  .prow .cell-duration {
+    grid-area: duration;
+  }
+  .prow .cell-created,
+  .prow .cell-size {
+    display: none;
+  }
+  .prow .cell-status {
+    grid-area: status;
+    justify-self: end;
+  }
+  .prow .cell-actions {
+    grid-area: actions;
+  }
+  .icon-only {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .renaming {
+    display: block;
+  }
+  .renaming td {
+    display: block;
+  }
+  .loading-row,
+  .empty-row {
+    display: block;
+    padding: 10px 0;
+  }
+  .loading-row td,
+  .empty-row td {
+    display: block;
+  }
+}

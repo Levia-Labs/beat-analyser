@@ -13,6 +13,7 @@ import argparse
 import base64
 import itertools
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -105,13 +106,19 @@ class Session:
         return tool_result(reply)
 
 
-def main() -> int:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=(__doc__ or "").partition("\n")[0])
     parser.add_argument("file", type=Path)
     parser.add_argument("--url", default="http://127.0.0.1:8001/mcp")
-    parser.add_argument("--token")
+    parser.add_argument(
+        "--token", default=os.environ.get("MCP_TOKEN") or os.environ.get("WEB_TOKEN")
+    )
     parser.add_argument("--timeout", type=float, default=1800)
-    args = parser.parse_args()
+    return parser.parse_args(argv)
+
+
+def main() -> int:
+    args = parse_args()
     session = Session(args.url, args.token)
     session.initialize()
     failures = []

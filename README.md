@@ -39,14 +39,16 @@ Needs [Docker](https://docs.docker.com/get-docker/) and [Task](https://taskfile.
 task docker:up        # first build compiles beatcore; later builds reuse it
 ```
 
-Open <http://localhost>. Projects are saved under `uploads/` on the host. A prebuilt image is
-on [Docker Hub](https://hub.docker.com/r/levialabs/beat-analyser).
+Open <http://localhost:8002>. Each finished project opens in a viewer with one timeline lane
+per track. Projects are saved under `uploads/` on the host. A prebuilt image is on
+[Docker Hub](https://hub.docker.com/r/levialabs/beat-analyser).
 
 On the host (Python 3.14 and ffmpeg on PATH; Rust optional):
 
 ```bash
 task setup                     # .venv, dependencies, git hooks; beatcore if cargo exists
 task analyse FILE=song.mp3     # analyse from the command line
+task web:install && task web:build   # once: the React app in web/ (Node 22)
 task run                       # web UI on http://127.0.0.1:5000 (needs beatcore built)
 ```
 
@@ -87,6 +89,10 @@ Percussion IDs are 128 to 130, beats 131, notes their MIDI pitch. Full schema:
 Details and error codes: [docs/api.md](docs/api.md). Agents can connect over MCP:
 [docs/mcp.md](docs/mcp.md). Read [docs/security.md](docs/security.md)
 before exposing the service beyond loopback.
+
+Set `WEB_TOKEN` to require a token: every route but the web UI shell and `/config` then
+answers 401 until the browser signs in (or a client sends `Authorization: Bearer <token>`).
+The app refuses to start on a non-loopback `BIND` without it.
 
 ## Documentation
 

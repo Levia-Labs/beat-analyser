@@ -14,7 +14,7 @@ silent: true
 #   task validate                every offline gate - what the hooks and the Stop hook run
 #   task validate:deep           validate plus coverage, deep properties, security audits
 #   task run                     the web UI on http://127.0.0.1:5000 (development server)
-#   task docker:up               the same UI in the container on http://localhost
+#   task docker:up               the same UI in the container on http://localhost:8002
 #
 # `task --list` is the index; every task carries a `desc`. docs/tasks.md explains each one.
 
@@ -77,6 +77,7 @@ includes:
 
   # Optional tooling. Nothing above needs these.
   graphify: ./tasks/graphify/Taskfile.yml
+  web: ./tasks/web/Taskfile.yml
 
 tasks:
   default:
@@ -189,11 +190,11 @@ tasks:
       - '"{{.PY}}" -W ignore app/app.py'
 
   smoke:
-    desc: "Probe a running server - index, security headers, /folders. Usage: task smoke [URL=http://127.0.0.1:5000]"
+    desc: "Probe a running server - index, security headers, /folders. Usage: task smoke [URL=http://127.0.0.1:5000] [TOKEN=]"
     vars:
       URL: '{{.URL | default "http://127.0.0.1:5000"}}'
     cmds:
-      - '"{{.SYS_PY}}" tasks/dev/smoke.py "{{.URL}}"'
+      - '"{{.SYS_PY}}" tasks/dev/smoke.py "{{.URL}}"{{if .TOKEN}} --token "{{.TOKEN}}"{{end}}'
 
   gate:
     desc: 'Run tasks as gates - one line each, decisive lines on failure, full log in .cache/gate/. Usage: task gate T="rust:test,test:run -- -k notes" [LINES=30]'
@@ -232,6 +233,7 @@ tasks:
       - task: hostpy:check
       - task: lint:yaml:check
       - task: test:run
+      - task: web:check
       - task: quality:gate
       - task: docker:config
       # Last: on a .venv that predates them, their precondition makes the Stop hook skip

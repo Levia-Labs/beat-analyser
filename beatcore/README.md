@@ -13,6 +13,8 @@ beatcore.analyse("audio.wav")
 #  "onsets": [(0.01, "kick"), (0.25, "hh"), ...]}
 ```
 
+Both entry points release the GIL while computing, so other Python threads keep running.
+
 | File                 | Role                                                                                 |
 | -------------------- | ------------------------------------------------------------------------------------ |
 | `src/audio.rs`       | WAV in (hound), mixed to mono                                                        |
