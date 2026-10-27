@@ -1,24 +1,11 @@
 import { useEffect, useId, useState, type DragEvent, type FormEvent } from "react";
-import { ApiError, getProgress, postAnalysis, type Config, type Progress } from "../api";
-import { progressId as newProgressId } from "../progressId";
+import type { Config } from "../api";
 import Banner from "./Banner";
-import { AnalyseIcon, LinkIcon, UploadIcon } from "./icons";
+import { AnalyseIcon, UploadIcon } from "./icons";
 import StageList from "./StageList";
+import { sizeLabel, useAnalysis, type Phase } from "./useAnalysis";
 
-const MB = 1024 * 1024;
-
-type Tab = "file" | "youtube";
-type Phase =
-  | { kind: "idle" }
-  | { kind: "uploading"; fraction: number }
-  | { kind: "analysing"; since: number }
-  | { kind: "error"; message: string };
-
-export function sizeLabel(bytes: number): string {
-  return bytes >= MB
-    ? `${(bytes / MB).toFixed(1)} MB`
-    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-}
+export { sizeLabel };
 
 function Elapsed({ since }: { since: number }) {
   const [now, setNow] = useState(since);
@@ -34,171 +21,119 @@ function Elapsed({ since }: { since: number }) {
   );
 }
 
-export default function AnalyseCard({
+function UrlPart({
+  busy,
+  onRun,
+  onEdit,
+}: {
+  busy: boolean;
+  onRun: (url: string) => void;
+  onEdit: () => void;
+}) {
+  const [url, setUrl] = useState("");
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    onRun(url);
+  }
+  return (
+    <form className="analyse-part" onSubmit={submit}>
+      <input
+        className="field"
+        type="url"
+        inputMode="url"
+        placeholder="https://youtu.be/..."
+        aria-label="YouTube URL"
+        value={url}
+        disabled={busy}
+        onChange={(event) => {
+          setUrl(event.target.value);
+          onEdit();
+        }}
+      />
+      <button
+        className="primary"
+        type="submit"
+        aria-label="Analyse YouTube URL"
+        disabled={busy || !url.trim()}
+      >
+        <AnalyseIcon /> Analyse
+      </button>
+    </form>
+  );
+}
+
+function FilePart({
   config,
-  onDone,
+  busy,
+  onRun,
+  onEdit,
 }: {
   config: Config | null;
-  onDone: (name: string) => void;
+  busy: boolean;
+  onRun: (file: File) => void;
+  onEdit: () => void;
 }) {
-  const [tab, setTab] = useState<Tab>("file");
   const [file, setFile] = useState<File | null>(null);
-  const [url, setUrl] = useState("");
-  const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [dragging, setDragging] = useState(false);
-  const [progressId, setProgressId] = useState<string | null>(null);
-  const [server, setServer] = useState<Progress | null>(null);
   const inputId = useId();
-  const busy = phase.kind === "uploading" || phase.kind === "analysing";
   const accept = config?.extensions.join(",") ?? "";
-
-  // Poll while the POST is open. A failed poll is ignored: the POST's own answer decides.
-  useEffect(() => {
-    if (!progressId) return;
-    let live = true;
-    const timer = window.setInterval(() => {
-      getProgress(progressId).then(
-        (state) => live && setServer(state),
-        () => undefined,
-      );
-    }, 1000);
-    return () => {
-      live = false;
-      window.clearInterval(timer);
-    };
-  }, [progressId]);
 
   function choose(chosen: File | undefined) {
     if (!chosen || busy) return;
     setFile(chosen);
-    setPhase({ kind: "idle" });
+    onEdit();
   }
-
   function onDrop(event: DragEvent) {
     event.preventDefault();
     setDragging(false);
     choose(event.dataTransfer.files[0]);
   }
-
-  async function submit(event: FormEvent) {
+  function submit(event: FormEvent) {
     event.preventDefault();
-    if (busy) return;
-    const id = newProgressId();
-    let body: FormData | string;
-    let endpoint: "/upload" | "/download_yt";
-    if (tab === "file") {
-      if (!file) return;
-      if (config && file.size > config.max_upload_mb * MB) {
-        setPhase({
-          kind: "error",
-          message: `Upload too large; the limit is ${config.max_upload_mb} MB`,
-        });
-        return;
-      }
-      body = new FormData();
-      body.append("file", file);
-      endpoint = "/upload";
-      setPhase({ kind: "uploading", fraction: 0 });
-    } else {
-      if (!url.trim()) return;
-      body = JSON.stringify({ url: url.trim() });
-      endpoint = "/download_yt";
-      setPhase({ kind: "analysing", since: Date.now() });
-    }
-    setProgressId(id);
-    setServer(null);
-    try {
-      const { name } = await postAnalysis(
-        endpoint,
-        body,
-        (fraction) =>
-          setPhase((current) =>
-            fraction < 1 && endpoint === "/upload"
-              ? { kind: "uploading", fraction }
-              : current.kind === "analysing"
-                ? current
-                : { kind: "analysing", since: Date.now() },
-          ),
-        id,
-      );
-      setProgressId(null);
-      setPhase({ kind: "idle" });
-      onDone(name);
-    } catch (error) {
-      setProgressId(null);
-      setPhase({
-        kind: "error",
-        message: error instanceof ApiError ? error.message : "Something went wrong",
-      });
-    }
+    if (file) onRun(file);
   }
-
   return (
-    <form className="card" onSubmit={submit} aria-busy={busy}>
-      <div className="tabs" role="tablist">
-        {(["file", "youtube"] as const).map((name) => (
-          <button
-            key={name}
-            type="button"
-            role="tab"
-            aria-selected={tab === name}
-            className={tab === name ? "tab on" : "tab"}
-            disabled={busy}
-            onClick={() => {
-              setTab(name);
-              setPhase({ kind: "idle" });
-            }}
-          >
-            {name === "file" ? <UploadIcon /> : <LinkIcon />}
-            {name === "file" ? "File" : "YouTube"}
-          </button>
-        ))}
-      </div>
-
-      {tab === "file" ? (
-        <label
-          htmlFor={inputId}
-          className={dragging ? "drop on" : "drop"}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-        >
-          <input
-            id={inputId}
-            type="file"
-            accept={accept}
-            disabled={busy}
-            aria-label="Audio file"
-            onChange={(event) => choose(event.target.files?.[0])}
-          />
-          {file ? (
-            <span>
-              <strong>{file.name}</strong> <span className="muted num">{sizeLabel(file.size)}</span>
-            </span>
-          ) : (
-            <span>
-              Drop audio here or <u>choose a file</u>
-              <br />
-              <span className="muted">{accept.replaceAll(",", " ")}</span>
-            </span>
-          )}
-        </label>
-      ) : (
+    <form className="analyse-part" onSubmit={submit}>
+      <label
+        htmlFor={inputId}
+        className={dragging ? "drop on" : "drop"}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+      >
         <input
-          className="field"
-          type="url"
-          inputMode="url"
-          placeholder="https://youtu.be/..."
-          aria-label="YouTube URL"
-          value={url}
+          id={inputId}
+          type="file"
+          accept={accept}
           disabled={busy}
-          onChange={(event) => setUrl(event.target.value)}
+          aria-label="Audio file"
+          onChange={(event) => choose(event.target.files?.[0])}
         />
-      )}
+        {file ? (
+          <span>
+            <strong>{file.name}</strong> <span className="muted num">{sizeLabel(file.size)}</span>
+          </span>
+        ) : (
+          <span>
+            <UploadIcon /> Drop audio here or <u>choose a file</u>
+            <br />
+            <span className="muted">{accept.replaceAll(",", " ")}</span>
+          </span>
+        )}
+      </label>
+      <button className="primary" type="submit" aria-label="Analyse file" disabled={busy || !file}>
+        <AnalyseIcon /> Analyse
+      </button>
+    </form>
+  );
+}
 
+function RunStatus({ phase }: { phase: Phase }) {
+  return (
+    <>
       {phase.kind === "uploading" && (
         <progress className="bar" max={1} value={phase.fraction} aria-label="Upload progress" />
       )}
@@ -208,16 +143,33 @@ export default function AnalyseCard({
           Analysing <Elapsed since={phase.since} />
         </p>
       )}
-      {busy && server && <StageList progress={server} />}
       {phase.kind === "error" && <Banner message={phase.message} />}
+    </>
+  );
+}
 
-      <button
-        className="primary"
-        type="submit"
-        disabled={busy || (tab === "file" ? !file : !url.trim())}
-      >
-        <AnalyseIcon /> Analyse
-      </button>
-    </form>
+// The two ways in, one run at a time: a YouTube URL first, then a local file.
+export default function AnalyseCard({
+  config,
+  onDone,
+  onBusy,
+}: {
+  config: Config | null;
+  onDone: (name: string) => void;
+  onBusy?: (busy: boolean) => void;
+}) {
+  const { phase, busy, server, runFile, runUrl, clearError } = useAnalysis(config, onDone);
+  useEffect(() => onBusy?.(busy), [busy, onBusy]);
+  const edit = () => phase.kind === "error" && clearError();
+  return (
+    <div className="analyse" aria-busy={busy}>
+      <UrlPart busy={busy} onRun={runUrl} onEdit={edit} />
+      <div className="or" aria-hidden="true">
+        <span>or</span>
+      </div>
+      <FilePart config={config} busy={busy} onRun={runFile} onEdit={edit} />
+      <RunStatus phase={phase} />
+      {busy && server && <StageList progress={server} />}
+    </div>
   );
 }

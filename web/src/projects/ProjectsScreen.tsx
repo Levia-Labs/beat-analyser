@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { ApiError, deleteProject, renameProject } from "../api";
 import Banner from "../components/Banner";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -6,12 +6,16 @@ import { RefreshIcon, TrashIcon } from "../components/icons";
 import { message } from "../useLoad";
 import { hasFilters } from "./query";
 import ProjectsTable from "./ProjectsTable";
-import ProjectsToolbar from "./ProjectsToolbar";
+import ProjectsBar from "./ProjectsBar";
+import { useDraftText } from "./useDraftText";
 import { usePagedProjects } from "./usePagedProjects";
 import { useProjectsQuery } from "./useProjectsQuery";
 
 export default function ProjectsScreen() {
   const { query, update, sortBy, clear } = useProjectsQuery();
+  const writeName = useCallback((q: string, replace: boolean) => update({ q }, replace), [update]);
+  const nameDraft = useDraftText(query.q, writeName);
+  const filters = { query, update, nameDraft };
   const paged = usePagedProjects(query);
   const { items, reload } = paged;
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
@@ -78,15 +82,14 @@ export default function ProjectsScreen() {
   const count = confirming?.length ?? 0;
   return (
     <section className="card projects" aria-labelledby="projects-title">
-      <h2 id="projects-title" className="sr-only">
-        Projects
-      </h2>
-      <ProjectsToolbar
-        query={query}
+      <ProjectsBar
+        props={filters}
         total={paged.loading ? null : paged.total}
-        onChange={update}
         onSort={sortBy}
-        onClear={clear}
+        onClear={() => {
+          nameDraft.reset();
+          clear();
+        }}
       />
       {paged.error && (
         <Banner
@@ -108,7 +111,7 @@ export default function ProjectsScreen() {
       )}
       <ProjectsTable
         items={items}
-        query={query}
+        filters={filters}
         loading={paged.loading}
         loadingMore={paged.loadingMore}
         hasMore={paged.hasMore}

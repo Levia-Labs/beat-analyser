@@ -2,14 +2,14 @@ import type { ReactNode } from "react";
 
 // Inline stroke icons: currentColor follows the text, aria-hidden because a label always sits beside them.
 function icon(paths: ReactNode) {
-  return function Icon({ size = 18 }: { size?: number }) {
+  return function Icon({ size = 18, filled = false }: { size?: number; filled?: boolean }) {
     return (
       <svg
         className="icon"
         width={size}
         height={size}
         viewBox="0 0 24 24"
-        fill="none"
+        fill={filled ? "currentColor" : "none"}
         stroke="currentColor"
         strokeWidth={2}
         strokeLinecap="round"
@@ -42,6 +42,7 @@ export const SearchIcon = icon(
   </>,
 );
 export const FilterIcon = icon(<path d="M4 5h16l-6 7v6l-4 2v-8z" />);
+export const FilterXIcon = icon(<path d="M4 5h16l-5.5 6.5M10 12v8l4-2v-3M16 15l5 5m0-5-5 5" />);
 export const SortAscIcon = icon(<path d="M12 19V5m0 0-5 5m5-5 5 5" />);
 export const SortDescIcon = icon(<path d="M12 5v14m0 0-5-5m5 5 5-5" />);
 export const ZoomInIcon = icon(

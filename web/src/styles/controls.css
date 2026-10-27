@@ -21,7 +21,6 @@ button,
 }
 .primary,
 .chip,
-.tab,
 .back {
   display: inline-flex;
   align-items: center;
@@ -46,24 +45,6 @@ button,
   color: var(--muted);
 }
 
-.tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--panel-2);
-  border-radius: var(--radius);
-  padding: 3px;
-}
-.tab {
-  flex: 1;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-.tab.on {
-  background: var(--panel);
-  color: var(--ink);
-}
 .drop {
   border: 1px dashed var(--line);
   border-radius: var(--radius);

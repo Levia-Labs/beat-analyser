@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -30,45 +30,28 @@ describe("App shell", () => {
     expect(brand).toHaveClass("brand");
   });
 
-  it("has Projects and Add tabs that route", () => {
+  it("renders no tabs and no phone bottom bar, on any route", () => {
+    for (const path of ["/", "/p/x", "/nowhere"]) {
+      const { unmount } = at(path);
+      expect(screen.queryByRole("navigation")).toBeNull();
+      expect(screen.queryByRole("link", { name: "Add" })).toBeNull();
+      unmount();
+    }
+  });
+
+  it("the list route has the Add button that opens the modal", () => {
     at("/");
-    const nav = screen.getByRole("navigation", { name: "Sections" });
-    expect(within(nav).getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/");
-    expect(within(nav).getByRole("link", { name: "Add" })).toHaveAttribute("href", "/add");
+    expect(screen.getByRole("heading", { name: "Projects" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add" })).toBeInTheDocument();
   });
 
-  it("marks Projects active on / and on a viewer route, Add on /add", () => {
-    const { unmount } = at("/p/x");
-    let nav = screen.getByRole("navigation", { name: "Sections" });
-    expect(within(nav).getByRole("link", { name: "Projects" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    expect(within(nav).getByRole("link", { name: "Add" })).not.toHaveAttribute("aria-current");
-    unmount();
+  it("has no /add route any more", () => {
     at("/add");
-    nav = screen.getByRole("navigation", { name: "Sections" });
-    expect(within(nav).getByRole("link", { name: "Add" })).toHaveAttribute("aria-current", "page");
-    expect(within(nav).getByRole("link", { name: "Projects" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("heading", { name: "Not found" })).toBeInTheDocument();
   });
 
-  it("renders the same links in the phone bottom bar", () => {
-    at("/add");
-    const bar = screen.getByRole("navigation", { name: "Sections, bottom bar" });
-    expect(bar).toHaveClass("bottom-bar");
-    expect(within(bar).getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/");
-    expect(within(bar).getByRole("link", { name: "Add" })).toHaveAttribute("href", "/add");
-    expect(within(bar).getByRole("link", { name: "Add" })).toHaveAttribute("aria-current", "page");
-  });
-
-  it("renders the analyse card on /add", () => {
-    at("/add");
-    expect(screen.getByRole("button", { name: "Analyse" })).toBeInTheDocument();
-  });
-
-  it("shows Not found on an unknown route, with the tabs still there", () => {
+  it("shows Not found on an unknown route", () => {
     at("/nowhere");
     expect(screen.getByRole("heading", { name: "Not found" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Sections" })).toBeInTheDocument();
   });
 });

@@ -13,6 +13,8 @@ const post = vi.mocked(postAnalysis);
 const poll = vi.mocked(getProgress);
 
 const config = { extensions: [".mp3", ".wav"], max_upload_mb: 1 };
+const FILE_GO = { name: "Analyse file" };
+const URL_GO = { name: "Analyse YouTube URL" };
 
 beforeEach(() => {
   post.mockReset();
@@ -36,19 +38,27 @@ function audio(bytes: number) {
 }
 
 describe("AnalyseCard", () => {
-  it("enables Analyse only once a file is chosen", async () => {
+  it("enables the file Analyse only once a file is chosen", async () => {
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
-    const go = screen.getByRole("button", { name: "Analyse" });
+    const go = screen.getByRole("button", FILE_GO);
     expect(go).toBeDisabled();
     await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
     expect(go).toBeEnabled();
     expect(screen.getByText("song.mp3")).toBeInTheDocument();
   });
 
+  it("enables the URL Analyse only once a URL is typed", async () => {
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    expect(screen.getByRole("button", URL_GO)).toBeDisabled();
+    await paste("https://youtu.be/dQw4w9WgXcQ");
+    expect(screen.getByRole("button", URL_GO)).toBeEnabled();
+    expect(screen.getByRole("button", FILE_GO)).toBeDisabled();
+  });
+
   it("refuses a file over the limit without sending it", async () => {
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
     await userEvent.upload(screen.getByLabelText("Audio file"), audio(2 * 1024 * 1024));
-    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await userEvent.click(screen.getByRole("button", FILE_GO));
     expect(screen.getByRole("alert")).toHaveTextContent("limit is 1 MB");
     expect(post).not.toHaveBeenCalled();
   });
@@ -58,7 +68,7 @@ describe("AnalyseCard", () => {
     const onDone = vi.fn();
     render(<AnalyseCard config={config} onDone={onDone} />);
     await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
-    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await userEvent.click(screen.getByRole("button", FILE_GO));
     await waitFor(() => expect(onDone).toHaveBeenCalledWith("song"));
   });
 
@@ -66,31 +76,33 @@ describe("AnalyseCard", () => {
     post.mockRejectedValue(new ApiError("Processing failed: boom", 500));
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
     await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
-    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await userEvent.click(screen.getByRole("button", FILE_GO));
     expect(await screen.findByRole("alert")).toHaveTextContent("Processing failed: boom");
-    expect(screen.getByRole("button", { name: "Analyse" })).toBeEnabled();
+    expect(screen.getByRole("button", FILE_GO)).toBeEnabled();
   });
 
-  it("ignores a drop while an upload is running", async () => {
+  it("ignores a drop while an upload is running, and locks both inputs", async () => {
     post.mockReturnValue(new Promise(() => {}));
-    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    const busy = vi.fn();
+    render(<AnalyseCard config={config} onDone={vi.fn()} onBusy={busy} />);
     await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
-    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await userEvent.click(screen.getByRole("button", FILE_GO));
     const other = new File([new Uint8Array(5)], "other.mp3", { type: "audio/mpeg" });
     fireEvent.drop(screen.getByText("song.mp3").closest("label")!, {
       dataTransfer: { files: [other] },
     });
-    expect(screen.getByRole("button", { name: "Analyse" })).toBeDisabled();
+    expect(screen.getByRole("button", FILE_GO)).toBeDisabled();
+    expect(screen.getByLabelText("YouTube URL")).toBeDisabled();
     expect(screen.getByText("song.mp3")).toBeInTheDocument();
     expect(screen.queryByText("other.mp3")).not.toBeInTheDocument();
+    expect(busy).toHaveBeenLastCalledWith(true);
   });
 
   it("keeps a YouTube request in the analysing phase whatever the progress", async () => {
     post.mockReturnValue(new Promise(() => {}));
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
-    await userEvent.click(screen.getByRole("tab", { name: "YouTube" }));
     await paste("https://youtu.be/dQw4w9WgXcQ");
-    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await userEvent.click(screen.getByRole("button", URL_GO));
     const report = post.mock.calls[0]![2];
     act(() => report(0.5));
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
@@ -100,11 +112,10 @@ describe("AnalyseCard", () => {
   it("sends a YouTube URL as JSON to /download_yt", async () => {
     post.mockResolvedValue({ name: "dQw4w9WgXcQ" });
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
-    await userEvent.click(screen.getByRole("tab", { name: "YouTube" }));
     await paste("https://youtu.be/dQw4w9WgXcQ");
-    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await userEvent.click(screen.getByRole("button", URL_GO));
     // The resolved POST sets state after the click returns; wait for the card to settle.
-    await waitFor(() => expect(screen.getByRole("button", { name: "Analyse" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByLabelText("YouTube URL")).toBeEnabled());
     expect(post).toHaveBeenCalledWith(
       "/download_yt",
       JSON.stringify({ url: "https://youtu.be/dQw4w9WgXcQ" }),
@@ -117,12 +128,11 @@ describe("AnalyseCard", () => {
     vi.stubGlobal("crypto", { getRandomValues: crypto.getRandomValues.bind(crypto) });
     post.mockResolvedValue({ name: "x" });
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
-    await userEvent.click(screen.getByRole("tab", { name: "YouTube" }));
     await paste("https://youtu.be/dQw4w9WgXcQ");
-    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    await userEvent.click(screen.getByRole("button", URL_GO));
     await waitFor(() => expect(post).toHaveBeenCalled());
     expect(post.mock.calls[0]![3]).toMatch(/^[0-9a-f]{32}$/);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Analyse" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByLabelText("YouTube URL")).toBeEnabled());
   });
 
   it("polls the server once a second while the POST is open, then stops", async () => {
@@ -141,11 +151,10 @@ describe("AnalyseCard", () => {
     };
     poll.mockResolvedValue(running);
     render(<AnalyseCard config={config} onDone={vi.fn()} />);
-    fireEvent.click(screen.getByRole("tab", { name: "YouTube" }));
     fireEvent.change(screen.getByLabelText("YouTube URL"), {
       target: { value: "https://youtu.be/dQw4w9WgXcQ" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    fireEvent.click(screen.getByRole("button", URL_GO));
     await act(() => vi.advanceTimersByTimeAsync(1000));
     expect(poll).toHaveBeenCalledTimes(1);
     expect(poll).toHaveBeenCalledWith(post.mock.calls[0]![3]);
