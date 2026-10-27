@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, deleteProject, getConfig, getEvents, renameProject } from "./api";
+import {
+  ApiError,
+  deleteProject,
+  getConfig,
+  getEvents,
+  login,
+  logout,
+  onUnauthorized,
+  renameProject,
+} from "./api";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -92,5 +101,48 @@ describe("api", () => {
       "/projects/song/rename",
       expect.objectContaining({ method: "POST", body: JSON.stringify({ to: "tune" }) }),
     );
+  });
+
+  it("tells the unauthorized listener about a 401 and still rejects", async () => {
+    answer(401, { error: "Sign in required" });
+    const seen = vi.fn();
+    const off = onUnauthorized(seen);
+    await expect(getEvents("x")).rejects.toMatchObject({ status: 401 });
+    expect(seen).toHaveBeenCalledTimes(1);
+    off();
+    await expect(getEvents("x")).rejects.toMatchObject({ status: 401 });
+    expect(seen).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not treat other errors as a sign-in request", async () => {
+    answer(404, { error: "Project not found" });
+    const seen = vi.fn();
+    const off = onUnauthorized(seen);
+    await expect(getEvents("x")).rejects.toMatchObject({ status: 404 });
+    off();
+    expect(seen).not.toHaveBeenCalled();
+  });
+
+  it("posts the token to /login; a wrong token rejects without the listener", async () => {
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ error: "Wrong token" }), { status: 401 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const seen = vi.fn();
+    const off = onUnauthorized(seen);
+    await expect(login("nope")).rejects.toMatchObject({ message: "Wrong token", status: 401 });
+    off();
+    expect(seen).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/login",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ token: "nope" }) }),
+    );
+  });
+
+  it("logs out with POST /logout", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(logout()).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith("/logout", expect.objectContaining({ method: "POST" }));
   });
 });

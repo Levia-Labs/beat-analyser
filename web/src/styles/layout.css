@@ -1,4 +1,5 @@
 .top {
+  position: relative;
   height: 56px;
   display: flex;
   align-items: center;
@@ -52,8 +53,20 @@
 .bottom-bar {
   display: none;
 }
-.status-page {
+.sign-out {
+  position: absolute;
+  right: 16px;
+}
+.status-page,
+.sign-in {
   justify-items: start;
+}
+.sign-in h1 {
+  margin: 0;
+  font-size: 18px;
+}
+.sign-in p {
+  margin: 0;
 }
 .status-page h1 {
   margin: 0;

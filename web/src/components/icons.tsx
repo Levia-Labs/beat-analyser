@@ -64,6 +64,13 @@ export const AlertIcon = icon(
     <path d="M12 10v4m0 3h.01" />
   </>,
 );
+export const LockIcon = icon(
+  <>
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </>,
+);
+export const LogoutIcon = icon(<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9" />);
 export const SelectIcon = icon(
   <>
     <rect x="4" y="4" width="16" height="16" rx="3" />

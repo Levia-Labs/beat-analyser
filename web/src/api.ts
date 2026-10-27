@@ -12,7 +12,7 @@ export type ProjectItem = {
   size: number;
 };
 export type ProjectsPage = { items: ProjectItem[]; total: number };
-export type Config = { extensions: string[]; max_upload_mb: number };
+export type Config = { extensions: string[]; max_upload_mb: number; auth?: boolean };
 export type Progress = {
   stages: string[];
   stage: string;
@@ -39,6 +39,20 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
   }
+}
+
+// With WEB_TOKEN set the server answers 401 to any API call without the session cookie; the
+// app shows the Sign in page instead of each screen's own error.
+const unauthorizedListeners = new Set<() => void>();
+export function onUnauthorized(listener: () => void): () => void {
+  unauthorizedListeners.add(listener);
+  return () => {
+    unauthorizedListeners.delete(listener);
+  };
+}
+// A wrong token at /login is the form's own error, not a request to sign in.
+function notifyUnauthorized(url: string) {
+  if (url !== "/login") unauthorizedListeners.forEach((listener) => listener());
 }
 
 function errorText(body: unknown, status: number): string {
@@ -71,6 +85,7 @@ async function request<T>(url: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError("Server unreachable", 0);
   }
   const body = parseJson(text);
+  if (response.status === 401) notifyUnauthorized(url);
   if (!response.ok) throw new ApiError(errorText(body, response.status), response.status);
   if (body === null) {
     throw new ApiError(`Server answered ${response.status} without JSON`, response.status);
@@ -87,6 +102,9 @@ export const renameProject = (name: string, to: string) =>
     method: "POST",
     body: JSON.stringify({ to }),
   });
+export const login = (token: string) =>
+  request<void>("/login", { method: "POST", body: JSON.stringify({ token }) });
+export const logout = () => request<void>("/logout", { method: "POST" });
 export const getConfig = () => get<Config>("/config");
 export const getProgress = (id: string) => get<Progress>(`/progress/${id}`);
 export const getProjects = (params: URLSearchParams) =>
@@ -117,6 +135,7 @@ export function postAnalysis(
       if (xhr.status === 200 && parsed && typeof parsed === "object" && "name" in parsed) {
         resolve({ name: String(parsed.name) });
       } else {
+        if (xhr.status === 401) notifyUnauthorized(endpoint);
         reject(new ApiError(errorText(parsed, xhr.status), xhr.status));
       }
     };
