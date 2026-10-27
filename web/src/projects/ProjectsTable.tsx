@@ -1,45 +1,13 @@
 import { useEffect, useRef } from "react";
 import type { ProjectItem } from "../api";
-import { SortAscIcon, SortDescIcon } from "../components/icons";
+import type { FilterProps } from "./ColumnFilters";
 import ProjectRow, { COLUMNS } from "./ProjectRow";
-import type { ProjectsQuery, SortKey } from "./query";
-import { SORT_LABELS } from "./ProjectsToolbar";
-
-const SORTABLE: SortKey[] = ["name", "key", "bpm", "duration", "created", "size"];
-
-function Header({
-  column,
-  query,
-  onSort,
-}: {
-  column: SortKey;
-  query: ProjectsQuery;
-  onSort: (column: SortKey) => void;
-}) {
-  const active = query.sort === column;
-  const Icon = active && query.order === "asc" ? SortAscIcon : SortDescIcon;
-  const label = SORT_LABELS[column];
-  return (
-    <th
-      scope="col"
-      className={`col-${column}`}
-      aria-sort={active ? (query.order === "asc" ? "ascending" : "descending") : "none"}
-    >
-      <button
-        type="button"
-        className={active ? "sort-button on" : "sort-button"}
-        aria-label={`Sort by ${label}`}
-        onClick={() => onSort(column)}
-      >
-        {label} <Icon />
-      </button>
-    </th>
-  );
-}
+import ProjectsHead from "./ProjectsHead";
+import type { SortKey } from "./query";
 
 export default function ProjectsTable({
   items,
-  query,
+  filters,
   loading,
   loadingMore,
   hasMore,
@@ -53,7 +21,7 @@ export default function ProjectsTable({
   onDelete,
 }: {
   items: ProjectItem[];
-  query: ProjectsQuery;
+  filters: FilterProps;
   loading: boolean;
   loadingMore: boolean;
   hasMore: boolean;
@@ -88,27 +56,12 @@ export default function ProjectsTable({
   return (
     <div className="table-region" ref={region}>
       <table className="ptable">
-        <thead>
-          <tr>
-            <th scope="col" className="cell-pick">
-              <input
-                type="checkbox"
-                aria-label="Select all loaded"
-                checked={allPicked}
-                onChange={(event) => onSelectAll(event.target.checked)}
-              />
-            </th>
-            {SORTABLE.map((column) => (
-              <Header key={column} column={column} query={query} onSort={onSort} />
-            ))}
-            <th scope="col" className="col-status">
-              Status
-            </th>
-            <th scope="col" className="col-actions">
-              <span className="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
+        <ProjectsHead
+          props={filters}
+          allPicked={allPicked}
+          onSelectAll={onSelectAll}
+          onSort={onSort}
+        />
         <tbody>
           {items.map((item) => (
             <ProjectRow

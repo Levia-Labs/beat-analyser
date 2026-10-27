@@ -1,5 +1,5 @@
 """The built web app: the index for its client-side routes, hashed assets, and the security
-headers every response carries. The routes' endpoint names (index, add, viewer, assets) are
+headers every response carries. The routes' endpoint names (index, viewer, assets) are
 the ones webauth.OPEN_ENDPOINTS leaves open so the sign-in page can load."""
 
 from pathlib import Path
@@ -36,10 +36,6 @@ def install(app: Flask) -> None:
 
     @app.get("/")
     def index():
-        return spa_index()
-
-    @app.get("/add")
-    def add():
         return spa_index()
 
     @app.get("/p/<name>")

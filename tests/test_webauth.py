@@ -67,7 +67,7 @@ def test_protected_routes_refuse_without_a_token(secured, method, path):
     assert response.get_json() == {"error": "Sign in required"}
 
 
-@pytest.mark.parametrize("path", ["/", "/add", "/p/x", "/assets/app-abc123.js", "/config"])
+@pytest.mark.parametrize("path", ["/", "/p/x", "/assets/app-abc123.js", "/config"])
 def test_open_routes_stay_open(secured, path):
     assert secured.get(path).status_code == 200
 

@@ -89,7 +89,7 @@ describe("Projects table", () => {
   it("lists rows with the total, links, ZIP and a not-built status", async () => {
     show();
     expect(await screen.findByRole("link", { name: "a" })).toHaveAttribute("href", "/p/a");
-    expect(screen.getByText("2 projects")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "2 projects" })).toHaveTextContent("2");
     expect(screen.getByRole("link", { name: "Download ZIP of a" })).toHaveAttribute(
       "href",
       "/download/a",
@@ -101,7 +101,7 @@ describe("Projects table", () => {
   });
 
   it("reads filters from the URL into the request and the controls", async () => {
-    show("/?q=so&key=minor&status=built&bpm_min=90&bpm_max=130&sort=bpm&order=asc");
+    show("/?q=so&key=minor&status=built&bpm_min=90&bpm_max=130&dur_min=60&sort=bpm&order=asc");
     await screen.findByRole("link", { name: "a" });
     const params = lastParams();
     expect(params.get("q")).toBe("so");
@@ -109,9 +109,16 @@ describe("Projects table", () => {
     expect(params.get("status")).toBe("built");
     expect(params.get("bpm_min")).toBe("90");
     expect(params.get("bpm_max")).toBe("130");
+    expect(params.get("dur_min")).toBe("60");
     expect(params.get("sort")).toBe("bpm");
     expect(params.get("order")).toBe("asc");
-    expect(screen.getByRole("searchbox", { name: "Search by name" })).toHaveValue("so");
+    for (const column of ["Name", "Key", "BPM", "Duration", "Status"]) {
+      expect(
+        screen.getByRole("button", { name: `Filter ${column}, 1 active` }),
+      ).toBeInTheDocument();
+    }
+    await userEvent.click(screen.getByRole("button", { name: "Filter Name, 1 active" }));
+    expect(await screen.findByRole("searchbox", { name: "Search by name" })).toHaveValue("so");
   });
 
   it("a header click sorts and writes the URL; a second click flips the order", async () => {
@@ -134,9 +141,11 @@ describe("Projects table", () => {
   it("debounces the name search by 250 ms", async () => {
     show();
     await screen.findByRole("link", { name: "a" });
+    await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
+    const box = await screen.findByRole("searchbox", { name: "Search by name" });
     vi.useFakeTimers();
     const calls = list.mock.calls.length;
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search by name" }), {
+    fireEvent.change(box, {
       target: { value: "ab" },
     });
     await act(() => vi.advanceTimersByTimeAsync(249));
@@ -145,18 +154,6 @@ describe("Projects table", () => {
     expect(list.mock.calls.length).toBeGreaterThan(calls);
     expect(lastParams().get("q")).toBe("ab");
     expect(screen.getByTestId("url")).toHaveTextContent("q=ab");
-  });
-
-  it("selects, filters by key and status, and Clear resets them", async () => {
-    show();
-    await screen.findByRole("link", { name: "a" });
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Key" }), "A minor");
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Status" }), "built");
-    expect(lastParams().get("key")).toBe("A minor");
-    expect(lastParams().get("status")).toBe("built");
-    await userEvent.click(screen.getByRole("button", { name: "Clear" }));
-    expect(screen.getByTestId("url")).toBeEmptyDOMElement();
-    expect(lastParams().has("key")).toBe(false);
   });
 
   it("loads the next 50 when the sentinel shows, and stops after the last page", async () => {
@@ -258,27 +255,6 @@ describe("Projects table", () => {
     expect(screen.getByRole("button", { name: "Delete selected (2)" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all loaded" }));
     expect(screen.queryByRole("button", { name: /Delete selected/ })).toBeNull();
-  });
-
-  it("the phone Filters button toggles the filter group by class", async () => {
-    show();
-    await screen.findByRole("link", { name: "a" });
-    const button = screen.getByRole("button", { name: "Filters" });
-    const group = screen.getByRole("group", { name: "Filters" });
-    expect(group).not.toHaveClass("open");
-    expect(button).toHaveAttribute("aria-expanded", "false");
-    await userEvent.click(button);
-    expect(group).toHaveClass("open");
-    expect(button).toHaveAttribute("aria-expanded", "true");
-    await userEvent.click(button);
-    expect(group).not.toHaveClass("open");
-  });
-
-  it("the phone sort select changes the sort", async () => {
-    show();
-    await screen.findByRole("link", { name: "a" });
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sort" }), "bpm");
-    expect(lastParams().get("sort")).toBe("bpm");
   });
 
   it("every button carries an icon", async () => {

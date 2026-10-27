@@ -23,6 +23,10 @@ def test_viewer_route_serves_the_same_index(client, web_dist):
     assert b'<div id="root">' in response.data
 
 
+def test_add_route_is_gone(client, web_dist):
+    assert client.get("/add").status_code == 404
+
+
 def test_assets_are_served_and_cached_for_good(client, web_dist):
     response = client.get("/assets/app-abc123.js")
     assert response.status_code == 200

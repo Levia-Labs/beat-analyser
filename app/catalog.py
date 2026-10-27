@@ -34,10 +34,12 @@ class QueryError(ValueError):
 @dataclass(frozen=True)
 class Query:
     q: str = ""
-    key: str = ""
+    keys: tuple[str, ...] = ()
     status: str = ""
     bpm_min: float | None = None
     bpm_max: float | None = None
+    dur_min: float | None = None
+    dur_max: float | None = None
     sort: str = "created"
     order: str = "desc"
     offset: int = 0
@@ -78,20 +80,33 @@ def _choice(args: Mapping[str, str], field: str, allowed: tuple[str, ...], defau
     return value
 
 
+def _keys(args: Mapping[str, str]) -> tuple[str, ...]:
+    """A comma-separated list of key names or modes; empty entries are skipped."""
+    keys: list[str] = []
+    for part in args.get("key", "").split(","):
+        key = part.strip()
+        if not key:
+            continue
+        if key not in KEYS and key not in MODES:
+            raise QueryError("key must be key names such as 'A minor', or major or minor")
+        if key not in keys:
+            keys.append(key)
+    return tuple(keys)
+
+
 def parse(args: Mapping[str, str]) -> Query:
     """Validate the query string. Raises QueryError; never returns a Query outside its bounds."""
-    key = args.get("key", "").strip()
-    if key and key not in KEYS and key not in MODES:
-        raise QueryError("key must be a key name such as 'A minor', or major or minor")
     status = args.get("status", "").strip()
     if status and status not in ("built", "pending"):
         raise QueryError("status must be built or pending")
     return Query(
         q=args.get("q", "").strip().lower(),
-        key=key,
+        keys=_keys(args),
         status=status,
         bpm_min=_number(args, "bpm_min"),
         bpm_max=_number(args, "bpm_max"),
+        dur_min=_number(args, "dur_min"),
+        dur_max=_number(args, "dur_max"),
         sort=_choice(args, "sort", SORTS, "created"),
         order=_choice(args, "order", ORDERS, "desc"),
         offset=_integer(args, "offset", 0, 0, None),
@@ -152,16 +167,24 @@ def _item(root: Path, name: str) -> dict[str, Any] | None:
 def _matches(item: dict[str, Any], query: Query) -> bool:
     if query.q and query.q not in item["name"].lower():
         return False
-    if query.key:
+    if query.keys:
         key = item["key"]
-        if key is None or (key != query.key and not key.endswith(f" {query.key}")):
+        if key is None or not any(k == key or key.endswith(f" {k}") for k in query.keys):
             return False
     if query.status and item["done"] != (query.status == "built"):
         return False
-    bpm = item["bpm"]
-    if query.bpm_min is not None and (bpm is None or bpm < query.bpm_min):
+    return _within(item["bpm"], query.bpm_min, query.bpm_max) and _within(
+        item["duration"], query.dur_min, query.dur_max
+    )
+
+
+def _within(value: float | None, low: float | None, high: float | None) -> bool:
+    """Inclusive bounds; an unknown value fails any bound that is set."""
+    if low is None and high is None:
+        return True
+    if value is None:
         return False
-    return query.bpm_max is None or (bpm is not None and bpm <= query.bpm_max)
+    return (low is None or value >= low) and (high is None or value <= high)
 
 
 def _names(root: Path) -> list[str]:

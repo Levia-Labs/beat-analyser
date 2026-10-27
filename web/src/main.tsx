@@ -8,6 +8,7 @@ import "./styles/layout.css";
 import "./styles/controls.css";
 import "./styles/list.css";
 import "./styles/projects.css";
+import "./styles/filters.css";
 import "./styles/viewer.css";
 
 const root = document.getElementById("root");

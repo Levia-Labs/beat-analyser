@@ -96,15 +96,16 @@ One page of the projects, filtered and sorted, for the Projects table:
 }
 ```
 
-| Parameter            | Meaning                                                         |
-| -------------------- | --------------------------------------------------------------- |
-| `q`                  | Case-insensitive substring of the name                          |
-| `key`                | An exact key (`A minor`) or a mode (`major`, `minor`)           |
-| `status`             | `built` (ZIP exists) or `pending`                               |
-| `bpm_min`, `bpm_max` | Inclusive bounds; a project without a BPM never matches a bound |
-| `sort`               | `name`, `key`, `bpm`, `duration`, `created` (default), `size`   |
-| `order`              | `asc` or `desc` (default)                                       |
-| `offset`, `limit`    | Paging; `offset` >= 0, `limit` 1 to 200 (default 50)            |
+| Parameter            | Meaning                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| `q`                  | Case-insensitive substring of the name                                              |
+| `key`                | Comma-separated keys (`A minor`) or modes (`major`, `minor`); a project matches any |
+| `status`             | `built` (ZIP exists) or `pending`                                                   |
+| `bpm_min`, `bpm_max` | Inclusive bounds; a project without a BPM never matches a bound                     |
+| `dur_min`, `dur_max` | Inclusive seconds; a project without a duration never matches a bound               |
+| `sort`               | `name`, `key`, `bpm`, `duration`, `created` (default), `size`                       |
+| `order`              | `asc` or `desc` (default)                                                           |
+| `offset`, `limit`    | Paging; `offset` >= 0, `limit` 1 to 200 (default 50)                                |
 
 `total` counts the filtered set, not the page. `duration` is seconds of audio and `null` for
 projects built before it was stored; `created` is the mtime of `meta.json`, `null` without

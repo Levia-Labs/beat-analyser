@@ -132,11 +132,12 @@ describe("Projects paging and reload", () => {
   it("Clear inside the debounce window drops the typed text for good", async () => {
     show();
     await screen.findByRole("link", { name: "a" });
+    await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
+    const box = await screen.findByRole("searchbox", { name: "Search by name" });
     vi.useFakeTimers();
-    const box = screen.getByRole("searchbox", { name: "Search by name" });
     fireEvent.change(box, { target: { value: "ab" } });
     await act(() => vi.advanceTimersByTimeAsync(100));
-    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear Name filter" }));
     await act(() => vi.advanceTimersByTimeAsync(600));
     expect(box).toHaveValue("");
     expect(screen.getByTestId("url")).toBeEmptyDOMElement();

@@ -61,6 +61,20 @@ def test_filters(client, seeded):
     assert names(client, "bpm_min=140") == ["Beta"]
 
 
+def test_key_accepts_a_list_and_matches_any(client, seeded):
+    assert names(client, "key=A minor,C major") == ["Beta", "gamma", "alpha"]
+    assert names(client, "key=C major, minor") == ["Beta", "gamma", "alpha"]
+    assert names(client, "key=C major,,") == ["Beta"]
+    assert names(client, "key=major,minor") == ["Beta", "gamma", "alpha"]
+
+
+def test_duration_bounds_are_inclusive_and_skip_unknown(client, seeded):
+    assert names(client, "dur_min=10.5") == ["Beta", "alpha"]
+    assert names(client, "dur_max=10.5") == ["alpha"]
+    assert names(client, "dur_min=11&dur_max=30") == ["Beta"]
+    assert names(client, "dur_min=0") == ["Beta", "alpha"]
+
+
 def test_total_counts_the_filtered_set_not_the_page(client, seeded):
     body = client.get("/projects?key=minor&limit=1&offset=1").get_json()
     assert body["total"] == 2
@@ -81,6 +95,9 @@ def test_sort_puts_unknown_last_in_both_orders(client, seeded):
         "order=up",
         "status=maybe",
         "key=H flat",
+        "key=A minor,H flat",
+        "dur_min=abc",
+        "dur_max=inf",
         "bpm_min=abc",
         "bpm_max=nan",
         "offset=-1",

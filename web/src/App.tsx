@@ -4,9 +4,7 @@ import { getConfig, login, logout, onUnauthorized } from "./api";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { LogoutIcon } from "./components/icons";
 import Logo from "./components/Logo";
-import NavTabs from "./components/NavTabs";
 import SignIn from "./components/SignIn";
-import Add from "./screens/Add";
 import Home from "./screens/Home";
 import NotFound from "./screens/NotFound";
 import { ViewerRoute } from "./screens/Viewer";
@@ -50,7 +48,6 @@ export default function App() {
           </button>
         )}
       </header>
-      <NavTabs />
       <main className="page">
         {locked ? (
           <SignIn
@@ -65,7 +62,6 @@ export default function App() {
           <ErrorBoundary key={session}>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/add" element={<Add />} />
               <Route path="/p/:name" element={<ViewerRoute />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
