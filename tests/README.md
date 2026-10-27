@@ -12,6 +12,7 @@ runs without beatcore or the note model. Run all with `task test:run`, a subset 
 | `test_agent_tooling.py` | Agent-session tools: gate and outline                                  |
 | `test_analysis.py`      | CSV track writing, label routing, end-to-end analysis                  |
 | `test_app.py`           | Flask routes: CSP, upload, refusals, folders, download, repair         |
+| `test_backend.py`       | The MCP web app client: multipart body, error messages, unreachable    |
 | `test_coverage_gate.py` | The coverage ratchet                                                   |
 | `test_key.py`           | Key detection from pitch classes                                       |
 | `test_jobs.py`          | the MCP job registry: dedupe per name, pending cap, error capture      |
