@@ -2,7 +2,7 @@ import { useState } from "react";
 import { deleteProject, renameProject } from "../api";
 import Banner from "../components/Banner";
 import ConfirmDialog from "../components/ConfirmDialog";
-import { TrashIcon } from "../components/icons";
+import { RefreshIcon, TrashIcon } from "../components/icons";
 import { message } from "../useLoad";
 import { hasFilters } from "./query";
 import ProjectsTable from "./ProjectsTable";
@@ -79,7 +79,16 @@ export default function ProjectsScreen() {
         onSort={sortBy}
         onClear={clear}
       />
-      {paged.error && <Banner message={paged.error} />}
+      {paged.error && (
+        <Banner
+          message={paged.error}
+          action={
+            <button type="button" className="chip" onClick={paged.retry}>
+              <RefreshIcon /> Retry
+            </button>
+          }
+        />
+      )}
       {problem && <Banner message={problem} />}
       {selected.size > 0 && (
         <div className="bulk">

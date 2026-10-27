@@ -77,32 +77,34 @@ export default function ProjectRow({
         <span className={item.done ? "chip" : "chip off"}>{item.done ? "Built" : "Not built"}</span>
       </td>
       <td className="cell-actions">
-        {item.done && (
-          <a
+        <div className="actions-row">
+          {item.done && (
+            <a
+              className="chip icon-only"
+              href={`/download/${encodeURIComponent(name)}`}
+              download
+              aria-label={`Download ZIP of ${name}`}
+            >
+              <DownloadIcon />
+            </a>
+          )}
+          <button
+            type="button"
             className="chip icon-only"
-            href={`/download/${encodeURIComponent(name)}`}
-            download
-            aria-label={`Download ZIP of ${name}`}
+            aria-label={`Rename ${name}`}
+            onClick={() => setRenaming(true)}
           >
-            <DownloadIcon />
-          </a>
-        )}
-        <button
-          type="button"
-          className="chip icon-only"
-          aria-label={`Rename ${name}`}
-          onClick={() => setRenaming(true)}
-        >
-          <PencilIcon />
-        </button>
-        <button
-          type="button"
-          className="chip icon-only"
-          aria-label={`Delete ${name}`}
-          onClick={() => onDelete(name)}
-        >
-          <TrashIcon />
-        </button>
+            <PencilIcon />
+          </button>
+          <button
+            type="button"
+            className="chip icon-only"
+            aria-label={`Delete ${name}`}
+            onClick={() => onDelete(name)}
+          >
+            <TrashIcon />
+          </button>
+        </div>
       </td>
     </tr>
   );

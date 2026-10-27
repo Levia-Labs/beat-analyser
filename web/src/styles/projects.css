@@ -118,7 +118,8 @@
   position: relative;
   z-index: 1;
 }
-.cell-actions {
+/* The flex row lives in a wrapper: display:flex on the td itself would drop it out of the table. */
+.actions-row {
   display: flex;
   gap: 4px;
   justify-content: flex-end;
@@ -210,6 +211,14 @@
     display: flex;
     align-items: center;
     font-weight: 600;
+    min-width: 0;
+  }
+  /* min-width:0 lets the flex child shrink below its text, so a long name ends in an ellipsis. */
+  .prow .name-link {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .prow .cell-key,
   .prow .cell-bpm,

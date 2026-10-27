@@ -99,8 +99,20 @@ def parse(args: Mapping[str, str]) -> Query:
     )
 
 
-def _folder_bytes(folder: Path) -> int:
-    return sum(path.stat().st_size for path in folder.iterdir() if path.is_file())
+def _size(path: Path) -> int:
+    # A build or delete can remove a file between listing and stat: it counts as 0 bytes.
+    try:
+        return path.stat().st_size if path.is_file() else 0
+    except FileNotFoundError:
+        return 0
+
+
+def _folder_bytes(folder: Path) -> int | None:
+    """Bytes in the folder's files, or None when the folder vanished mid-listing."""
+    try:
+        return sum(_size(path) for path in folder.iterdir())
+    except FileNotFoundError:
+        return None
 
 
 def _created(meta_path: Path) -> str | None:
@@ -117,14 +129,15 @@ def _number_or_none(value: Any) -> float | None:
     return float(value) if math.isfinite(value) else None
 
 
-def _item(root: Path, name: str) -> dict[str, Any]:
+def _item(root: Path, name: str) -> dict[str, Any] | None:
     folder = storage.project_dir(root, name)
     archive = storage.zip_path(root, name)
     meta = events.meta(folder) or {}
     key = meta.get("key")
-    size = _folder_bytes(folder) if folder.is_dir() else 0
-    if archive.is_file():
-        size += archive.stat().st_size
+    folder_size = _folder_bytes(folder) if folder.is_dir() else 0
+    size = (folder_size or 0) + _size(archive)
+    if folder_size is None and not archive.is_file():
+        return None  # deleted while the page was being built
     return {
         "name": name,
         "done": archive.is_file(),
@@ -161,8 +174,8 @@ def _names(root: Path) -> list[str]:
 
 def page(root: Path, query: Query) -> dict[str, Any]:
     """One page of the filtered, sorted projects, and the size of the filtered set."""
-    items = [_item(root, name) for name in _names(root)] if root.is_dir() else []
-    items = [item for item in items if _matches(item, query)]
+    found = [_item(root, name) for name in _names(root)] if root.is_dir() else []
+    items = [item for item in found if item is not None and _matches(item, query)]
     field = query.sort
     descending = query.order == "desc"
     known = [item for item in items if item[field] is not None]

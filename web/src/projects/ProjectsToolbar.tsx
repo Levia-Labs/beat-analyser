@@ -131,7 +131,16 @@ export default function ProjectsToolbar({
           <option value="built">Built</option>
           <option value="pending">Not built</option>
         </select>
-        <button type="button" className="chip" onClick={onClear}>
+        <button
+          type="button"
+          className="chip"
+          onClick={() => {
+            // Resetting the draft re-runs the debounce effect, which cancels a pending write of the
+            // typed text; relying on the URL change alone misses a URL that was already empty.
+            setDraft({ q: "", bpmMin: "", bpmMax: "" });
+            onClear();
+          }}
+        >
           <XIcon /> Clear
         </button>
       </div>

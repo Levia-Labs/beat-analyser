@@ -2,6 +2,7 @@
 
 import os
 import wave
+from pathlib import Path
 
 import pytest
 
@@ -96,6 +97,36 @@ def test_invalid_values_are_400(client, seeded, query):
 
 def test_empty_root(client):
     assert client.get("/projects").get_json() == {"items": [], "total": 0}
+
+
+def test_a_file_vanishing_during_stat_counts_as_zero_bytes(client, seeded, monkeypatch):
+    real_stat = Path.stat
+
+    def stat(self, *args, **kwargs):
+        if self.name == "kick.csv" and self.parent.name == "alpha":
+            raise FileNotFoundError(self)
+        return real_stat(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", stat)
+    body = client.get("/projects?sort=name&order=asc").get_json()
+    assert [item["name"] for item in body["items"]] == ["alpha", "Beta", "gamma", "legacy"]
+    alpha = body["items"][0]
+    assert alpha["size"] > 0  # the ZIP and meta still count
+
+
+def test_a_folder_vanishing_mid_listing_is_skipped_unless_a_zip_remains(
+    client, seeded, monkeypatch
+):
+    real_iterdir = Path.iterdir
+
+    def iterdir(self):
+        if self.name in {"alpha", "gamma"}:
+            raise FileNotFoundError(self)
+        return real_iterdir(self)
+
+    monkeypatch.setattr(Path, "iterdir", iterdir)
+    # gamma has no ZIP and vanished: skipped. alpha keeps its ZIP: listed with the ZIP's size.
+    assert names(client, "sort=name&order=asc") == ["alpha", "Beta", "legacy"]
 
 
 def test_build_stores_the_duration(client, upload_root):
