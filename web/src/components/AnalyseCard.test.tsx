@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, postAnalysis } from "../api";
@@ -55,6 +55,32 @@ describe("AnalyseCard", () => {
     await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Processing failed: boom");
     expect(screen.getByRole("button", { name: "Analyse" })).toBeEnabled();
+  });
+
+  it("ignores a drop while an upload is running", async () => {
+    post.mockReturnValue(new Promise(() => {}));
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    await userEvent.upload(screen.getByLabelText("Audio file"), audio(10));
+    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    const other = new File([new Uint8Array(5)], "other.mp3", { type: "audio/mpeg" });
+    fireEvent.drop(screen.getByText("song.mp3").closest("label")!, {
+      dataTransfer: { files: [other] },
+    });
+    expect(screen.getByRole("button", { name: "Analyse" })).toBeDisabled();
+    expect(screen.getByText("song.mp3")).toBeInTheDocument();
+    expect(screen.queryByText("other.mp3")).not.toBeInTheDocument();
+  });
+
+  it("keeps a YouTube request in the analysing phase whatever the progress", async () => {
+    post.mockReturnValue(new Promise(() => {}));
+    render(<AnalyseCard config={config} onDone={vi.fn()} />);
+    await userEvent.click(screen.getByRole("tab", { name: "YouTube" }));
+    await userEvent.type(screen.getByLabelText("YouTube URL"), "https://youtu.be/dQw4w9WgXcQ");
+    await userEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    const report = post.mock.calls[0]![2];
+    act(() => report(0.5));
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.getByText(/Analysing/)).toBeInTheDocument();
   });
 
   it("sends a YouTube URL as JSON to /download_yt", async () => {

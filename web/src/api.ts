@@ -42,8 +42,17 @@ async function get<T>(url: string): Promise<T> {
   } catch {
     throw new ApiError("Server unreachable", 0);
   }
-  const body = parseJson(await response.text());
+  let text: string;
+  try {
+    text = await response.text();
+  } catch {
+    throw new ApiError("Server unreachable", 0);
+  }
+  const body = parseJson(text);
   if (!response.ok) throw new ApiError(errorText(body, response.status), response.status);
+  if (body === null) {
+    throw new ApiError(`Server answered ${response.status} without JSON`, response.status);
+  }
   return body as T;
 }
 

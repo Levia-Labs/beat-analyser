@@ -48,7 +48,7 @@ export default function AnalyseCard({
   const accept = config?.extensions.join(",") ?? "";
 
   function choose(chosen: File | undefined) {
-    if (!chosen) return;
+    if (!chosen || busy) return;
     setFile(chosen);
     setPhase({ kind: "idle" });
   }
@@ -86,7 +86,7 @@ export default function AnalyseCard({
     try {
       const { name } = await postAnalysis(endpoint, body, (fraction) =>
         setPhase((current) =>
-          fraction < 1
+          fraction < 1 && endpoint === "/upload"
             ? { kind: "uploading", fraction }
             : current.kind === "analysing"
               ? current
