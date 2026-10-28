@@ -7,7 +7,7 @@
 # image.
 
 # The SPA in web/, built once; only its dist/ reaches the runtime image, so Node does not.
-FROM node:22.14.0-slim AS web
+FROM node:26.11.1-slim AS web
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
