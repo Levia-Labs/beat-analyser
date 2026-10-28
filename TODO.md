@@ -61,3 +61,10 @@ class: bug
 
 status: open
 class: bug
+
+## 4 task analyse fails on Windows through the docker fallback
+
+status: open
+class: bug
+
+Host venv lacks beatcore, so task analyse falls back to docker; the bind mount built from the Windows ROOT path fails with 'invalid mode /app/uploads'. task run on the host cannot analyse. Seen 2026-10-28 while capturing website screenshots.
