@@ -35,9 +35,9 @@ def upload(base_url: str, filename: str, data: bytes) -> None:
     _post(f"{base_url}/upload", body, f"multipart/form-data; boundary={boundary}")
 
 
-def download_yt(base_url: str, video_id: str) -> None:
-    """POST /download_yt with the canonical URL rebuilt from the video ID."""
-    body = json.dumps({"url": youtube.canonical_url(video_id)}).encode()
+def download_yt(base_url: str, video_id: str, name: str) -> None:
+    """POST /download_yt with the canonical URL rebuilt from the video ID and the project name."""
+    body = json.dumps({"url": youtube.canonical_url(video_id), "name": name}).encode()
     _post(f"{base_url}/download_yt", body, "application/json")
 
 

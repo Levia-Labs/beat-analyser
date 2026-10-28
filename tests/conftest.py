@@ -11,6 +11,7 @@ from hypothesis import settings
 
 import analysis
 import app as app_module
+import youtube
 
 # Fast in task test:run and the Stop hook; task props:deep sets HYPOTHESIS_PROFILE=deep.
 settings.register_profile("dev", max_examples=50, deadline=None)
@@ -40,6 +41,8 @@ def client(upload_root, monkeypatch):
         return {"bpm": 128.0, "confidence": 0.5, "key": "A minor"}
 
     monkeypatch.setattr(analysis, "analyse", fake_analyse)
+    # Tests never reach YouTube: no title, so a project falls back to the video ID.
+    monkeypatch.setattr(youtube, "title", lambda vid: None)
     app_module.app.config.update(TESTING=True, UPLOAD_ROOT=upload_root)
     return app_module.app.test_client()
 

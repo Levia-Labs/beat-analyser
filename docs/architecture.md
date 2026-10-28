@@ -73,7 +73,7 @@ imports - and the tests run - where the extension is not built.
 ## Storage layout
 
 See the Output section of the [README](../README.md). Project names are sanitised upload
-stems or 11-character YouTube video IDs. `storage.is_valid_name` is the single check every
+stems, sanitised YouTube titles, or the video ID when a title has nothing usable. `storage.is_valid_name` is the single check every
 name passes before it becomes a path.
 
 ## Runtime

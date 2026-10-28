@@ -51,6 +51,7 @@ def analyse_files(root: Path, files: list[Path]) -> int:
 
 def analyse_youtube(root: Path, url: str) -> int:
     vid = youtube.video_id(url)
+    name = youtube.name_for(vid)
 
     def place_audio(wav: Path) -> None:
         source = youtube.download_audio(vid, wav.parent, YT_MAX_SECONDS, YT_MAX_BYTES)
@@ -59,8 +60,8 @@ def analyse_youtube(root: Path, url: str) -> int:
         finally:
             source.unlink(missing_ok=True)
 
-    pipeline.build(root, vid, place_audio)
-    return summary(root, vid)
+    pipeline.build(root, name, place_audio)
+    return summary(root, name)
 
 
 def summary(root: Path, name: str) -> int:

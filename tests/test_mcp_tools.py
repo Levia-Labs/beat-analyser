@@ -10,6 +10,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 import backend
 import mcp_tools
 import storage
+import youtube
 from jobs import Jobs
 
 
@@ -79,10 +80,19 @@ def test_analyse_audio_refuses_more_than_the_limit(root, calls, monkeypatch):
     assert calls == []
 
 
-def test_analyse_youtube_reduces_the_url_to_an_id(root, calls):
+def test_analyse_youtube_names_the_project_after_the_title(root, calls, monkeypatch):
+    monkeypatch.setattr(youtube, "title", lambda vid: "Never Gonna Give You Up")
+    result = mcp_tools.analyse_youtube("https://youtu.be/dQw4w9WgXcQ")
+    name = "Never_Gonna_Give_You_Up"
+    assert result == {"name": name, "status": "done"}
+    assert calls == [("yt", mcp_tools.BACKEND_URL, "dQw4w9WgXcQ", name)]
+
+
+def test_analyse_youtube_falls_back_to_the_id(root, calls, monkeypatch):
+    monkeypatch.setattr(youtube, "title", lambda vid: None)
     result = mcp_tools.analyse_youtube("https://youtu.be/dQw4w9WgXcQ")
     assert result == {"name": "dQw4w9WgXcQ", "status": "done"}
-    assert calls == [("yt", mcp_tools.BACKEND_URL, "dQw4w9WgXcQ")]
+    assert calls == [("yt", mcp_tools.BACKEND_URL, "dQw4w9WgXcQ", "dQw4w9WgXcQ")]
 
 
 def test_analyse_youtube_refuses_a_foreign_host(root, calls):

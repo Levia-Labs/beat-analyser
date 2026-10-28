@@ -25,7 +25,9 @@ Analyses take minutes, so they run as jobs: start one, then poll.
 | `list_projects`   | none                                            | `{projects: [{name, done, meta}]}`                                                                  |
 | `get_events`      | `name`, `track`, `start=0`, `end`, `limit=1000` | `{rows: [[time, label]], truncated}`, at most 10000 rows                                            |
 
-`name` is the project name: the uploaded file's sanitised stem, or the YouTube video ID.
+`name` is the project name: the uploaded file's sanitised stem, or the YouTube video's
+sanitised title (the video ID when the title has nothing usable). `analyse_youtube` fetches
+the title before it answers.
 `track` is one of the CSVs in [output.md](output.md). Labels come decoded from `labels.json`.
 Starting a name that is already queued or running returns that job. A project made in the
 web UI is `done` as soon as its ZIP exists.

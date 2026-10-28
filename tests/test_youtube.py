@@ -100,3 +100,70 @@ def test_download_without_progress_callback(monkeypatch, tmp_path):
 
 def test_canonical_url():
     assert youtube.canonical_url(VID) == f"https://www.youtube.com/watch?v={VID}"
+
+
+@pytest.mark.parametrize(
+    ("title", "name"),
+    [
+        (
+            "Rick Astley - Never Gonna Give You Up (Official Video)",
+            "Rick_Astley_-_Never_Gonna_Give_You_Up_Official_Video",
+        ),
+        ("Beyoncé \N{EN DASH} Halo", "Beyonce_Halo"),
+        ("../../etc/passwd", "etc_passwd"),
+        ("--- intro", "intro"),
+        ("x" * 150, "x" * 100),
+        # Nothing usable left: the project falls back to the video ID.
+        ("日本語のタイトル", VID),
+        ("", VID),
+        (None, VID),
+    ],
+)
+def test_project_name_from_title(title, name):
+    assert youtube.project_name(title, VID) == name
+
+
+def test_project_name_of_an_id_with_a_leading_dash():
+    assert youtube.project_name(None, "-abcdefghij") == "yt-abcdefghij"
+
+
+class _FakeInfoDL:
+    """Stands in for yt_dlp.YoutubeDL when only the metadata is fetched."""
+
+    info: ClassVar[dict | Exception] = {}
+    urls: ClassVar[list[str]] = []
+
+    def __init__(self, params):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def extract_info(self, url, download):
+        assert not download
+        self.urls.append(url)
+        if isinstance(self.info, Exception):
+            raise self.info
+        return self.info
+
+
+@pytest.mark.parametrize(
+    ("info", "title"),
+    [
+        ({"title": "Never Gonna Give You Up"}, "Never Gonna Give You Up"),
+        ({}, None),
+        ("error", None),
+    ],
+)
+def test_title(monkeypatch, info, title):
+    import yt_dlp
+    from yt_dlp.utils import DownloadError
+
+    _FakeInfoDL.info = DownloadError("private video") if info == "error" else info
+    _FakeInfoDL.urls = []
+    monkeypatch.setattr(yt_dlp, "YoutubeDL", _FakeInfoDL)
+    assert youtube.title(VID) == title
+    assert _FakeInfoDL.urls == [youtube.canonical_url(VID)]

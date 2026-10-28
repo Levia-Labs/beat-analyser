@@ -63,18 +63,18 @@ def test_upload_posts_multipart_with_the_filename(sent):
     assert req.data.endswith(f"--{boundary}--\r\n".encode())
 
 
-def test_download_yt_posts_the_canonical_url(sent):
-    backend.download_yt("http://backend:8000", "dQw4w9WgXcQ")
+def test_download_yt_posts_the_canonical_url_and_name(sent):
+    backend.download_yt("http://backend:8000", "dQw4w9WgXcQ", "Song")
     req, _ = sent[0]
     assert req.full_url == "http://backend:8000/download_yt"
     assert req.get_header("Content-type") == "application/json"
-    assert json.loads(req.data) == {"url": youtube.canonical_url("dQw4w9WgXcQ")}
+    assert json.loads(req.data) == {"url": youtube.canonical_url("dQw4w9WgXcQ"), "name": "Song"}
 
 
 def test_the_web_token_goes_out_as_a_bearer_header(sent, monkeypatch):
     monkeypatch.setenv("WEB_TOKEN", "tok")
     backend.upload("http://backend:8000", "song.mp3", b"x")
-    backend.download_yt("http://backend:8000", "dQw4w9WgXcQ")
+    backend.download_yt("http://backend:8000", "dQw4w9WgXcQ", "Song")
     assert [req.get_header("Authorization") for req, _ in sent] == ["Bearer tok", "Bearer tok"]
 
 
@@ -99,7 +99,7 @@ def test_a_non_json_error_page_is_quoted(monkeypatch):
 def test_an_unreachable_backend_is_a_backend_error(monkeypatch):
     refuse_with(monkeypatch, urllib.error.URLError("Connection refused"))
     with pytest.raises(backend.BackendError, match="unreachable"):
-        backend.download_yt("http://backend:8000", "dQw4w9WgXcQ")
+        backend.download_yt("http://backend:8000", "dQw4w9WgXcQ", "Song")
 
 
 def test_a_dropped_connection_is_a_backend_error(monkeypatch):

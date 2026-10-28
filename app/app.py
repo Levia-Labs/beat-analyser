@@ -151,6 +151,10 @@ def download_yt():
         vid = youtube.video_id(str(data.get("url", "")))
     except ValueError as exc:
         return error(str(exc), 400)
+    # The MCP server names the project before it calls here, so it can answer at once.
+    name = str(data["name"]) if "name" in data else youtube.name_for(vid)
+    if not storage.is_valid_name(name):
+        return error("Invalid project name", 400)
 
     tracker = progress.Tracker(request.headers.get("X-Progress-Id"), progress.YOUTUBE_STAGES)
 
@@ -169,7 +173,7 @@ def download_yt():
         finally:
             source.unlink(missing_ok=True)
 
-    return build_or_error(vid, place_audio, tracker)
+    return build_or_error(name, place_audio, tracker)
 
 
 @app.get("/progress/<progress_id>")

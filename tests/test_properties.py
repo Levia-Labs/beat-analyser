@@ -111,6 +111,13 @@ def test_video_id_round_trips(vid):
     assert youtube.video_id(f"https://youtu.be/{vid}") == vid
 
 
+@given(st.one_of(st.none(), st.text(max_size=300)), ID)
+@example("../../../etc/passwd", "dQw4w9WgXcQ")
+@example("-" * 5 + "x" * 200, "dQw4w9WgXcQ")
+def test_title_name_is_a_valid_name(title, vid):
+    assert storage.is_valid_name(youtube.project_name(title, vid))
+
+
 @given(st.floats(0, 1e5), st.floats(0, 1e5))
 @example(0.03125, 0.0)  # an exact tie: "0.0312" parses to just under 0.0312
 def test_format_time_is_monotonic_and_close(a, b):

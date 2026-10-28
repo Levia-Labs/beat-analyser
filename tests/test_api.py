@@ -35,11 +35,29 @@ def test_download_yt_answers_the_name_when_json_is_asked(client, monkeypatch):
         return source
 
     monkeypatch.setattr(youtube, "download_audio", fake_download)
+    monkeypatch.setattr(youtube, "title", lambda vid: "Never Gonna Give You Up")
     response = client.post(
         "/download_yt", json={"url": "https://youtu.be/dQw4w9WgXcQ"}, headers=JSON
     )
     assert response.status_code == 200
-    assert response.get_json() == {"name": "dQw4w9WgXcQ"}
+    assert response.get_json() == {"name": "Never_Gonna_Give_You_Up"}
+
+    # A caller that already chose the name (the MCP server) sends it along.
+    response = client.post(
+        "/download_yt",
+        json={"url": "https://youtu.be/dQw4w9WgXcQ", "name": "Chosen"},
+        headers=JSON,
+    )
+    assert response.get_json() == {"name": "Chosen"}
+
+
+def test_download_yt_refuses_an_invalid_name(client):
+    response = client.post(
+        "/download_yt",
+        json={"url": "https://youtu.be/dQw4w9WgXcQ", "name": "../x"},
+        headers=JSON,
+    )
+    assert response.status_code == 400
 
 
 def test_config(client):

@@ -11,6 +11,10 @@ from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+from werkzeug.utils import secure_filename
+
+import storage
+
 _ID = re.compile(r"[A-Za-z0-9_-]{11}")
 _HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"}
 
@@ -34,6 +38,45 @@ def video_id(url: str) -> str:
 
 def canonical_url(vid: str) -> str:
     return f"https://www.youtube.com/watch?v={vid}"
+
+
+def title(vid: str) -> str | None:
+    """The video's title, or None when YouTube will not say (private, removed, offline)."""
+    from yt_dlp import YoutubeDL
+    from yt_dlp.utils import DownloadError
+
+    with YoutubeDL(
+        {
+            "quiet": True,
+            "no_warnings": True,
+            "noplaylist": True,
+            "cachedir": False,  # pyright: ignore[reportArgumentType]
+        }
+    ) as ydl:
+        try:
+            info = ydl.extract_info(canonical_url(vid), download=False)
+        except DownloadError:
+            # The download reports the real reason; the project keeps the video ID meanwhile.
+            return None
+    return (info or {}).get("title") or None
+
+
+def project_name(video_title: str | None, vid: str) -> str:
+    """A project name from the video's title, or the video ID when nothing usable is left.
+
+    The project used to be named after the ID alone, which says nothing about the song.
+    """
+    # secure_filename transliterates to ASCII and drops separators; a leading dash would
+    # still read as an option to every tool that sees the folder name.
+    name = secure_filename(video_title or "")[:100].lstrip("-._")
+    if storage.is_valid_name(name):
+        return name
+    # An ID may start with - or _, which no project name may; such a video used to be refused.
+    return vid if storage.is_valid_name(vid) else f"yt{vid}"
+
+
+def name_for(vid: str) -> str:
+    return project_name(title(vid), vid)
 
 
 def download_audio(

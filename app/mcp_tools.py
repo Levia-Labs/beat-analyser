@@ -60,13 +60,15 @@ def check_audio(filename: str, data_base64: str, max_bytes: int) -> tuple[str, s
 
 
 def analyse_youtube(url: str) -> dict[str, Any]:
-    """Start analysing a YouTube video. Returns at once with the project name (the video ID);
-    poll project_status(name) until it is done or failed."""
+    """Start analysing a YouTube video. Returns at once with the project name (the video's
+    title, or its ID when the title has nothing usable); poll project_status(name) until it
+    is done or failed."""
     try:
         vid = youtube.video_id(url)
     except ValueError as exc:
         raise ToolError(str(exc)) from None
-    return _start(vid, lambda: backend.download_yt(BACKEND_URL, vid))
+    name = youtube.name_for(vid)
+    return _start(name, lambda: backend.download_yt(BACKEND_URL, vid, name))
 
 
 def analyse_audio(filename: str, data_base64: str) -> dict[str, Any]:

@@ -37,15 +37,17 @@ curl -F file=@song.mp3 -o song_tracks.zip http://localhost:8002/upload
 
 JSON body `{"url": "<YouTube URL>"}`. Accepted forms: `youtube.com/watch?v=`,
 `youtu.be`, `youtube.com/shorts`, on `www.`, `m.` and `music.` hosts. The project is
-named after the video ID. `Accept: application/json` and `X-Progress-Id` work as for
-`/upload`.
+named after the video's title, sanitised as an upload stem is; when YouTube gives no title
+or nothing usable is left, after the video ID (prefixed `yt` if the ID starts with `-` or
+`_`). An optional `"name"` in the body overrides both. `Accept: application/json` and
+`X-Progress-Id` work as for `/upload`.
 
-| Status | When                                                                                        |
-| ------ | ------------------------------------------------------------------------------------------- |
-| 200    | ZIP attachment `<video id>_tracks.zip`, or `{"name": "<video id>"}` for JSON                |
-| 400    | Not a YouTube URL, video longer than `YT_MAX_MINUTES`, or audio larger than `MAX_UPLOAD_MB` |
-| 429    | `MAX_ANALYSES` analyses already running; nothing changed, retry shortly                     |
-| 500    | Download or analysis failed                                                                 |
+| Status | When                                                                              |
+| ------ | --------------------------------------------------------------------------------- |
+| 200    | ZIP attachment `<name>_tracks.zip`, or `{"name": "<name>"}` for JSON              |
+| 400    | Not a YouTube URL, invalid `name`, video too long (`YT_MAX_MINUTES`) or too large |
+| 429    | `MAX_ANALYSES` analyses already running; nothing changed, retry shortly           |
+| 500    | Download or analysis failed                                                       |
 
 ## `GET /config`
 
@@ -197,8 +199,8 @@ rebuilt under it.
 | 404    | The name is invalid or has no project folder                   |
 | 409    | The project is being analysed, or the new name is already used |
 
-A YouTube project is named after its video ID. After a rename the same URL no longer finds
-it, so analysing that URL again starts afresh under the ID.
+A YouTube project is named after its video's title. After a rename the same URL no longer
+finds it, so analysing that URL again starts afresh under the title.
 
 ## `GET /folders`
 
