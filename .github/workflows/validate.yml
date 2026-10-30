@@ -39,12 +39,13 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       # yt-dlp too: without it, basedpyright cannot resolve the import in app/youtube.py.
+      # mcp too: the MCP server tests import it, and type checking failed on CI without it.
       - name: Install test and lint tooling
         run: |
           python -m venv .venv
           # shellcheck disable=SC2046 # word splitting is the point: one pip argument per pinned line
           .venv/bin/python -m pip install --quiet -r requirements-dev.txt \
-            $(grep -E '^(Flask|Werkzeug|numpy|scipy|onnxruntime)==|^yt-dlp$' app/requirements.txt) \
+            $(grep -E '^(Flask|Werkzeug|numpy|scipy|onnxruntime|mcp)==|^yt-dlp$' app/requirements.txt) \
             ./beatcore
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
