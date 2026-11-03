@@ -7,7 +7,7 @@
 # image.
 
 # The SPA in web/, built once; only its dist/ reaches the runtime image, so Node does not.
-FROM node:26.11.1-slim AS web
+FROM node:26.12.0-slim AS web
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -21,7 +21,7 @@ RUN npm run build
 FROM rust:1.98-slim AS rust
 
 
-FROM python:3.14.7-slim AS build
+FROM python:3.15.0-slim AS build
 
 # gcc is the linker rustc calls. The base image tag is pinned; an unpinned apt package takes
 # Debian security updates on rebuild.
@@ -48,7 +48,7 @@ COPY beatcore /tmp/beatcore
 RUN pip install --no-cache-dir /tmp/beatcore
 
 
-FROM python:3.14.7-slim
+FROM python:3.15.0-slim
 
 # The base image tag is pinned; an unpinned apt package takes Debian security updates on rebuild.
 # hadolint ignore=DL3008
